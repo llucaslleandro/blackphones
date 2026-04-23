@@ -1,0 +1,70 @@
+---
+description: Architecture, boundaries, and integration contracts
+---
+
+## Project Overview
+Vendly is a **static storefront + dashboard** (HTML/CSS/vanilla JS) that talks to a **Google Apps Script Web App** (`Code.gs`) which persists data in Google Sheets (`Produtos`, `Pedidos`).
+
+### Tech stack (detected)
+- **Frontend**: static HTML + Tailwind CDN + Font Awesome CDN
+- **Store onboarding**: Driver.js CDN
+- **Dashboard charts**: Chart.js CDN
+- **Backend**: Google Apps Script
+- **Data store**: Google Sheets
+
+## Architecture rules (best practices within current constraints)
+
+### Static / no-bundler constraint
+- Do not introduce a build step unless explicitly requested.
+- Prefer plain `.js` files loaded via `<script src="...">`.
+
+### Script load order is a contract
+The storefront relies on globals initialized across files. Preserve this order in `index.html`:
+- `config.js` → `js/utils.js` → `js/api.js` → `js/ui.js` → `js/cart.js` → `js/products.js` → `js/main.js`
+
+Same for the dashboard pages:
+- `dashboard/index.html` loads `../config.js` then `dashboard/app.js`
+- `dashboard/dashboard.html` loads `../config.js` then `dashboard/app.js`
+
+If you need to reorder, you must first refactor to remove global coupling.
+
+### Module boundaries (recommended)
+- **`config.js`**: public configuration + theme injection only. No secrets. No business logic.
+- **`js/utils.js`**: shared primitives only (storage, formatting, cache helpers). Owns global state objects.
+- **`js/api.js`**: all network I/O to Apps Script API. No DOM manipulation here.
+- **`js/ui.js`**: DOM element registry + UI-only helpers (show/hide, onboarding, social proof).
+- **`js/products.js`**: catalog rendering + filtering + modal + compare.
+- **`js/cart.js`**: cart state transitions + rendering + checkout/WhatsApp composition.
+- **`js/main.js`**: initialization/wiring only (event binding, init carousel, startup sequence).
+- **`dashboard/app.js`**: all dashboard logic; must treat API responses as untrusted data.
+
+### Apps Script API contract
+- Requests are routed by query param: `?action=...`
+- Responses must be JSON with a consistent envelope:
+  - **Success**: `{ ok: true, data: <value> }` (or `{ ok: true, pedido_id: "..."} ` / `{ ok: true, clicks: <n> }`)
+  - **Error**: `{ ok: false, error: "<message>" }`
+
+#### Supported actions (current)
+- **GET**
+  - `action=produtos` → returns active products list
+  - `action=pedidos` → returns orders list
+  - `action=click&produtoId=...` → increments click counter
+- **POST**
+  - `action=pedido` with JSON body: `{ itens: [...], total: number }`
+  - `action=atualizarStatus` with JSON body: `{ pedido_id, status }`
+  - `action=salvar_estoque` with JSON body: `{ estoque_updates: [{ sku, estoque, estoque_minimo }] }`
+
+### Data model (practical)
+Storefront expects product fields like:
+- `id`, `sku`, `grupo_id`, `nome`, `descricao`, `categoria`, `preco`, `imagem`
+- variants: `cor`, `armazenamento`, `condicao`
+- inventory: `estoque`, `estoque_minimo`
+- flags: `ativo`
+- analytics: `clicks`
+
+Dashboard expects order fields derived from the `Pedidos` sheet headers (lowercased keys with underscores).
+
+### Change safety rules
+- Any change to `Code.gs` that alters response shapes must be mirrored in:
+  - `js/api.js`, `js/products.js`, `dashboard/app.js` (as applicable)
+- Any new localStorage key must be versioned (e.g. `_v3`) and have a migration plan if it replaces an old key.

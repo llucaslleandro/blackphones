@@ -1,0 +1,22 @@
+---
+description: Performance guidance for static storefront + dashboard
+---
+
+## Storefront performance
+- Prefer rendering with `DocumentFragment` for product lists (already used).
+- Avoid re-querying DOM in loops; reuse `elements` references.
+- Use cache wisely:
+  - keep product cache TTL bounded (current 5 minutes)
+  - handle storage quota failures gracefully
+- Be careful with timers:
+  - banner autoplay intervals must be cleared/reset correctly
+  - avoid stacking intervals on repeated init
+
+## Dashboard performance
+- Prefer `cache: 'no-store'` only when necessary; otherwise use cache-busting intentionally (current uses `_t=` to force fresh).
+- When polling (45s), skip updates while user is editing stock (already implemented).
+- Avoid full re-render loops when a small state update suffices, unless simplicity is preferred.
+
+## Network & API
+- Keep payloads small; post only required fields.
+- Maintain consistent response envelope; handle partial/missing fields defensively.

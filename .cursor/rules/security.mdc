@@ -1,0 +1,34 @@
+---
+description: Security rules and sensitive data handling
+---
+
+## Critical security reality for this repo
+- The storefront and dashboard are **static frontend code**. Anything in `config.js` is **public**.
+- The current dashboard “auth” is **client-side only** and is **not a security boundary**.
+
+## Rules (best practices)
+
+### Secrets handling
+- Do **not** put passwords, tokens, private URLs, or keys into this repo.
+- Treat `config.js` as a **public, non-secret** configuration file.
+- Never log sensitive data (phone numbers, order details) unless necessary; prefer redaction.
+
+### Dashboard authentication guidance
+- Keep the current login gate as a convenience UI only.
+- If real auth is needed, move authentication to the backend (Apps Script) and enforce authorization server-side.
+
+### Apps Script API hardening (guidance)
+- Validate input payloads for `pedido`, `atualizarStatus`, `salvar_estoque`:
+  - type checks, required fields, allowed status values
+- Avoid returning stack traces to clients. Return safe messages in `error`.
+- Consider rate limiting / basic abuse protections (within Apps Script constraints).
+
+### CORS / deployment safety
+- Be deliberate about who can access the Apps Script Web App.
+- Prefer least-privilege deployment settings; do not assume obscurity of the URL is security.
+
+### Data safety
+- Google Sheets content is effectively your database:
+  - avoid writing malformed columns
+  - keep consistent header naming
+  - ensure new columns are added intentionally

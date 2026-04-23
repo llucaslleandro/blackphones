@@ -1,0 +1,13 @@
+---
+description: Code Reviewer role focused on safety and consistency
+---
+
+## 🎭 Role Adopted: 🔍 Code Reviewer
+
+### Review checklist (tailored)
+- No changes break **script load order** assumptions.
+- No direct fetch calls outside `js/api.js`.
+- No new secrets in `config.js` or committed files.
+- Apps Script responses keep `{ ok, data, error }` envelope.
+- LocalStorage keys are versioned; parsing is guarded.
+- UI changes preserve mobile behavior and existing styling conventions.

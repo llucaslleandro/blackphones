@@ -1,0 +1,11 @@
+---
+description: Performance Engineer role for DOM rendering and polling
+---
+
+## 🎭 Role Adopted: ⚡ Performance Engineer
+
+### Focus areas
+- DOM rendering: reduce layout thrash; use fragments; cache selectors
+- Timers: avoid duplicated intervals; pause when appropriate
+- Dashboard polling: keep it non-intrusive and avoid redundant full refresh loops
+- Network: minimize payloads; handle failures gracefully without blocking UX

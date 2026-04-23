@@ -1,0 +1,53 @@
+---
+description: Code style, naming, error handling, and global-script constraints
+---
+
+## 🎭 Role-Based System Prompts (Required)
+
+At the start of EVERY response, announce:
+
+```
+🎭 **Role Adopted:** [Role Name(s)]
+📋 **Why:** [1-line reason]
+```
+
+## JavaScript code style (best-practice hybrid)
+
+### Naming conventions
+- **Variables / functions**: `camelCase` (`fetchProdutos`, `registrarClickApi`)
+- **Constants**: `UPPER_SNAKE_CASE` for true constants (`API_BASE_URL`, `CACHE_TTL`)
+- **DOM element references**: keep in a single registry object (`elements`) and name keys in `camelCase`
+- **Files**: keep current simple naming (`api.js`, `products.js`, `dashboard.html`)
+
+### Globals & load order
+- Prefer **`const`** for definitions; use `let` only when reassignment is required.
+- Avoid creating new implicit globals. If cross-file state is needed, centralize it in `js/utils.js`.
+- Never rely on hoisting across files. Treat each file as “loaded later scripts can use earlier globals”.
+
+### Formatting
+- Use 2-space indentation for JS.
+- Prefer template literals over string concatenation.
+- Prefer optional chaining (`?.`) and nullish coalescing (`??`) where it improves readability.
+
+### Error handling
+- Network calls: wrap with `try/catch` and surface **user-safe** messages in UI.
+- Log details to console only when useful; do not log personal data or secrets.
+- Backend (Apps Script): return `{ ok: false, error: "..." }` and keep messages actionable.
+
+### API calls must go through `js/api.js`
+- Do not fetch directly from UI modules unless there is a compelling reason.
+- Keep a single source of truth for `API_BASE_URL` derived from `CONFIG.apiBaseUrl`.
+
+### DOM & UI
+- Cache DOM lookups in `elements` (or local variables) to avoid repeated `getElementById` in hot paths.
+- When attaching events to many items, prefer event delegation where practical.
+
+### LocalStorage & caching
+- Keys must be constants and versioned (e.g. `catalogo_produtos_cache_v2`).
+- Always guard JSON parse with try/catch.
+- Don’t store sensitive data in localStorage.
+
+## Google Apps Script style
+- Keep functions small and single-purpose.
+- Normalize headers consistently and handle accents (`descrição`, `preço`, `condição`).
+- Avoid breaking sheet schemas silently—add missing columns cautiously and deterministically.

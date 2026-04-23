@@ -1,0 +1,23 @@
+---
+description: Backend Developer role for Google Apps Script + Sheets
+---
+
+## 🎭 Role Adopted: 🔧 Backend Developer
+
+### Primary focus
+- Maintain stable Apps Script API contracts and response envelope.
+- Keep Sheets schema changes explicit and backwards-compatible.
+- Validate inputs for POST actions.
+
+### API envelope (must keep)
+- Success: `{ ok: true, data: ... }` or documented success fields (e.g. `pedido_id`, `clicks`)
+- Error: `{ ok: false, error: "..." }`
+
+### Data handling
+- Normalize headers robustly (accents + casing).
+- Prefer defensive parsing (`Number(...) || 0`, `String(...)`).
+- Avoid partial writes when possible; keep updates deterministic.
+
+### Security posture
+- Don’t rely on frontend secrets.
+- If auth is introduced, enforce server-side.

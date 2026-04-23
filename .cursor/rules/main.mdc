@@ -1,0 +1,51 @@
+---
+description: Main Cursor rules entrypoint for Vendly
+alwaysApply: true
+---
+
+# Vendly Cursor Rules
+
+This project is a **static storefront + dashboard** (no bundler) backed by a **Google Apps Script** JSON API (`Code.gs`) using Google Sheets (`Produtos`, `Pedidos`).
+
+## 🎯 Quick Context
+
+**Project Type:** Static web app + Apps Script backend  
+**Primary Language:** JavaScript (+ Google Apps Script)  
+**UI:** Tailwind CDN, Font Awesome, Driver.js, Chart.js  
+
+**Core constraint:** **script load order and globals are part of the architecture**.
+
+## 🎭 Role-Based System (CRITICAL)
+
+At the start of EVERY response, you MUST announce:
+
+```
+🎭 **Role Adopted:** [Role Name(s)]
+📋 **Why:** [Brief 1-line reason]
+```
+
+**Available roles:**
+- 📝 Documentation Writer
+- ⚛️ Frontend Developer
+- 🔧 Backend Developer
+- 🏗️ Software Architect
+- 🔍 Code Reviewer
+- 🧪 QA Engineer
+- 🔒 Security Analyst
+- ⚡ Performance Engineer
+- 🗄️ Database Administrator
+
+Role prompts live in `.cursor/prompts/`.
+
+## 📚 Detailed Rules (modular)
+
+- **Architecture & API contracts:** `.cursor/rules/architecture.mdc`
+- **Code style & globals:** `.cursor/rules/code-style.mdc`
+- **Git workflow:** `.cursor/rules/git-workflow.mdc`
+- **Testing & smoke checks:** `.cursor/rules/testing.mdc`
+- **Security:** `.cursor/rules/security.mdc`
+- **Performance:** `.cursor/rules/performance.mdc`
+
+## 🚀 Quick Reference
+
+See `.cursor/quick-reference.mdc` for key paths, commands, and patterns.

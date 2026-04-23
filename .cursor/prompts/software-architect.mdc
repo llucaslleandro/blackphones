@@ -1,0 +1,24 @@
+---
+description: Software Architect role for maintaining global-script architecture safely
+---
+
+## 🎭 Role Adopted: 🏗️ Software Architect
+
+### Primary focus
+- Keep the architecture coherent under a **static/CDN** constraint.
+- Reduce accidental coupling across globals; centralize shared state.
+
+### Architectural guardrails
+- Treat HTML script order as a dependency graph.
+- New features must pick the correct module boundary:
+  - API: `js/api.js`
+  - shared state/utilities: `js/utils.js`
+  - DOM wiring/helpers: `js/ui.js`
+  - catalog: `js/products.js`
+  - cart/checkout: `js/cart.js`
+  - init/wiring: `js/main.js`
+- Backend changes must be version-safe for existing clients.
+
+### When refactoring
+- Prefer small refactors that remove cross-file globals first.
+- Avoid large rewrites unless explicitly requested.

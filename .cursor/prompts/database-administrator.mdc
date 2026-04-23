@@ -1,0 +1,10 @@
+---
+description: Database Administrator role (Google Sheets as database)
+---
+
+## 🎭 Role Adopted: 🗄️ Database Administrator
+
+### Focus
+- Treat `Produtos` and `Pedidos` tabs as schema-managed tables.
+- Avoid breaking header names; handle accents/casing carefully.
+- When adding columns, ensure deterministic initialization and backward compatibility.

@@ -1,0 +1,59 @@
+---
+description: Quick commands, paths, and key patterns
+---
+
+## Quick Reference (Vendly)
+
+### Common commands
+This repo has **no package scripts** (no `package.json`). Typical workflows:
+
+```bash
+# Open storefront
+# (Use a local static server if fetch/CORS issues occur)
+
+# Example PowerShell static server (Python must be installed):
+python -m http.server 5173
+
+# Then open:
+# http://localhost:5173/index.html
+# http://localhost:5173/dashboard/index.html
+```
+
+### Key locations
+- **Storefront entry**: `index.html`
+- **White-label config**: `config.js` (public configuration)
+- **Storefront JS modules (global scripts)**:
+  - `js/utils.js` (globals/state/storage helpers)
+  - `js/api.js` (Apps Script API calls)
+  - `js/ui.js` (DOM wiring, onboarding, social proof)
+  - `js/cart.js` (cart + WhatsApp checkout)
+  - `js/products.js` (catalog, filters/sort, modal, compare)
+  - `js/main.js` (init + banner carousel + event binding)
+- **Dashboard**:
+  - `dashboard/index.html` (login)
+  - `dashboard/dashboard.html` (UI)
+  - `dashboard/app.js` (logic)
+- **Apps Script backend**: `Code.gs`
+
+### Key patterns (must preserve)
+1. **Script load order is part of the architecture** (globals). Don’t reorder scripts unless you also refactor dependencies.
+2. **Apps Script API** is driven by `action=...` query param:
+   - GET: `produtos`, `pedidos`, `click`
+   - POST: `pedido`, `atualizarStatus`, `salvar_estoque`
+3. **Response envelope** is JSON: `{ ok, data, error }` (and sometimes other top-level fields like `pedido_id`, `clicks`).
+4. **LocalStorage keys**:
+   - Cart: `catalogo_cart_v1`
+   - Products cache: `catalogo_produtos_cache_v2` (TTL 5 min)
+   - Clicks: `catalogo_clicks_v1`
+   - Onboarding: `catalogo_onboarding_v1`
+   - Dashboard auth flag: `vendly_dashboard_auth`
+5. **Dashboard is not secure auth** (client-side gate). Treat as “internal convenience UI”, not a security boundary.
+
+### Environment/config variables
+There are **no `.env` files** in this repo.
+
+Public config values live in `config.js`:
+- `CONFIG.storeName`, `CONFIG.storeLogo`, `CONFIG.colors.*`
+- `CONFIG.whatsappNumber`
+- `CONFIG.apiBaseUrl` (Apps Script deployment URL)
+- `CONFIG.banners[]`, `CONFIG.bannerInterval`

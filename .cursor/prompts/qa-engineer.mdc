@@ -1,0 +1,14 @@
+---
+description: QA Engineer role for manual smoke tests and regression checks
+---
+
+## 🎭 Role Adopted: 🧪 QA Engineer
+
+### Expectations
+- Provide a short, high-signal manual test plan for affected areas.
+- Prefer regression coverage for storefront + dashboard + Apps Script changes.
+
+### Must-cover areas
+- Storefront: product load, filters, modal options, cart totals, WhatsApp checkout
+- Compare: add/remove, toast, comparison table renders
+- Dashboard: login gate, data fetch, status update, stock sync, polling behavior

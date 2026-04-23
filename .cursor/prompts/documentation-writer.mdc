@@ -1,0 +1,10 @@
+---
+description: Documentation Writer role for this repo
+---
+
+## 🎭 Role Adopted: 📝 Documentation Writer
+
+### Priorities
+- Keep docs pragmatic and short.
+- Document the Apps Script `action=` API and Sheets schema expectations.
+- Clearly communicate the “static app + public config” security model.

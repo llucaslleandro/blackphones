@@ -1,95 +1,314 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catálogo de Produtos - Carrinho & WhatsApp</title>
+  <title>Black Phones</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Driver.js - Onboarding Tour -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            primary: '#1d4ed8',
-            secondary: '#f59e0b'
+            primary: 'var(--color-primary)',
+            secondary: 'var(--color-secondary)',
+            accent: 'var(--color-accent)'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          },
+          animation: {
+            'fade-in': 'fadeIn 1s ease-out'
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            }
           }
         }
       }
     }
   </script>
+  <link rel="stylesheet" href="assets/css/styles.css">
 </head>
-<body class="bg-slate-100 text-slate-800">
+
+<body class="bg-gray-50 text-gray-900 font-sans">
   <div class="min-h-screen">
-    <header class="bg-white border-b border-slate-200 shadow-sm">
-      <div class="mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
-        <div>
-          <h1 id="store-name" class="text-2xl font-bold text-primary">Loja Exemplo</h1>
-          <p class="text-sm text-slate-600">Catálogo online com carrinho e envio por WhatsApp.</p>
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+        <div class="flex-1">
+          <h1 id="store-name" class="text-xl font-bold text-gray-900">Black Phones</h1>
         </div>
-        <button id="btn-open-cart" class="relative p-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition">
-          🛒
-          <span id="cart-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
-        </button>
+        <div class="flex items-center gap-3">
+          <button id="btn-compare"
+            class="hidden text-sm font-medium text-gray-600 hover:text-gray-900 transition px-3 py-1.5">
+            Comparar (<span id="compare-count">0</span>)
+          </button>
+          <button id="btn-help-tour"
+            class="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition text-sm"
+            title="Tour guiado">
+            <i class="fa-solid fa-question"></i>
+          </button>
+          <button id="btn-open-cart"
+            class="relative flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium text-sm">
+            <i class="fa-solid fa-cart-shopping" style="color: rgb(255, 255, 255);"></i>
+            <span id="cart-badge" class="hidden text-xs font-bold">0</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <main class="mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        <div class="col-span-full flex flex-col sm:flex-row gap-3 items-stretch">
-          <input id="search-input" type="search" placeholder="Buscar produto por nome..." class="flex-1 border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary" />
-          <select id="category-select" class="border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+    <!-- Banner Carousel -->
+    <section id="banner-carousel" class="banner-carousel">
+      <div id="banner-track" class="banner-track"></div>
+      <div class="banner-overlay"></div>
+      <button id="banner-prev" class="banner-arrow banner-arrow--prev" aria-label="Banner anterior">❮</button>
+      <button id="banner-next" class="banner-arrow banner-arrow--next" aria-label="Próximo banner">❯</button>
+      <div id="banner-dots" class="banner-dots"></div>
+    </section>
+
+    <!-- Hero Section -->
+    <section class="relative bg-white w-full overflow-hidden">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div class="text-center">
+          <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 tracking-tight">Encontre o Celular
+            Ideal</h2>
+          <p class="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">Celulares premium com as melhores
+            condições do mercado</p>
+          <button id="hero-cta"
+            class="inline-block px-8 py-3.5 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">Explorar
+            Catálogo</button>
+        </div>
+      </div>
+    </section>
+
+    <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+      <!-- Highlights Section -->
+      <section id="highlights-section" class="mb-12 hidden">
+        <h3 class="text-3xl font-bold text-gray-900 mb-8 text-center">Ofertas em Destaque</h3>
+        <div id="highlights-grid" class="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"></div>
+      </section>
+
+      <section id="catalog-section" class="mb-12">
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch">
+          <input id="search-input" type="search" placeholder="Buscar por modelo..."
+            class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition" />
+          <select id="category-select"
+            class="px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition font-medium text-sm">
             <option value="all">Todas as categorias</option>
+          </select>
+          <select id="condition-select"
+            class="px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition font-medium text-sm">
+            <option value="all">Qualquer condição</option>
+            <option value="Novo">Novo</option>
+            <option value="Seminovo">Seminovo</option>
+          </select>
+          <select id="sort-select"
+            class="px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition font-medium text-sm">
+            <option value="default">Ordenar por</option>
+            <option value="price-low">Menor preço</option>
+            <option value="price-high">Maior preço</option>
+            <option value="popular">Mais populares</option>
+            <option value="best-sellers">Mais Vendidos</option>
           </select>
         </div>
       </section>
 
-      <div id="loading" class="p-6 bg-white rounded-xl shadow text-center text-slate-500">Carregando produtos...</div>
-      <div id="error-message" class="hidden p-6 bg-red-100 text-red-700 rounded-xl shadow text-center"></div>
-      <div id="empty-message" class="hidden p-6 bg-yellow-100 text-yellow-800 rounded-xl shadow text-center">Nenhum produto disponível na planilha.</div>
-
-      <section id="products-grid" class="hidden grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></section>
-
-      <div id="checkout-area" class="hidden mt-8 bg-white p-6 rounded-xl shadow-lg">
-        <h2 class="text-xl font-semibold mb-4">Checkout</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <input id="customer-name" type="text" placeholder="Nome do cliente" class="border border-slate-300 rounded-lg px-4 py-2" />
-          <input id="customer-phone" type="tel" placeholder="Telefone (ex: 79999999999)" class="border border-slate-300 rounded-lg px-4 py-2" />
-          <select id="delivery-type" class="border border-slate-300 rounded-lg px-4 py-2">
-            <option value="Entrega">Entrega</option>
-            <option value="Retirada">Retirada</option>
-          </select>
-          <div id="address-wrapper" class="col-span-full">
-            <input id="address" type="text" placeholder="Endereço de entrega" class="w-full border border-slate-300 rounded-lg px-4 py-2" />
+      <!-- Skeleton Loading Grid -->
+      <div id="loading" class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div class="skeleton-card">
+          <div class="skeleton aspect-square"></div>
+          <div class="p-6 space-y-4">
+            <div class="skeleton" style="height:18px;width:75%"></div>
+            <div class="skeleton" style="height:12px;width:60%;margin-top:8px"></div>
+            <div class="skeleton" style="height:12px;width:50%;margin-top:4px"></div>
+            <div style="border-top:1px solid #f0f0f0;padding-top:16px;margin-top:16px">
+              <div class="skeleton" style="height:28px;width:45%"></div>
+              <div class="skeleton" style="height:44px;width:100%;margin-top:16px;border-radius:8px"></div>
+              <div class="skeleton" style="height:38px;width:100%;margin-top:8px;border-radius:8px"></div>
+            </div>
           </div>
-          <textarea id="notes" rows="3" placeholder="Observações" class="col-span-full border border-slate-300 rounded-lg px-4 py-2"></textarea>
         </div>
-        <div class="mt-4 flex justify-between items-center gap-3">
-          <button id="clear-cart" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">Limpar carrinho</button>
-          <button id="finalize-order" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">Finalizar Pedido</button>
+        <div class="skeleton-card hidden sm:block">
+          <div class="skeleton aspect-square"></div>
+          <div class="p-6 space-y-4">
+            <div class="skeleton" style="height:18px;width:65%"></div>
+            <div class="skeleton" style="height:12px;width:55%;margin-top:8px"></div>
+            <div class="skeleton" style="height:12px;width:45%;margin-top:4px"></div>
+            <div style="border-top:1px solid #f0f0f0;padding-top:16px;margin-top:16px">
+              <div class="skeleton" style="height:28px;width:50%"></div>
+              <div class="skeleton" style="height:44px;width:100%;margin-top:16px;border-radius:8px"></div>
+              <div class="skeleton" style="height:38px;width:100%;margin-top:8px;border-radius:8px"></div>
+            </div>
+          </div>
         </div>
-        <p id="checkout-msg" class="mt-3 text-sm text-slate-600"></p>
+        <div class="skeleton-card hidden lg:block">
+          <div class="skeleton aspect-square"></div>
+          <div class="p-6 space-y-4">
+            <div class="skeleton" style="height:18px;width:70%"></div>
+            <div class="skeleton" style="height:12px;width:58%;margin-top:8px"></div>
+            <div class="skeleton" style="height:12px;width:48%;margin-top:4px"></div>
+            <div style="border-top:1px solid #f0f0f0;padding-top:16px;margin-top:16px">
+              <div class="skeleton" style="height:28px;width:40%"></div>
+              <div class="skeleton" style="height:44px;width:100%;margin-top:16px;border-radius:8px"></div>
+              <div class="skeleton" style="height:38px;width:100%;margin-top:8px;border-radius:8px"></div>
+            </div>
+          </div>
+        </div>
+        <div class="skeleton-card hidden xl:block">
+          <div class="skeleton aspect-square"></div>
+          <div class="p-6 space-y-4">
+            <div class="skeleton" style="height:18px;width:60%"></div>
+            <div class="skeleton" style="height:12px;width:52%;margin-top:8px"></div>
+            <div class="skeleton" style="height:12px;width:42%;margin-top:4px"></div>
+            <div style="border-top:1px solid #f0f0f0;padding-top:16px;margin-top:16px">
+              <div class="skeleton" style="height:28px;width:48%"></div>
+              <div class="skeleton" style="height:44px;width:100%;margin-top:16px;border-radius:8px"></div>
+              <div class="skeleton" style="height:38px;width:100%;margin-top:8px;border-radius:8px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="error-message" class="hidden p-6 bg-red-50 text-red-700 rounded-lg text-center border border-red-200">
+      </div>
+      <div id="empty-message" class="hidden p-8 text-center text-gray-600">
+        <p class="text-lg">Nenhum celular disponível.</p>
+      </div>
+
+      <section id="products-grid" class="hidden grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></section>
+
+      <!-- Modal de Comparação -->
+      <div id="compare-modal" class="fixed inset-0 bg-black/40 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+          <div class="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+              <h3 class="text-2xl font-bold text-gray-900">Comparar Celulares</h3>
+              <button id="close-compare" class="text-gray-400 hover:text-gray-600 text-2xl font-light">✕</button>
+            </div>
+            <div id="compare-content" class="p-6">
+              <!-- Conteúdo dinâmico -->
+            </div>
+          </div>
+        </div>
       </div>
     </main>
 
-    <div id="cart-panel" class="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50">
-      <div class="px-4 py-4 border-b border-slate-200 flex justify-between items-center">
-        <h3 class="text-lg font-semibold">Carrinho</h3>
-        <button id="close-cart" class="text-slate-500 hover:text-slate-700">Fechar X</button>
-      </div>
-      <div class="p-4 overflow-y-auto h-[calc(100vh-160px)]">
-        <ul id="cart-items" class="space-y-3"></ul>
-      </div>
-      <div class="p-4 border-t border-slate-200">
-        <div class="flex justify-between text-lg font-semibold mb-3">
-          <span>Total</span>
-          <span id="total-value">R$ 0,00</span>
+    <!-- Modal de Detalhes do Produto -->
+    <div id="product-modal" class="fixed inset-0 bg-black/50 z-50 hidden" style="backdrop-filter: blur(4px);">
+      <div class="flex items-end md:items-center justify-center h-[100dvh] md:p-4">
+        <div class="bg-white md:rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col rounded-t-2xl"
+          style="max-height: 90dvh;">
+          <!-- Header fixo com botão fechar (fora do scroll) -->
+          <div
+            class="flex-shrink-0 flex items-center justify-between px-5 py-3 md:py-2.5 bg-white border-b border-gray-100 rounded-t-2xl">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Detalhes do Produto</h3>
+            <button id="close-product"
+              class="w-9 h-9 flex items-center justify-center rounded-full bg-gray-400 text-white hover:bg-gray-700 transition text-lg font-bold shadow-md">✕</button>
+          </div>
+          <!-- Conteúdo rolável -->
+          <div class="overflow-y-auto flex-1 min-h-0">
+            <div class="flex flex-col md:flex-row">
+              <!-- Imagem -->
+              <div
+                class="flex-shrink-0 md:w-1/2 bg-gray-50 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 h-[220px] md:h-auto overflow-hidden">
+                <img id="pm-image" src=""
+                  class="max-w-[75%] max-h-[200px] md:max-w-[80%] md:max-h-[300px] object-contain drop-shadow-xl"
+                  alt="Produto">
+              </div>
+              <!-- Info -->
+              <div class="md:w-1/2 p-5 md:px-6 md:py-4 space-y-4 md:space-y-3">
+                <div>
+                  <h2 id="pm-name" class="text-xl md:text-xl font-bold text-gray-900 leading-tight"></h2>
+                  <p class="text-sm text-gray-500 mt-1 md:mt-0.5 md:text-xs md:line-clamp-2" id="pm-desc"></p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-400 line-through mb-1 md:mb-0 md:text-xs" id="pm-old-price"></p>
+                  <p class="text-2xl md:text-2xl font-bold text-gray-900 font-sans" id="pm-price"></p>
+                  <span id="pm-badge"
+                    class="inline-block mt-2 md:mt-1 px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-md uppercase tracking-wide hidden"></span>
+                </div>
+
+                <div id="pm-options" class="space-y-3 md:space-y-2.5">
+                  <!-- Cores -->
+                  <div id="pm-color-section" class="hidden">
+                    <p class="text-sm font-semibold text-gray-800 mb-2 md:mb-1.5 md:text-xs">Cor: <span
+                        id="pm-color-lbl" class="font-normal text-gray-600"></span></p>
+                    <div id="pm-colors" class="flex flex-wrap gap-2 md:gap-1.5"></div>
+                  </div>
+                  <!-- Armazenamento -->
+                  <div id="pm-storage-section" class="hidden">
+                    <p class="text-sm font-semibold text-gray-800 mb-2 md:mb-1.5 md:text-xs">Armazenamento:</p>
+                    <div id="pm-storages" class="flex flex-wrap gap-2 md:gap-1.5"></div>
+                  </div>
+                  <!-- Condição -->
+                  <div id="pm-condition-section" class="hidden">
+                    <p class="text-sm font-semibold text-gray-800 mb-2 md:mb-1.5 md:text-xs">Condição:</p>
+                    <div id="pm-conditions" class="flex flex-wrap gap-2 md:gap-1.5"></div>
+                  </div>
+                </div>
+
+                <p id="pm-status-msg" class="text-red-500 text-sm font-medium mt-2 hidden text-left">Configuração
+                  indisponível.</p>
+              </div>
+            </div>
+          </div>
+          <!-- Sticky bottom action bar (always visible, never hidden by Safari toolbar) -->
+          <div class="flex-shrink-0 border-t border-gray-100 bg-white px-5 py-3 md:py-2.5 rounded-b-2xl"
+            style="padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));">
+            <button id="pm-buy-btn"
+              class="w-full btn-solid py-3.5 md:py-3 rounded-xl font-bold text-base md:text-base uppercase tracking-wide flex justify-center items-center gap-2 mb-2">
+              Eu Quero
+            </button>
+            <button id="pm-compare-btn"
+              class="w-full bg-gray-100 text-gray-700 py-2.5 md:py-2.5 rounded-xl hover:bg-gray-200 transition text-sm md:text-xs font-medium">
+              Comparar
+            </button>
+          </div>
         </div>
-        <p class="text-sm text-slate-500">Continue com o checkout abaixo para enviar para WhatsApp.</p>
       </div>
     </div>
-    <div id="overlay" class="hidden fixed inset-0 bg-black/40 z-40"></div>
+
+    <div id="overlay" class="hidden fixed inset-0 bg-black/40 z-10"></div>
+    <div id="cart-panel"
+      style="position: fixed; right: 0; top: 0; bottom: 0; width: 100%; max-width: 448px; background-color: white; box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15); z-index: 999; display: none; flex-direction: column;">
+      <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="text-xl font-bold text-gray-900" style="display: none;">Seu Carrinho</h3>
+        <button id="close-cart" class="text-gray-400 hover:text-gray-600 text-2xl font-light">✕</button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <ul id="cart-items" class="space-y-3.5"></ul>
+      </div>
+      <div class="border-t border-gray-100 px-6 py-4">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-600 font-medium">Total:</span>
+          <span id="total-value" class="text-2xl font-bold text-gray-900">R$ 0,00</span>
+        </div>
+        <div class="flex justify-end mb-6 mt-1">
+          <span id="installment-value" class="text-sm text-gray-500 font-medium font-sans"></span>
+        </div>
+        <div id="checkout-form" class="space-y-4">
+          <h4 class="text-lg font-semibold text-gray-900">Resumo do Pedido</h4>
+          <p class="text-sm text-gray-600">O pedido será enviado para o WhatsApp com os detalhes do produto.</p>
+          <div class="flex gap-2 pt-2">
+            <button id="clear-cart"
+              class="flex-1 px-3.5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium text-sm">Limpar</button>
+            <button id="finalize-order"
+              class="flex-1 px-3.5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-semibold text-sm">Enviar
+              para WhatsApp</button>
+          </div>
+          <p id="checkout-msg" class="text-sm text-gray-500"></p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+  <script type="module" src="src/vitrine/main.js"></script>
 </body>
+
 </html>

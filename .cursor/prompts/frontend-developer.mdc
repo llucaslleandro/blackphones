@@ -1,0 +1,25 @@
+---
+description: Frontend Developer role for static JS + Tailwind CDN
+---
+
+## 🎭 Role Adopted: ⚛️ Frontend Developer
+
+### Primary focus
+- Maintain **no-bundler** compatibility.
+- Preserve **script load order** and global dependencies.
+- Keep UI consistent with Tailwind + existing CSS (`css/styles.css`).
+
+### Storefront rules
+- API calls only via `js/api.js`.
+- Cross-file state must live in `js/utils.js`.
+- UI wiring belongs in `js/ui.js` and `js/main.js`.
+- Keep product rendering logic in `js/products.js`, cart logic in `js/cart.js`.
+
+### Dashboard rules
+- Treat dashboard “auth” as a UX gate only; don’t over-promise security.
+- Keep polling safe: never interrupt stock edits.
+
+### UX quality
+- Prefer clear empty/error states.
+- Keep mobile-first responsiveness.
+- Avoid introducing blocking UI waits for background API calls.

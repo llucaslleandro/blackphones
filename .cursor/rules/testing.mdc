@@ -1,0 +1,43 @@
+---
+description: Testing strategy and manual verification checklists
+---
+
+## Current state (detected)
+- No automated tests in repo.
+- Primary verification is manual in browser.
+
+## Best-practice testing guidance (no-bundler friendly)
+
+### Manual smoke checklist (storefront)
+- Catalog loads:
+  - First load shows skeleton then products
+  - Subsequent load uses cache then refreshes in background
+- Filters:
+  - Search, category, condition, sort work together
+  - Out-of-stock items sort to the end and show “Indisponível”
+- Product modal:
+  - Options switching updates price/image and availability correctly
+  - Out-of-stock blocks “Eu Quero”
+- Cart:
+  - Add/remove/quantity updates total and badge
+  - Finalize opens WhatsApp message and posts order in background
+- Compare:
+  - Add up to 3, toast appears, comparison table renders
+
+### Manual smoke checklist (dashboard)
+- Login gate:
+  - Logged-out redirects to `dashboard/index.html`
+  - Logged-in redirects to `dashboard/dashboard.html`
+- Data load:
+  - Orders + products load from Apps Script
+  - KPIs and charts render without console errors
+- Status change:
+  - Changing status updates sheet and refreshes dashboard
+  - Stock updates apply when status becomes `Fechado`
+- Stock management:
+  - Editing `estoque` / `estoque_minimo` enables Save, syncs to sheet, then hides Save
+
+### Suggested future automation (optional)
+If/when you introduce tooling, consider:
+- Playwright “smoke” suite hitting `http://localhost:<port>/` (requires a static server)
+- A small contract test script validating Apps Script responses (shape + required fields)

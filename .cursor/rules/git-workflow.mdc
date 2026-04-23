@@ -1,0 +1,40 @@
+---
+description: Git workflow, branching, and commit conventions
+---
+
+## Current repo status (detected)
+- Primary branch: `master`
+- Minimal history: single initial commit
+- No remote configured yet
+
+## Recommended workflow (best practices)
+
+### Branch strategy (lightweight GitHub Flow)
+- Keep `master` as stable.
+- Use short-lived branches:
+  - `feature/<short-name>`
+  - `fix/<short-name>`
+  - `chore/<short-name>`
+
+### Commit messages (Conventional Commits)
+Use:
+- `feat:` new feature
+- `fix:` bug fix
+- `docs:` documentation only
+- `refactor:` refactor without behavior change
+- `style:` formatting only
+- `test:` tests only
+- `chore:` tooling/assets/maintenance
+
+Examples tailored to this repo:
+- `feat(storefront): add compare modal insights`
+- `fix(api): handle missing clicks field from Apps Script`
+- `chore(ui): update banner assets and carousel timing`
+
+### Practical guardrails for this project
+- Treat `config.js` as public; never commit secrets.
+- Large asset updates (banners) should be in separate commits from logic changes when possible.
+
+### Suggested first-time remote setup
+If you later add a remote:
+- Ensure `.gitignore` covers OS/editor noise (e.g. `Thumbs.db`, `.DS_Store`), and never ignores `.cursor/` rules unless you want them excluded.
