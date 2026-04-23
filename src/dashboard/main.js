@@ -147,6 +147,9 @@ function setupDashboardListeners() {
     }
   }, 15000);
 
+  // Setup Image Drag and Drop
+  setupImageDragAndDrop();
+
   // Global Refresh
   document.getElementById('btn-refresh')?.addEventListener('click', () => store.loadDashboardData(RENDER_PIPELINE));
   document.getElementById('btn-retry')?.addEventListener('click', () => store.loadDashboardData(RENDER_PIPELINE));
@@ -240,26 +243,183 @@ function setupDashboardListeners() {
   document.getElementById('exclusao-cancelar')?.addEventListener('click', inventory.cancelarExclusao);
   document.getElementById('exclusao-confirmar')?.addEventListener('click', () => inventory.executarExclusao({ dataCallbacks: RENDER_PIPELINE }));
 
-  // Image Upload
-  document.getElementById('cad-img-file')?.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      document.getElementById('cad-img-loading')?.classList.remove('hidden');
-      document.getElementById('cad-img-placeholder')?.classList.add('hidden');
+  // Unified Multi-Upload
+  const multiUploadInput = document.getElementById('multi-upload-input');
+  const dropZone = document.getElementById('unified-drop-zone');
+
+  if (multiUploadInput) {
+    multiUploadInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+      handleFiles(files);
+      e.target.value = ''; // Reset
+    });
+  }
+
+  if (dropZone) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+    });
+
+    dropZone.addEventListener('dragenter', () => dropZone.classList.add('border-indigo-500', 'bg-indigo-50'));
+    dropZone.addEventListener('dragover', () => dropZone.classList.add('border-indigo-500', 'bg-indigo-50'));
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-indigo-500', 'bg-indigo-50'));
+    dropZone.addEventListener('drop', (e) => {
+      dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+      const files = Array.from(e.dataTransfer.files);
+      handleFiles(files);
+    });
+  }
+
+  // Remove Image Button
+  document.getElementById('modal-cadastro-produto')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-remove-img');
+    if (btn) {
+      const idx = btn.dataset.idx;
+      const urlInput = document.getElementById(`cad-imagem-${idx}`);
+      const thumb = document.getElementById(`cad-img-thumb-${idx}`);
+      const placeholder = document.getElementById(`cad-img-placeholder-${idx}`);
+
+      if (urlInput) urlInput.value = '';
+      if (thumb) {
+        thumb.src = '';
+        thumb.classList.add('hidden');
+      }
+      if (placeholder) placeholder.classList.remove('hidden');
+      
+      ui.showToast(`Imagem ${idx} removida`, 'blue', 'fa-trash-can');
+    }
+  });
+
+  async function handleFiles(files) {
+    // Find next available slots
+    let slotsToFill = [];
+    for (let i = 1; i <= 5; i++) {
+      const urlVal = document.getElementById(`cad-imagem-${i}`)?.value;
+      if (!urlVal) slotsToFill.push(i);
+    }
+
+    // If no slots are empty, use the first N slots
+    if (slotsToFill.length === 0) slotsToFill = [1, 2, 3, 4, 5];
+
+    for (let i = 0; i < Math.min(files.length, slotsToFill.length); i++) {
+      const slotIdx = slotsToFill[i];
+      const file = files[i];
+      
+      const loading = document.getElementById(`cad-img-loading-${slotIdx}`);
+      const placeholder = document.getElementById(`cad-img-placeholder-${slotIdx}`);
+      const thumb = document.getElementById(`cad-img-thumb-${slotIdx}`);
+      const urlInput = document.getElementById(`cad-imagem-${slotIdx}`);
+
+      loading?.classList.remove('hidden');
+      placeholder?.classList.add('hidden');
+
       try {
         const compressed = await ui.compressImage(file);
         const url = await store.uploadImageToDrive(compressed, file.name);
-        document.getElementById('cad-imagem').value = url;
-        document.getElementById('cad-img-thumb').src = compressed;
-        document.getElementById('cad-img-preview')?.classList.remove('hidden');
-        ui.showToast('Imagem enviada!', 'green', 'fa-check');
+        if (urlInput) urlInput.value = url;
+        if (thumb) {
+          thumb.src = compressed;
+          thumb.classList.remove('hidden');
+        }
+        ui.showToast(`Imagem ${slotIdx} enviada!`, 'green', 'fa-check');
       } catch (err) {
-        ui.showToast('Erro no upload', 'red', 'fa-xmark');
+        console.error(err);
+        ui.showToast(`Erro no slot ${slotIdx}`, 'red', 'fa-xmark');
+        if (!thumb || thumb.classList.contains('hidden')) placeholder?.classList.remove('hidden');
       } finally {
-        document.getElementById('cad-img-loading')?.classList.add('hidden');
+        loading?.classList.add('hidden');
       }
     }
+  }
+}
+
+function setupImageDragAndDrop() {
+  let draggedIdx = null;
+
+  const container = document.getElementById('modal-cadastro-produto');
+  if (!container) return;
+
+  container.addEventListener('dragstart', (e) => {
+    const slot = e.target.closest('.img-slot');
+    if (slot) {
+      draggedIdx = slot.dataset.idx;
+      e.dataTransfer.effectAllowed = 'move';
+      slot.classList.add('opacity-40', 'scale-95');
+    }
   });
+
+  container.addEventListener('dragend', (e) => {
+    const slot = e.target.closest('.img-slot');
+    if (slot) {
+      slot.classList.remove('opacity-40', 'scale-95');
+      document.querySelectorAll('.img-slot').forEach(s => s.classList.remove('bg-indigo-50', 'border-indigo-400'));
+    }
+  });
+
+  container.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const slot = e.target.closest('.img-slot');
+    if (slot && slot.dataset.idx !== draggedIdx) {
+      slot.classList.add('bg-indigo-50', 'border-indigo-400', 'border-solid');
+    }
+  });
+
+  container.addEventListener('dragleave', (e) => {
+    const slot = e.target.closest('.img-slot');
+    if (slot) {
+      slot.classList.remove('bg-indigo-50', 'border-indigo-400', 'border-solid');
+    }
+  });
+
+  container.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const slot = e.target.closest('.img-slot');
+    if (slot && draggedIdx && slot.dataset.idx !== draggedIdx) {
+      swapImages(draggedIdx, slot.dataset.idx);
+    }
+    document.querySelectorAll('.img-slot').forEach(s => s.classList.remove('bg-indigo-50', 'border-indigo-400', 'border-solid'));
+  });
+}
+
+function swapImages(idx1, idx2) {
+  const urlInput1 = document.getElementById(`cad-imagem-${idx1}`);
+  const urlInput2 = document.getElementById(`cad-imagem-${idx2}`);
+  const thumb1 = document.getElementById(`cad-img-thumb-${idx1}`);
+  const thumb2 = document.getElementById(`cad-img-thumb-${idx2}`);
+  const placeholder1 = document.getElementById(`cad-img-placeholder-${idx1}`);
+  const placeholder2 = document.getElementById(`cad-img-placeholder-${idx2}`);
+
+  if (!urlInput1 || !urlInput2) return;
+
+  // Swap values
+  const tempUrl = urlInput1.value;
+  urlInput1.value = urlInput2.value;
+  urlInput2.value = tempUrl;
+
+  // Swap thumbnails
+  const tempSrc = thumb1.src;
+  const tempHidden = thumb1.classList.contains('hidden');
+  
+  thumb1.src = thumb2.src;
+  if (thumb2.classList.contains('hidden')) thumb1.classList.add('hidden');
+  else thumb1.classList.remove('hidden');
+
+  thumb2.src = tempSrc;
+  if (tempHidden) thumb2.classList.add('hidden');
+  else thumb2.classList.remove('hidden');
+
+  // Update placeholders
+  if (thumb1.classList.contains('hidden')) placeholder1?.classList.remove('hidden');
+  else placeholder1?.classList.add('hidden');
+  
+  if (thumb2.classList.contains('hidden')) placeholder2?.classList.remove('hidden');
+  else placeholder2?.classList.add('hidden');
+
+  ui.showToast('Ordem alterada!', 'blue', 'fa-arrows-rotate');
 }
 
 // Start

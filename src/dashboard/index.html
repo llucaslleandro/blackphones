@@ -58,6 +58,29 @@
       scrollbar-width: none;
     }
 
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .img-slot {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .img-slot:hover {
+      border-color: #818cf8;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    .img-slot.dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+
     .tabs-scroll>button {
       flex-shrink: 0;
       white-space: nowrap;
@@ -1238,42 +1261,7 @@
                 class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 placeholder="0,00">
             </div>
-            <div class="sm:col-span-2">
-              <label class="text-xs font-semibold text-gray-600 block mb-1">Imagem do Produto *</label>
-              <!-- Hidden input that stores the final URL -->
-              <input id="cad-imagem" type="hidden">
-              <!-- Upload zone -->
-              <div id="cad-img-zone"
-                class="relative w-full min-h-[120px] border-2 border-dashed border-gray-300 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 bg-gray-50 hover:border-indigo-400 hover:bg-indigo-50/30 transition group">
-                <!-- Default state -->
-                <div id="cad-img-placeholder" class="flex flex-col items-center text-center px-4 py-6">
-                  <i
-                    class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 group-hover:text-indigo-500 transition mb-2"></i>
-                  <p class="text-sm font-medium text-gray-500">Toque ou arraste uma imagem</p>
-                  <p class="text-[10px] text-gray-400 mt-1">JPEG, PNG • Máx 5MB • Será comprimida automaticamente</p>
-                </div>
-                <!-- Preview state (hidden) -->
-                <div id="cad-img-preview" class="hidden w-full flex flex-col items-center p-3">
-                  <img id="cad-img-thumb" src="" alt="Preview"
-                    class="max-h-[140px] max-w-full object-contain rounded-lg shadow-sm">
-                  <div class="flex items-center gap-2 mt-2">
-                    <span id="cad-img-name" class="text-[10px] text-gray-500 truncate max-w-[200px]"></span>
-                    <button type="button" id="cad-img-remove"
-                      class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 rounded bg-red-50 hover:bg-red-100 transition">
-                      <i class="fa-solid fa-trash-can mr-1"></i>Remover
-                    </button>
-                  </div>
-                </div>
-                <!-- Loading state (hidden) -->
-                <div id="cad-img-loading" class="hidden flex flex-col items-center py-6">
-                  <i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-500 mb-2"></i>
-                  <p class="text-sm font-medium text-indigo-600">Enviando imagem...</p>
-                </div>
-                <!-- Actual file input (invisible, covers the zone) -->
-                <input id="cad-img-file" type="file" accept="image/*"
-                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-              </div>
-            </div>
+
             <div>
               <label class="text-xs font-semibold text-gray-600 block mb-1">Cor *</label>
               <input id="cad-cor" type="text"
@@ -1289,6 +1277,118 @@
                 <button type="button" id="cad-armaz-unit"
                   class="px-3 py-2.5 border border-l-0 border-gray-200 rounded-r-lg bg-gray-100 text-xs font-bold text-gray-700 hover:bg-gray-200 transition whitespace-nowrap min-w-[44px]"
                   data-unit="GB">GB</button>
+              </div>
+            </div>
+
+            <div class="sm:col-span-2 space-y-4">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-black text-gray-400 uppercase tracking-widest block">Fotos do Produto (Máx 5)</label>
+                <span class="text-[10px] text-gray-400 italic">Dica: Arraste para reordenar</span>
+              </div>
+              
+              <!-- Zona de Drop Unificada -->
+              <div id="unified-drop-zone" class="relative border-2 border-dashed border-gray-200 rounded-2xl p-8 transition-all hover:border-indigo-400 hover:bg-indigo-50/30 group cursor-pointer text-center">
+                <input type="file" id="multi-upload-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" multiple>
+                <div class="space-y-2 pointer-events-none">
+                  <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+                  </div>
+                  <p class="text-sm font-bold text-gray-700">Clique ou arraste até 5 fotos aqui</p>
+                  <p class="text-xs text-gray-400">A primeira foto será usada como capa automaticamente</p>
+                </div>
+              </div>
+
+              <!-- Grid de Slots (Reordenável) -->
+              <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="image-slots-grid">
+                <!-- Slot 1 (Capa) -->
+                <div class="img-slot group relative aspect-square bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden cursor-move" draggable="true" data-idx="1">
+                  <!-- Badge Capa -->
+                  <div class="absolute top-2 left-2 z-20 bg-gray-900 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md shadow-sm pointer-events-none">
+                    Capa
+                  </div>
+                  
+                  <div id="cad-img-preview-1" class="w-full h-full relative pointer-events-none">
+                    <img id="cad-img-thumb-1" src="" class="w-full h-full object-contain hidden">
+                    <div id="cad-img-placeholder-1" class="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
+                      <span class="text-lg font-black opacity-20">1</span>
+                    </div>
+                    <div id="cad-img-loading-1" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <i class="fa-solid fa-spinner fa-spin text-indigo-500"></i>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-remove-img absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" data-idx="1">
+                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                  </button>
+                  <input type="hidden" id="cad-imagem-1">
+                </div>
+
+                <!-- Slot 2 -->
+                <div class="img-slot group relative aspect-square bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden cursor-move" draggable="true" data-idx="2">
+                  <div id="cad-img-preview-2" class="w-full h-full relative pointer-events-none">
+                    <img id="cad-img-thumb-2" src="" class="w-full h-full object-contain hidden">
+                    <div id="cad-img-placeholder-2" class="absolute inset-0 flex items-center justify-center text-gray-300">
+                      <span class="text-lg font-black opacity-20">2</span>
+                    </div>
+                    <div id="cad-img-loading-2" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <i class="fa-solid fa-spinner fa-spin text-indigo-500"></i>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-remove-img absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" data-idx="2">
+                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                  </button>
+                  <input type="hidden" id="cad-imagem-2">
+                </div>
+
+                <!-- Slot 3 -->
+                <div class="img-slot group relative aspect-square bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden cursor-move" draggable="true" data-idx="3">
+                  <div id="cad-img-preview-3" class="w-full h-full relative pointer-events-none">
+                    <img id="cad-img-thumb-3" src="" class="w-full h-full object-contain hidden">
+                    <div id="cad-img-placeholder-3" class="absolute inset-0 flex items-center justify-center text-gray-300">
+                      <span class="text-lg font-black opacity-20">3</span>
+                    </div>
+                    <div id="cad-img-loading-3" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <i class="fa-solid fa-spinner fa-spin text-indigo-500"></i>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-remove-img absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" data-idx="3">
+                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                  </button>
+                  <input type="hidden" id="cad-imagem-3">
+                </div>
+
+                <!-- Slot 4 -->
+                <div class="img-slot group relative aspect-square bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden cursor-move" draggable="true" data-idx="4">
+                  <div id="cad-img-preview-4" class="w-full h-full relative pointer-events-none">
+                    <img id="cad-img-thumb-4" src="" class="w-full h-full object-contain hidden">
+                    <div id="cad-img-placeholder-4" class="absolute inset-0 flex items-center justify-center text-gray-300">
+                      <span class="text-lg font-black opacity-20">4</span>
+                    </div>
+                    <div id="cad-img-loading-4" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <i class="fa-solid fa-spinner fa-spin text-indigo-500"></i>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-remove-img absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" data-idx="4">
+                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                  </button>
+                  <input type="hidden" id="cad-imagem-4">
+                </div>
+
+                <!-- Slot 5 -->
+                <div class="img-slot group relative aspect-square bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden cursor-move" draggable="true" data-idx="5">
+                  <div id="cad-img-preview-5" class="w-full h-full relative pointer-events-none">
+                    <img id="cad-img-thumb-5" src="" class="w-full h-full object-contain hidden">
+                    <div id="cad-img-placeholder-5" class="absolute inset-0 flex items-center justify-center text-gray-300">
+                      <span class="text-lg font-black opacity-20">5</span>
+                    </div>
+                    <div id="cad-img-loading-5" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <i class="fa-solid fa-spinner fa-spin text-indigo-500"></i>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-remove-img absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" data-idx="5">
+                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                  </button>
+                  <input type="hidden" id="cad-imagem-5">
+                </div>
               </div>
             </div>
           </div>

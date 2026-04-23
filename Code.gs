@@ -217,7 +217,14 @@ function getProdutos() {
       descricao: String(obj['descrição'] || obj['descricao'] || ''),
       categoria: String(obj['categoria'] || ''),
       preco: Number(obj['preço'] || obj['preco'] || 0),
-      imagem: String(obj['imagem'] || ''),
+      imagem: String(obj['imagem_1'] || obj['imagem'] || ''),
+      images: [
+        String(obj['imagem_1'] || obj['imagem'] || ''),
+        String(obj['imagem_2'] || ''),
+        String(obj['imagem_3'] || ''),
+        String(obj['imagem_4'] || ''),
+        String(obj['imagem_5'] || '')
+      ].filter(img => img && img.trim() !== ''),
       armazenamento: String(obj['armazenamento'] || ''),
       ram: String(obj['ram'] || ''),
       // Cameras (new split fields + legacy compatibility)
@@ -242,6 +249,11 @@ function getProdutos() {
 function ensureProdutosColumns_(sheet, headerRow) {
   var headers = (headerRow || []).map(function(h) { return String(h || '').trim().toLowerCase(); });
   var required = [
+    { key: 'imagem_1', label: 'imagem_1' },
+    { key: 'imagem_2', label: 'imagem_2' },
+    { key: 'imagem_3', label: 'imagem_3' },
+    { key: 'imagem_4', label: 'imagem_4' },
+    { key: 'imagem_5', label: 'imagem_5' },
     { key: 'camera_frontal', label: 'camera_frontal' },
     { key: 'camera_traseira', label: 'camera_traseira' },
     { key: 'custo', label: 'custo' },
@@ -249,16 +261,22 @@ function ensureProdutosColumns_(sheet, headerRow) {
     { key: 'imei2', label: 'imei2' },
     { key: 'codigo_serie', label: 'codigo_serie' },
     { key: 'origem', label: 'origem' },
-    { key: 'saude_bateria', label: 'saude_bateria' }
+    { key: 'saude_bateria', label: 'saude_bateria' },
+    { key: 'ram', label: 'ram' },
+    { key: 'bateria', label: 'bateria' },
+    { key: 'tela', label: 'tela' }
   ];
 
-  var missing = required.filter(function(r) { return headers.indexOf(r.key) === -1; });
-  if (!missing.length) return;
-
-  var startCol = headers.length + 1;
-  missing.forEach(function(r, i) {
-    sheet.getRange(1, startCol + i).setValue(r.label);
+  var added = false;
+  required.forEach(function(r) {
+    if (headers.indexOf(r.key) === -1) {
+      var newCol = headers.length + 1;
+      sheet.getRange(1, newCol).setValue(r.label);
+      headers.push(r.key);
+      added = true;
+    }
   });
+  return added;
 }
 
 function getPedidos() {
@@ -618,6 +636,8 @@ function salvarEstoqueManualmente(updates) {
   return updatedCount;
 }
 
+
+
 function salvarNovoProduto(produtos) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('Produtos');
@@ -637,7 +657,12 @@ function salvarNovoProduto(produtos) {
     { key: 'grupo_id', label: 'grupo_id' },
     { key: 'ativo', label: 'ativo' },
     { key: 'estoque', label: 'estoque' },
-    { key: 'estoque_minimo', label: 'estoque_minimo' }
+    { key: 'estoque_minimo', label: 'estoque_minimo' },
+    { key: 'imagem_1', label: 'imagem_1' },
+    { key: 'imagem_2', label: 'imagem_2' },
+    { key: 'imagem_3', label: 'imagem_3' },
+    { key: 'imagem_4', label: 'imagem_4' },
+    { key: 'imagem_5', label: 'imagem_5' }
   ];
   var addedCols = false;
   requiredCols.forEach(function(r) {
@@ -662,7 +687,9 @@ function salvarNovoProduto(produtos) {
     'bateria': 'bateria', 'tela': 'tela', 'condicao': 'condição',
     'ativo': 'ativo', 'estoque': 'estoque', 'estoque_minimo': 'estoque_minimo',
     'clicks': 'clicks', 'imei1': 'imei1', 'imei2': 'imei2',
-    'codigo_serie': 'codigo_serie', 'origem': 'origem', 'saude_bateria': 'saude_bateria'
+    'codigo_serie': 'codigo_serie', 'origem': 'origem', 'saude_bateria': 'saude_bateria',
+    'imagem_1': 'imagem_1', 'imagem_2': 'imagem_2', 'imagem_3': 'imagem_3',
+    'imagem_4': 'imagem_4', 'imagem_5': 'imagem_5'
   };
 
   var count = 0;
@@ -721,7 +748,9 @@ function editarProduto_(payload) {
     'bateria': 'bateria', 'tela': 'tela', 'condicao': 'condição',
     'estoque': 'estoque', 'estoque_minimo': 'estoque_minimo',
     'imei1': 'imei1', 'imei2': 'imei2',
-    'codigo_serie': 'codigo_serie', 'origem': 'origem', 'saude_bateria': 'saude_bateria'
+    'codigo_serie': 'codigo_serie', 'origem': 'origem', 'saude_bateria': 'saude_bateria',
+    'imagem_1': 'imagem_1', 'imagem_2': 'imagem_2', 'imagem_3': 'imagem_3',
+    'imagem_4': 'imagem_4', 'imagem_5': 'imagem_5'
   };
 
   var targetSku = String(payload.sku);

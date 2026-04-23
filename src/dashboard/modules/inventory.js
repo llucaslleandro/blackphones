@@ -320,7 +320,7 @@ export function abrirModalCadastro() {
   cadastroTemVariacoes = false;
   editModeSku = null;
 
-  ['cad-nome', 'cad-desc', 'cad-preco', 'cad-custo', 'cad-imagem', 'cad-cor', 'cad-armazenamento', 'cad-ram',
+  ['cad-nome', 'cad-desc', 'cad-preco', 'cad-custo', 'cad-cor', 'cad-armazenamento', 'cad-ram',
     'cad-cam-frontal', 'cad-cam-traseira', 'cad-bateria', 'cad-tela',
     'cad-imei1', 'cad-imei2', 'cad-serie', 'cad-origem', 'cad-saude'
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -331,12 +331,20 @@ export function abrirModalCadastro() {
   const estMinInput = document.getElementById('cad-estoque-min');
   if (estMinInput) estMinInput.value = '2';
 
-  // Reset image
-  document.getElementById('cad-img-file').value = '';
-  document.getElementById('cad-img-thumb').src = '';
-  document.getElementById('cad-img-placeholder')?.classList.remove('hidden');
-  document.getElementById('cad-img-preview')?.classList.add('hidden');
-  document.getElementById('cad-img-loading')?.classList.add('hidden');
+  // Reset all 5 images
+  for (let i = 1; i <= 5; i++) {
+    const imgInput = document.getElementById(`cad-imagem-${i}`);
+    if (imgInput) imgInput.value = '';
+    
+    const thumb = document.getElementById(`cad-img-thumb-${i}`);
+    if (thumb) { thumb.src = ''; thumb.classList.add('hidden'); }
+    
+    const placeholder = document.getElementById(`cad-img-placeholder-${i}`);
+    if (placeholder) placeholder.classList.remove('hidden');
+    
+    const loading = document.getElementById(`cad-img-loading-${i}`);
+    if (loading) loading.classList.add('hidden');
+  }
 
   // Reset custom category input
   const catCustom = document.getElementById('cad-categoria-custom');
@@ -392,14 +400,26 @@ export function abrirModalEdicao(sku) {
   fill('cad-desc', prod.descricao);
   fill('cad-preco', prod.preco);
   fill('cad-custo', prod.custo);
-  fill('cad-imagem', prod.imagem);
   fill('cad-cor', prod.cor);
 
-  if (prod.imagem) {
-    document.getElementById('cad-img-thumb').src = prod.imagem;
-    document.getElementById('cad-img-placeholder')?.classList.add('hidden');
-    document.getElementById('cad-img-preview')?.classList.remove('hidden');
+  // Fill Images
+  for (let i = 1; i <= 5; i++) {
+    const imgUrl = (prod.images && prod.images[i - 1]) || '';
+    fill(`cad-imagem-${i}`, imgUrl);
+    const thumb = document.getElementById(`cad-img-thumb-${i}`);
+    const placeholder = document.getElementById(`cad-img-placeholder-${i}`);
+    if (thumb && imgUrl) {
+      thumb.src = imgUrl;
+      thumb.classList.remove('hidden');
+      placeholder?.classList.add('hidden');
+    } else if (thumb) {
+      thumb.src = '';
+      thumb.classList.add('hidden');
+      placeholder?.classList.remove('hidden');
+    }
   }
+
+
 
   const parseNumUnit = (str) => {
     const s = String(str || '');
@@ -530,7 +550,7 @@ function validarCamposObrigatorios() {
   if (!val('cad-nome')) markError('cad-nome', 'Nome do Produto é obrigatório');
   if (!getCategoria()) markError('cad-categoria', 'Categoria é obrigatória');
   if (!val('cad-preco') || Number(val('cad-preco')) <= 0) markError('cad-preco', 'Preço é obrigatório e deve ser maior que zero');
-  if (!val('cad-imagem')) markError('cad-imagem', 'Imagem do Produto é obrigatória (faça upload)');
+  if (!val('cad-imagem-1')) markError('cad-imagem-1', 'Imagem Principal (Capa) é obrigatória');
   if (!val('cad-cor')) markError('cad-cor', 'Cor é obrigatória');
   if (!val('cad-armazenamento')) markError('cad-armazenamento', 'Armazenamento é obrigatório');
 
@@ -584,7 +604,12 @@ export async function salvarNovoProduto(callbacks = {}) {
     categoria: getCategoria(),
     preco: numVal('cad-preco'),
     custo: numVal('cad-custo'),
-    imagem: val('cad-imagem'),
+    imagem_1: val('cad-imagem-1'),
+    imagem_2: val('cad-imagem-2'),
+    imagem_3: val('cad-imagem-3'),
+    imagem_4: val('cad-imagem-4'),
+    imagem_5: val('cad-imagem-5'),
+    imagem: val('cad-imagem-1'), // fallback for legacy code
     cor: cor,
     armazenamento: armazenamento,
     ram: ramNum ? ramNum + ramUnit : '',

@@ -23,7 +23,8 @@ function mapearProduto(item) {
     descricao: String(item.descricao || ''),
     categoria: String(item.categoria || 'Sem categoria'),
     preco: Number(item.preco || 0),
-    imagem: String(item.imagem || 'https://via.placeholder.com/400x250?text=Imagem'),
+    imagem: String(item.imagem || item.imagem_1 || 'https://via.placeholder.com/400x250?text=Imagem'),
+    images: Array.isArray(item.images) ? item.images : [String(item.imagem || item.imagem_1 || '')].filter(Boolean),
     armazenamento: String(item.armazenamento || ''),
     ram: String(item.ram || ''),
     camera_frontal: String(item.camera_frontal || ''),
@@ -731,10 +732,12 @@ export function openProductModal(grupoId, productId) {
   });
 
   const closeBtn = document.getElementById('close-product');
-  closeBtn.onclick = () => {
-    mModal.classList.add('hidden');
-    document.body.style.overflow = '';
-  };
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      mModal.classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+  }
 }
 
 function renderModalOptions(containerId, optionsList, selectedValue, onSelect, availableSet) {
@@ -798,18 +801,21 @@ function updateModalSelection() {
   );
 
   document.getElementById('pm-color-lbl').textContent = store.selColor || '';
+  document.getElementById('pm-storage-lbl').textContent = store.selStorage || '';
+  document.getElementById('pm-condition-lbl').textContent = store.selCondition || '';
 
   renderModalOptions('pm-colors', uColors, store.selColor, (val) => { store.selColor = val; updateModalSelection(); }, availColors);
   renderModalOptions('pm-storages', uStorages, store.selStorage, (val) => { store.selStorage = val; updateModalSelection(); }, availStorages);
   renderModalOptions('pm-conditions', uConditions, store.selCondition, (val) => { store.selCondition = val; updateModalSelection(); }, availConditions);
 
-  document.getElementById('pm-color-section').classList.toggle('hidden', uColors.length < 1);
-  document.getElementById('pm-storage-section').classList.toggle('hidden', uStorages.length < 1);
-  document.getElementById('pm-condition-section').classList.toggle('hidden', uConditions.length < 1);
-
+  const imgContainer = document.getElementById('pm-image-container');
   const btnBuy = document.getElementById('pm-buy-btn');
   const btnComp = document.getElementById('pm-compare-btn');
   const statusMsg = document.getElementById('pm-status-msg');
+
+  document.getElementById('pm-color-section').classList.toggle('hidden', uColors.length < 1);
+  document.getElementById('pm-storage-section').classList.toggle('hidden', uStorages.length < 1);
+  document.getElementById('pm-condition-section').classList.toggle('hidden', uConditions.length < 1);
 
   if (match) {
     const isActive = match.ativo === true || String(match.ativo).toLowerCase() === 'true';
@@ -819,7 +825,64 @@ function updateModalSelection() {
     const isPoucas = emEstoque && Number(match.estoque) > 1 && Number(match.estoque) <= minMatch;
 
     store.currentTargetId = match.id;
-    document.getElementById('pm-image').src = match.imagem;
+    
+    // Gallery Rendering
+    const allImages = match.images && match.images.length > 0 ? match.images : [match.imagem];
+    if (allImages.length > 1) {
+      imgContainer.innerHTML = `
+        <div class="flex flex-col md:flex-row gap-4 w-full h-full">
+          <!-- Miniaturas (Lateral Esquerda no Desktop, Base no Mobile) -->
+          <div class="flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto md:overflow-y-auto no-scrollbar py-1 md:w-20 shrink-0" id="pm-thumbnails">
+            ${allImages.map((img, idx) => `
+              <button class="pm-thumb w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 ${idx === 0 ? 'border-gray-900 bg-gray-50' : 'border-transparent bg-white'} overflow-hidden flex-shrink-0 transition-all hover:border-gray-300 shadow-sm" data-idx="${idx}">
+                <img src="${img}" class="w-full h-full object-contain p-1" loading="lazy">
+              </button>
+            `).join('')}
+          </div>
+          
+          <!-- Imagem Principal -->
+          <div class="relative group flex-1 order-1 md:order-2 bg-white rounded-2xl overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-0">
+            <img src="${allImages[0]}" id="pm-main-img" class="max-w-[90%] max-h-[90%] object-contain transition-opacity duration-300" alt="${match.nome}">
+            
+            <button id="pm-prev" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 transition-all hover:bg-white active:scale-95">
+              <i class="fa-solid fa-chevron-left text-sm"></i>
+            </button>
+            <button id="pm-next" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 transition-all hover:bg-white active:scale-95">
+              <i class="fa-solid fa-chevron-right text-sm"></i>
+            </button>
+          </div>
+        </div>
+      `;
+
+      let currentIdx = 0;
+      const mainImg = document.getElementById('pm-main-img');
+      const thumbs = document.querySelectorAll('.pm-thumb');
+      
+      const updateGallery = (newIdx) => {
+        currentIdx = (newIdx + allImages.length) % allImages.length;
+        mainImg.style.opacity = '0';
+        setTimeout(() => {
+          mainImg.src = allImages[currentIdx];
+          mainImg.style.opacity = '1';
+        }, 150);
+        
+        thumbs.forEach((t, i) => {
+          const isSelected = i === currentIdx;
+          t.className = `pm-thumb w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 ${isSelected ? 'border-gray-900 bg-gray-50' : 'border-transparent bg-white'} overflow-hidden flex-shrink-0 transition-all hover:border-gray-300 shadow-sm`;
+        });
+      };
+
+      document.getElementById('pm-prev').onclick = (e) => { e.stopPropagation(); updateGallery(currentIdx - 1); };
+      document.getElementById('pm-next').onclick = (e) => { e.stopPropagation(); updateGallery(currentIdx + 1); };
+      thumbs.forEach(t => t.onclick = (e) => { e.stopPropagation(); updateGallery(parseInt(t.dataset.idx)); });
+    } else {
+      imgContainer.innerHTML = `
+        <div class="w-full h-full bg-white rounded-2xl overflow-hidden flex items-center justify-center p-4">
+          <img src="${allImages[0]}" class="max-w-[95%] max-h-[95%] object-contain drop-shadow-xl" alt="${match.nome}">
+        </div>
+      `;
+    }
+
     document.getElementById('pm-name').textContent = match.categoria ? `${match.categoria} - ${match.nome}` : match.nome;
     document.getElementById('pm-desc').textContent = match.descricao || '';
     document.getElementById('pm-price').textContent = formatarMoedaBRL(Number(match.preco));
@@ -867,7 +930,11 @@ function updateModalSelection() {
     btnComp.textContent = 'Comparar';
 
     if (store.modalVariacoes[0]) {
-      document.getElementById('pm-image').src = store.modalVariacoes[0].imagem;
+      imgContainer.innerHTML = `
+        <div class="w-full aspect-square bg-white rounded-xl overflow-hidden flex items-center justify-center">
+          <img src="${store.modalVariacoes[0].imagem}" class="max-w-[85%] max-h-[85%] object-contain opacity-50" alt="Indisponível">
+        </div>
+      `;
       document.getElementById('pm-name').textContent = store.modalVariacoes[0].nome;
       document.getElementById('pm-price').textContent = '----------';
       document.getElementById('pm-old-price').textContent = '';
