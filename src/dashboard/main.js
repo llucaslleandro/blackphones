@@ -211,6 +211,10 @@ function setupDashboardListeners() {
     inventory.renderEstoque({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
   });
 
+  document.getElementById('estoque-filter')?.addEventListener('change', () => {
+    inventory.renderEstoque({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
+  });
+
   document.getElementById('btn-salvar-estoque')?.addEventListener('click', () => {
     inventory.salvarEstoqueManualmente({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
   });

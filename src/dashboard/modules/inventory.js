@@ -35,11 +35,60 @@ export function renderEstoque(callbacks = {}) {
   document.getElementById('alert-estoque').textContent = disponiveis;
 
   const searchEstoque = document.getElementById('estoque-search')?.value.toLowerCase() || '';
+  const filterEstoque = document.getElementById('estoque-filter')?.value || 'all';
+
+  // Pré-processar mapa de vendas para filtro de "Parados"
+  const today = new Date();
+  const lastSaleMap = {};
+  const normalizeText = (text) => {
+    return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
+  };
+
+  state.allOrders.forEach(o => {
+    if (o.status === 'Fechado') {
+      const sku = String(o.sku || '').trim().toLowerCase();
+      let combinedName = String(o.produto || '');
+      const storage = String(o.armazenamento || '');
+      const color = String(o.cor || '');
+      if (storage && !combinedName.includes(storage)) combinedName += ' ' + storage;
+      if (color && !combinedName.includes(color)) combinedName += ' ' + color;
+      const pNameNormalized = normalizeText(combinedName);
+      if (sku) { if (!lastSaleMap[sku] || o.parsedDate > lastSaleMap[sku]) lastSaleMap[sku] = o.parsedDate; }
+      if (pNameNormalized) { if (!lastSaleMap[pNameNormalized] || o.parsedDate > lastSaleMap[pNameNormalized]) lastSaleMap[pNameNormalized] = o.parsedDate; }
+    }
+  });
+
+  // Aplicar Filtros
   if (searchEstoque.length > 0) {
     produtosValidos = produtosValidos.filter(p =>
       (p.nome || '').toLowerCase().includes(searchEstoque) ||
       (p.sku || '').toLowerCase().includes(searchEstoque)
     );
+  }
+
+  if (filterEstoque !== 'all') {
+    produtosValidos = produtosValidos.filter(p => {
+      const est = Number(p.estoque) || 0;
+      const min = Number(p.estoque_minimo) || 2;
+      
+      if (filterEstoque === 'em-estoque') return est > 0;
+      if (filterEstoque === 'esgotados') return est <= 0;
+      if (filterEstoque === 'baixo-estoque') return est > 0 && est <= min;
+      
+      if (filterEstoque === 'parados') {
+        if (est <= 0) return false;
+        const sku = String(p.sku || '').trim().toLowerCase();
+        let combinedName = String(p.nome || '');
+        if (p.armazenamento && !combinedName.includes(p.armazenamento)) combinedName += ' ' + p.armazenamento;
+        if (p.cor && !combinedName.includes(p.cor)) combinedName += ' ' + p.cor;
+        const fullNomeNormalized = normalizeText(combinedName);
+        
+        let lastDate = sku && lastSaleMap[sku] ? lastSaleMap[sku] : (fullNomeNormalized && lastSaleMap[fullNomeNormalized] ? lastSaleMap[fullNomeNormalized] : null);
+        const days = lastDate ? Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24)) : 999;
+        return days >= 15;
+      }
+      return true;
+    });
   }
 
   tbody.innerHTML = '';
@@ -48,14 +97,7 @@ export function renderEstoque(callbacks = {}) {
     return;
   }
 
-  const today = new Date();
-  const lastSaleMap = {};
-  state.allOrders.forEach(o => {
-    if (o.status === 'Fechado') {
-      const sku = String(o.sku || '').trim().toLowerCase();
-      if (sku && (!lastSaleMap[sku] || o.parsedDate > lastSaleMap[sku])) lastSaleMap[sku] = o.parsedDate;
-    }
-  });
+
 
   produtosValidos.forEach(p => {
     const pending = pendingEstoqueUpdates[p.sku] || {};
@@ -71,7 +113,13 @@ export function renderEstoque(callbacks = {}) {
     const isActive = String(p.ativo).toLowerCase() === 'true';
     const rowOpacity = isActive ? '' : 'opacity-60 bg-gray-50';
     
-    const lastDate = lastSaleMap[String(p.sku || '').trim().toLowerCase()];
+    const skuKey = String(p.sku || '').trim().toLowerCase();
+    let combinedName = String(p.nome || '');
+    if (p.armazenamento && !combinedName.includes(p.armazenamento)) combinedName += ' ' + p.armazenamento;
+    if (p.cor && !combinedName.includes(p.cor)) combinedName += ' ' + p.cor;
+    const fullNomeNormalized = normalizeText(combinedName);
+    
+    const lastDate = skuKey && lastSaleMap[skuKey] ? lastSaleMap[skuKey] : (fullNomeNormalized && lastSaleMap[fullNomeNormalized] ? lastSaleMap[fullNomeNormalized] : null);
     const giroStr = lastDate ? (Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24)) === 0 ? 'Hoje' : `${Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24))} dias`) : '-';
 
     const precoVenda = parseNumber(p.preco ?? 0);

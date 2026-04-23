@@ -226,7 +226,7 @@ function getProdutos() {
       bateria: String(obj['bateria'] || ''),
       tela: String(obj['tela'] || ''),
       condicao: String(obj['condição'] || obj['condicao'] || ''),
-      ativo: String(obj['ativo'] || '').toLowerCase() === 'true' || obj['ativo'] === true,
+      ativo: obj['ativo'] === undefined || obj['ativo'] === '' || String(obj['ativo']).toLowerCase() === 'true' || obj['ativo'] === true,
       custo: Number(obj['custo'] || obj['preco_custo'] || 0),
       clicks: Number(obj['clicks'] || 0),
       imei1: String(obj['imei1'] || ''),

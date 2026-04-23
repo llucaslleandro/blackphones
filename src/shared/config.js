@@ -7,7 +7,7 @@ export const CONFIG = {
   // Identidade da Loja
   storeName: 'Black Phones',
   nome_lojista: 'Júlio', // Nome para saudação personalizada no dashboard
-  storeLogo: 'assets/images/unidospacks-png.png', // Logo da loja (usada no onboarding)
+  storeLogo: 'assets/images/black-logo2.png', // Logo da loja (usada no onboarding)
   storeTagline: 'Encontre o celular ideal para você',
 
   // Cores da Marca
@@ -22,11 +22,11 @@ export const CONFIG = {
   },
 
   // WhatsApp
-  whatsappNumber: '5579996063423', // sem +
+  whatsappNumber: '5579999662466', // sem +
 
   // Parcelamento (Simulador no carrinho)
   installment: {
-    interestRatePerInstallment: 0.025, // 2,5% por parcela (juros simples)
+    interestRatePerInstallment: 0.03, // 3% por parcela (juros simples)
     defaultInstallments: 10,
     maxInstallments: 21
   },
@@ -38,7 +38,7 @@ export const CONFIG = {
   },
 
   // Google Apps Script API
-  apiBaseUrl: 'https://script.google.com/macros/s/AKfycbzu8CUf74lqnAyr1jajxKvTc0KutjZ95M9yaKlOX7SPmDogW6CwFK7tgRky76tX4dQb/exec',
+  apiBaseUrl: 'https://script.google.com/macros/s/AKfycbzXpXgCLSWjK7d6cmDCXkcu7cEUiasJF2z9Uytnu9IpLzXhs1lvk2Kz0xZJx18_eKjI/exec',
 
   // Banners do Carrossel
   // Para Desktop: tamanho recomendado 1200x400px (proporção 3:1)

@@ -39,7 +39,7 @@ function createWelcomeOverlay() {
   overlay.innerHTML = `
     <div class="onboarding-welcome-card">
       <div class="onb-icon">
-        <img src="${CONFIG.storeLogo.startsWith('http') || CONFIG.storeLogo.startsWith('/') ? CONFIG.storeLogo : '../../' + CONFIG.storeLogo}" alt="${CONFIG.storeName}" style="width:100%;height:100%;object-fit:cover;">
+        <img src="${CONFIG.storeLogo.startsWith('http') || CONFIG.storeLogo.startsWith('/') ? CONFIG.storeLogo : '../../' + CONFIG.storeLogo}" alt="${CONFIG.storeName}" style="width:100%;height:100%;object-fit:contain;">
       </div>
       <h2>Bem-vindo ao Painel!</h2>
       <p>Gerencie sua loja ${CONFIG.storeName} com facilidade. Vamos te mostrar as principais ferramentas.</p>

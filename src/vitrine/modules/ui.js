@@ -180,7 +180,7 @@ function createWelcomeOverlay() {
   overlay.innerHTML = `
     <div class="onboarding-welcome-card">
       <div class="onb-icon" style="overflow:hidden;">
-        <img src="${CONFIG.storeLogo}" alt="${CONFIG.storeName}" style="width:100%;height:100%;object-fit:cover;">
+        <img src="${CONFIG.storeLogo}" alt="${CONFIG.storeName}" style="width:100%;height:100%;object-fit:contain;">
       </div>
       <h2>Bem-vindo à ${CONFIG.storeName}!</h2>
       <p>Descubra como encontrar o celular perfeito para você em poucos passos.</p>

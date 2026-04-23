@@ -108,17 +108,37 @@ export function renderRankings() {
   const models = {}, vars = {}, revTick = {};
   const today = new Date();
   const lastSaleMap = {};
+  const normalizeText = (text) => {
+    return String(text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, ' '); // Remove espaços extras
+  };
 
   // For model name resolution
   const modelNameMap = {};
-  const normalize = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
-
   state.allOrders.forEach(o => {
     if (o.status === 'Fechado') {
       const sku = String(o.sku || '').trim().toLowerCase();
-      const pName = String(o.produto || '').trim().toLowerCase();
-      if (sku && (!lastSaleMap[sku] || o.parsedDate > lastSaleMap[sku])) lastSaleMap[sku] = o.parsedDate;
-      if (pName && (!lastSaleMap[pName] || o.parsedDate > lastSaleMap[pName])) lastSaleMap[pName] = o.parsedDate;
+      
+      // Criar um nome de busca limpo, evitando duplicar termos que já estão no nome
+      let combinedName = String(o.produto || '');
+      const storage = String(o.armazenamento || '');
+      const color = String(o.cor || '');
+      
+      if (storage && !combinedName.includes(storage)) combinedName += ' ' + storage;
+      if (color && !combinedName.includes(color)) combinedName += ' ' + color;
+      
+      const pNameNormalized = normalizeText(combinedName);
+      
+      if (sku) {
+        if (!lastSaleMap[sku] || o.parsedDate > lastSaleMap[sku]) lastSaleMap[sku] = o.parsedDate;
+      } 
+      if (pNameNormalized) {
+        if (!lastSaleMap[pNameNormalized] || o.parsedDate > lastSaleMap[pNameNormalized]) lastSaleMap[pNameNormalized] = o.parsedDate;
+      }
     }
   });
 
@@ -127,7 +147,7 @@ export function renderRankings() {
 
     // Normalizing Model key - Resolve to human name immediately to group effectively
     let modelLabel = o.group_id && String(o.group_id).trim() !== '' ? String(o.group_id).trim() : o.produto;
-    
+
     if (modelLabel.toUpperCase().startsWith('GRP')) {
       const gId = modelLabel.toLowerCase();
       const prod = state.allProducts.find(p => String(p.grupo_id || '').toLowerCase() === gId);
@@ -138,16 +158,8 @@ export function renderRankings() {
         modelLabel = o.produto || modelLabel;
       }
     }
-    
-    // Clean up if it's still a raw variations name (remove - black, - 128gb etc)
-    // Actually, user mostly wants the model name. If we fell back to o.produto,
-    // let's try to keep only the first part before common separators if it's long.
-    if (modelLabel.includes(' - ')) {
-       // Optional: modelLabel = modelLabel.split(' - ')[0]; 
-       // but we'll stick to full name for now to avoid losing important info.
-    }
-    
-    const nKey = normalize(modelLabel);
+
+    const nKey = normalizeText(modelLabel);
     models[nKey] = (models[nKey] || 0) + o.quantidade;
     if (!modelNameMap[nKey]) modelNameMap[nKey] = modelLabel;
 
@@ -193,23 +205,60 @@ export function renderRankings() {
 
   renderLi(rankList(revTick, (a, b) => b.val.fat - a.val.fat), 'rank-revenue', l => l, v => `${formatMoney(v.fat)}`);
 
-  // Idle Products
-  const idleList = state.allProducts.map(p => {
-    const lastDate = lastSaleMap[String(p.sku || '').trim().toLowerCase()] || lastSaleMap[String(p.nome || '').trim().toLowerCase()];
-    const days = lastDate ? Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24)) : 999;
-    return { ...p, daysIdle: days };
-  }).filter(p => p.daysIdle > 15 && Number(p.estoque) > 0).sort((a, b) => b.daysIdle - a.daysIdle);
+  // Idle Products (Produtos Parados)
+  const idleList = state.allProducts
+    .filter(p => p.ativo !== false && Number(p.estoque) > 0)
+    .map(p => {
+      const sku = String(p.sku || '').trim().toLowerCase();
+      // Nome composto do produto para comparação precisa, evitando duplicatas
+      let combinedName = String(p.nome || '');
+      const storage = String(p.armazenamento || '');
+      const color = String(p.cor || '');
+      
+      if (storage && !combinedName.includes(storage)) combinedName += ' ' + storage;
+      if (color && !combinedName.includes(color)) combinedName += ' ' + color;
+      
+      const fullNomeNormalized = normalizeText(combinedName);
+      
+      let lastDate = null;
+      if (sku && lastSaleMap[sku]) {
+        lastDate = lastSaleMap[sku];
+      } else if (fullNomeNormalized && lastSaleMap[fullNomeNormalized]) {
+        lastDate = lastSaleMap[fullNomeNormalized];
+      }
+      
+      const days = lastDate ? Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24)) : 999;
+      return { ...p, daysIdle: days };
+    })
+    .filter(p => p.daysIdle > 10)
+    .sort((a, b) => b.daysIdle - a.daysIdle);
 
   const elIdle = document.getElementById('rank-idle');
   if (elIdle) {
     elIdle.innerHTML = idleList.length === 0 ? '<li class="text-sm text-green-600 font-medium py-2">Tudo girando!</li>' : '';
-    idleList.slice(0, 15).forEach(p => {
+    idleList.slice(0, 10).forEach(p => {
       const isCritical = p.daysIdle > 30;
+      const cond = p.condicao || 'Novo';
+
+      // Badges de variação
+      const storageBadge = p.armazenamento && p.armazenamento !== 'N/A' ? `<span class="px-1 py-0.5 rounded bg-blue-50 text-blue-700 text-[8px] font-bold">${p.armazenamento}</span>` : '';
+      const colorBadge = p.cor && p.cor !== 'N/A' ? `<span class="px-1 py-0.5 rounded bg-purple-50 text-purple-700 text-[8px] font-bold">${p.cor}</span>` : '';
+      const condBadge = `<span class="px-1 py-0.5 rounded ${cond === 'Novo' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'} text-[8px] font-black uppercase tracking-tighter">${cond}</span>`;
+
       elIdle.innerHTML += `
-        <li class="flex flex-col mb-2 pb-2 border-b last:border-0 pl-2 border-l-4 ${isCritical ? 'border-l-red-500' : 'border-l-orange-400'}">
+        <li class="flex flex-col mb-3 pb-2 border-b last:border-0 pl-2 border-l-4 ${isCritical ? 'border-l-red-500' : 'border-l-orange-400'}">
           <div class="flex justify-between items-start gap-2">
-            <span class="text-[13px] font-semibold text-gray-800 truncate">${p.nome}</span>
-            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${isCritical ? 'bg-red-100 text-red-800' : 'bg-orange-50 text-orange-700'}">${p.daysIdle === 999 ? 'S/ Vendas' : p.daysIdle + ' d'}</span>
+            <div class="flex flex-col min-w-0">
+              <span class="text-[13px] font-bold text-gray-900 truncate leading-tight">${p.nome}</span>
+              <div class="flex flex-wrap gap-1 mt-1">
+                ${condBadge}
+                ${storageBadge}
+                ${colorBadge}
+              </div>
+            </div>
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${isCritical ? 'bg-red-100 text-red-800' : 'bg-orange-50 text-orange-700'}">
+              ${p.daysIdle === 999 ? 'SEM VENDAS' : p.daysIdle + ' d'}
+            </span>
           </div>
         </li>`;
     });

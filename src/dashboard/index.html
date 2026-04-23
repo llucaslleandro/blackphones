@@ -34,7 +34,8 @@
     }
 
     /* Prevent horizontal page overflow on mobile */
-    html, body {
+    html,
+    body {
       overflow-x: hidden;
     }
 
@@ -47,9 +48,17 @@
       gap: 0;
       white-space: nowrap;
     }
-    .tabs-scroll::-webkit-scrollbar { display: none; }
-    .tabs-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-    .tabs-scroll > button {
+
+    .tabs-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tabs-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .tabs-scroll>button {
       flex-shrink: 0;
       white-space: nowrap;
     }
@@ -60,24 +69,35 @@
       flex-wrap: wrap;
       gap: 8px;
     }
-    .order-filters-mobile > * {
+
+    .order-filters-mobile>* {
       flex: 1 1 auto;
       min-width: 0;
     }
+
     @media (min-width: 640px) {
-      .order-filters-mobile { flex-wrap: nowrap; }
-      .order-filters-mobile > * { flex: 0 1 auto; }
+      .order-filters-mobile {
+        flex-wrap: nowrap;
+      }
+
+      .order-filters-mobile>* {
+        flex: 0 1 auto;
+      }
     }
 
     /* Mobile card layout for order table */
     @media (max-width: 639px) {
-      .order-table thead { display: none; }
+      .order-table thead {
+        display: none;
+      }
+
       .order-table tbody {
         display: flex;
         flex-direction: column;
         gap: 12px;
         padding: 12px;
       }
+
       .order-table tbody tr {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -87,16 +107,19 @@
         background: #f9fafb;
         border: 1px solid #e5e7eb;
         border-radius: 14px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
       }
+
       .order-table tbody tr:hover {
         background: #f3f4f6;
       }
+
       .order-table tbody tr td {
         padding: 2px 0 !important;
         white-space: normal !important;
         text-align: left !important;
       }
+
       /* Código/Data — full width top */
       .order-table tbody tr td:nth-child(1) {
         grid-column: 1 / -1;
@@ -104,24 +127,29 @@
         border-bottom: 1px solid #e5e7eb;
         margin-bottom: 6px;
       }
+
       /* Produto — full width */
       .order-table tbody tr td:nth-child(2) {
         grid-column: 1 / -1;
       }
+
       /* Qtd — left */
       .order-table tbody tr td:nth-child(3) {
         grid-column: 1;
       }
+
       /* Valor — right */
       .order-table tbody tr td:nth-child(4) {
         grid-column: 2;
         text-align: right !important;
       }
+
       /* Status — full width */
       .order-table tbody tr td:nth-child(5) {
         grid-column: 1 / -1;
         padding-top: 8px !important;
       }
+
       .order-table tbody tr td:nth-child(5) select {
         width: 100% !important;
       }
@@ -421,9 +449,13 @@
           de Vendas</span>
       </div>
       <div class="flex items-center gap-2">
+        <a href="../../index.html" target="_blank"
+          class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm shadow-indigo-200">
+          <i class="fa-solid fa-store"></i> <span class="hidden xs:inline">Ver Vitrine</span>
+        </a>
         <button id="btn-tutorial"
           class="text-xs font-bold text-gray-500 hover:text-indigo-600 transition flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-indigo-50">
-          <i class="fa-solid fa-circle-question"></i> Ver tutorial
+          <i class="fa-solid fa-circle-question"></i> <span class="hidden sm:inline">Ver tutorial</span>
         </button>
         <button id="btn-logout"
           class="text-sm font-medium text-red-600 hover:text-red-700 transition flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-red-50">
@@ -800,12 +832,12 @@
 
         <!-- Tabela de Últimos Pedidos -->
         <div id="section-historico-pedidos" class="glass-card rounded-2xl shadow-sm overflow-hidden">
-          <div
-            class="p-4 sm:p-6 border-b border-gray-100 flex flex-col gap-4">
+          <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col gap-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h3 class="text-lg font-bold text-gray-900 flex-shrink-0">Histórico de Pedidos <span id="label-table-count"
-                  class="text-sm font-medium text-gray-500 font-normal ml-2">0 itens</span></h3>
-              <button id="btn-novo-pedido" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition flex items-center gap-2">
+              <h3 class="text-lg font-bold text-gray-900 flex-shrink-0">Histórico de Pedidos <span
+                  id="label-table-count" class="text-sm font-medium text-gray-500 font-normal ml-2">0 itens</span></h3>
+              <button id="btn-novo-pedido"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> Novo Pedido
               </button>
             </div>
@@ -844,7 +876,7 @@
                   <th class="px-6 py-4 font-semibold">Produto / Variação</th>
                   <th class="px-6 py-4 font-semibold text-center">Qtd</th>
                   <th class="px-6 py-4 font-semibold text-right">Valor Total</th>
-                   <th class="px-6 py-4 font-semibold text-center">Status</th>
+                  <th class="px-6 py-4 font-semibold text-center">Status</th>
                   <th class="px-6 py-4 font-semibold text-right">Ação</th>
                 </tr>
               </thead>
@@ -870,6 +902,14 @@
             <div class="flex gap-2 w-full sm:w-auto flex-wrap">
               <input type="text" id="estoque-search" placeholder="Buscar por nome ou SKU..."
                 class="w-full sm:w-64 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400">
+              <select id="estoque-filter"
+                class="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 cursor-pointer">
+                <option value="all">Todos os Produtos</option>
+                <option value="em-estoque">Em Estoque</option>
+                <option value="esgotados">Esgotados</option>
+                <option value="baixo-estoque">Baixo Estoque</option>
+                <option value="parados">Faltam Vender (15 dias+)</option>
+              </select>
               <button id="btn-add-produto"
                 class="px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg hover:bg-gray-800 transition whitespace-nowrap flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> Adicionar Produto
@@ -1031,7 +1071,8 @@
               <!-- Ativos Agora -->
               <div
                 class="glass-card p-5 rounded-2xl shadow-sm border border-green-200 bg-gradient-to-br from-green-50 to-white relative overflow-hidden">
-                <p class="text-[10px] font-black text-green-600 uppercase tracking-widest mb-1 opacity-80 flex items-center gap-1.5">
+                <p
+                  class="text-[10px] font-black text-green-600 uppercase tracking-widest mb-1 opacity-80 flex items-center gap-1.5">
                   Ativos Agora <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block"></span>
                 </p>
                 <h4 id="met-ativos" class="text-2xl font-black text-green-700">0</h4>
@@ -1505,43 +1546,54 @@
   <!-- Load ES Module Script -->
   <script type="module" src="main.js"></script>
   <!-- MODAL: NOVO PEDIDO MANUAL -->
-  <div id="modal-novo-pedido" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="modal-novo-pedido"
+    class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-[scaleIn_0.3s_ease-out]">
       <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
         <h3 class="text-xl font-black text-gray-900 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
+          <div
+            class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
             <i class="fa-solid fa-cart-plus"></i>
           </div>
           Lançar Pedido Manual
         </h3>
-        <button id="novo-pedido-close" class="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-full">
+        <button id="novo-pedido-close"
+          class="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-full">
           <i class="fa-solid fa-xmark text-xl"></i>
         </button>
       </div>
       <div class="p-8 max-h-[70vh] overflow-y-auto">
         <div id="pedido-manual-errors" class="hidden mb-6 p-4 bg-red-50 border border-red-100 rounded-xl">
-          <ul id="pedido-manual-errors-list" class="text-xs text-red-600 list-disc list-inside space-y-1 font-bold"></ul>
+          <ul id="pedido-manual-errors-list" class="text-xs text-red-600 list-disc list-inside space-y-1 font-bold">
+          </ul>
         </div>
         <form id="form-novo-pedido" class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="md:col-span-2">
               <label class="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">Produto *</label>
-              <select id="man-produto" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm transition">
+              <select id="man-produto"
+                class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm transition">
                 <option value="">Selecione um produto...</option>
               </select>
             </div>
             <div>
               <label class="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">Quantidade *</label>
-              <input type="number" id="man-qtd" value="1" min="1" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm transition">
+              <input type="number" id="man-qtd" value="1" min="1"
+                class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm transition">
             </div>
             <div>
-              <label class="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">Valor Unitário (R$)</label>
-              <input type="number" id="man-preco" step="0.01" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm transition" placeholder="Opcional (usa preço do cadastro)">
+              <label class="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">Valor Unitário
+                (R$)</label>
+              <input type="number" id="man-preco" step="0.01"
+                class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm transition"
+                placeholder="Opcional (usa preço do cadastro)">
             </div>
           </div>
           <div class="pt-4 flex items-center justify-end gap-4">
-            <button type="button" id="novo-pedido-cancel" class="px-6 py-3 text-sm font-bold text-gray-500 hover:text-gray-700 transition">Cancelar</button>
-            <button type="button" id="novo-pedido-submit" class="px-8 py-3 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 flex items-center gap-2">
+            <button type="button" id="novo-pedido-cancel"
+              class="px-6 py-3 text-sm font-bold text-gray-500 hover:text-gray-700 transition">Cancelar</button>
+            <button type="button" id="novo-pedido-submit"
+              class="px-8 py-3 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 flex items-center gap-2">
               <i class="fa-solid fa-check"></i> Lançar Pedido
             </button>
           </div>
@@ -1551,19 +1603,24 @@
   </div>
 
   <!-- MODAL: CONFIRMAR EXCLUSÃO -->
-  <div id="modal-excluir-pedido" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+  <div id="modal-excluir-pedido"
+    class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-[scaleIn_0.3s_ease-out]">
       <div class="p-8 text-center">
-        <div class="w-20 h-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-3xl mx-auto mb-6 shadow-inner">
+        <div
+          class="w-20 h-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-3xl mx-auto mb-6 shadow-inner">
           <i class="fa-solid fa-trash-can"></i>
         </div>
         <h3 class="text-xl font-black text-gray-900 mb-2">Excluir Pedido?</h3>
-        <p class="text-sm text-gray-500 mb-8 font-medium">Esta ação não pode ser desfeita. Se o pedido estava "Fechado", o estoque será devolvido automaticamente.</p>
+        <p class="text-sm text-gray-500 mb-8 font-medium">Esta ação não pode ser desfeita. Se o pedido estava "Fechado",
+          o estoque será devolvido automaticamente.</p>
         <div class="flex flex-col gap-3">
-          <button id="btn-excluir-confirm" class="w-full py-4 bg-red-500 text-white rounded-2xl font-black text-sm hover:bg-red-600 transition shadow-lg shadow-red-100 flex items-center justify-center gap-2">
+          <button id="btn-excluir-confirm"
+            class="w-full py-4 bg-red-500 text-white rounded-2xl font-black text-sm hover:bg-red-600 transition shadow-lg shadow-red-100 flex items-center justify-center gap-2">
             Sim, Excluir
           </button>
-          <button id="btn-excluir-cancel" class="w-full py-4 bg-gray-100 text-gray-600 rounded-2xl font-black text-sm hover:bg-gray-200 transition">
+          <button id="btn-excluir-cancel"
+            class="w-full py-4 bg-gray-100 text-gray-600 rounded-2xl font-black text-sm hover:bg-gray-200 transition">
             Cancelar
           </button>
         </div>
@@ -1572,4 +1629,5 @@
   </div>
 
 </body>
+
 </html>
