@@ -340,7 +340,7 @@ function salvarPedido(pedido) {
   var sheet = ss.getSheetByName('Pedidos');
   if (!sheet) {
     sheet = ss.insertSheet('Pedidos');
-    sheet.appendRow(['Data', 'ID do Pedido', 'Group ID', 'Marca', 'Produto', 'Armazenamento', 'Cor', 'Condição', 'Quantidade', 'Total', 'Status', 'SKU', 'Estoque Processado']);
+    sheet.appendRow(['Data', 'ID do Pedido', 'Group ID', 'Marca', 'Produto', 'Armazenamento', 'Cor', 'Condição', 'IMEI 1', 'Saude Bateria', 'Quantidade', 'Total', 'Status', 'SKU', 'Estoque Processado']);
   }
 
   var rows = sheet.getDataRange().getValues();
@@ -364,6 +364,18 @@ function salvarPedido(pedido) {
     itemIdCol = headers.length;
     sheet.getRange(1, itemIdCol + 1).setValue('ID do Item');
     headers.push('id do item');
+  }
+  var imeiCol = headers.indexOf('imei 1');
+  if (imeiCol === -1) {
+    imeiCol = headers.length;
+    sheet.getRange(1, imeiCol + 1).setValue('IMEI 1');
+    headers.push('imei 1');
+  }
+  var batCol = headers.indexOf('saude bateria');
+  if (batCol === -1) {
+    batCol = headers.length;
+    sheet.getRange(1, batCol + 1).setValue('Saude Bateria');
+    headers.push('saude bateria');
   }
 
   var pedidoId = 'PED-' + new Date().getTime();
@@ -393,6 +405,8 @@ function salvarPedido(pedido) {
       mapHeader('armazenamento', item.armazenamento || '');
       mapHeader('cor', item.cor || '');
       mapHeader('condição', item.condicao || '');
+      mapHeader('imei 1', item.imei1 || '');
+      mapHeader('saude bateria', item.saude_bateria || '');
       mapHeader('quantidade', item.quantidade || 1);
       mapHeader('total', totalItem);
       mapHeader('status', 'Pendente');

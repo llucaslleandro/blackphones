@@ -156,10 +156,15 @@ export function renderTable(callbacks = {}) {
             </div>
           </div>
         </td>
-        <td class="px-6 py-3 whitespace-nowrap text-right pt-4">
-          <button data-id="${o.item_id || o.id_do_pedido}" class="btn-excluir-pedido p-2 text-gray-400 hover:text-red-500 transition rounded-lg hover:bg-red-50">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
+        <td class="px-6 py-3 whitespace-nowrap text-center pt-4">
+          <div class="flex gap-2 justify-center">
+            <button data-id="${o.item_id || o.id_do_pedido}" class="btn-gerar-recibo w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition flex items-center justify-center border border-gray-100 hover:border-indigo-200 shadow-sm" title="Gerar Recibo">
+              <i class="fa-solid fa-file-invoice-dollar text-xs"></i>
+            </button>
+            <button data-id="${o.item_id || o.id_do_pedido}" class="btn-excluir-pedido w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition flex items-center justify-center border border-gray-100 hover:border-red-200 shadow-sm">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+          </div>
         </td>
       </tr>
     `;

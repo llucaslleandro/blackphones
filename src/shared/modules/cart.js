@@ -407,6 +407,8 @@ export async function finalizarPedido() {
         armazenamento: produto.armazenamento || 'N/A',
         cor: produto.cor || 'N/A',
         condicao: produto.condicao || 'N/A',
+        imei1: produto.imei1 || '',
+        saude_bateria: produto.saude_bateria || '',
         quantidade: item.quantidade,
         preco: item.preco
       };
@@ -461,6 +463,8 @@ export function comprarViaWhatsApp(produtoId) {
       armazenamento: produto.armazenamento || 'N/A',
       cor: produto.cor || 'N/A',
       condicao: produto.condicao || 'N/A',
+      imei1: produto.imei1 || '',
+      saude_bateria: produto.saude_bateria || '',
       quantidade: 1,
       preco: Number(produto.preco)
     }],

@@ -34,7 +34,9 @@ function mapearProduto(item) {
     condicao: String(item.condicao || '').trim(),
     ativo: item.ativo === true || String(item.ativo).toLowerCase() === 'true',
     custo: Number(item.custo || 0),
-    clicks: Number(item.clicks || 0)
+    clicks: Number(item.clicks || 0),
+    imei1: String(item.imei1 || ''),
+    saude_bateria: String(item.saude_bateria || '')
   };
 }
 

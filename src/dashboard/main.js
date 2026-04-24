@@ -7,6 +7,7 @@ import * as inventory from './modules/inventory.js';
 import * as notifications from './modules/notifications.js';
 import { initOnboarding } from './modules/onboarding.js';
 import { renderMetricas, refreshActiveCount } from './modules/metrics.js';
+import { initReceiptModal } from './modules/receipt.js';
 
 // ---- INITIALIZATION ----
 const IS_LOGIN_PAGE = window.location.pathname.includes('login.html');
@@ -22,13 +23,14 @@ async function init() {
   } else {
     document.title = `Painel de Vendas - ${CONFIG.storeName}`;
     setupDashboardListeners();
-    
+    initReceiptModal();
+
     // Initial Load
     await store.loadDashboardData(RENDER_PIPELINE);
-    
+
     // Seed notifications with catch-up (don't alert on old orders)
     notifications.initSeenOrders(store.state.allOrders);
-    
+
     // Auto-refresh every 45s
     setInterval(() => {
       // Don't refresh if there are pending stock changes
@@ -64,7 +66,7 @@ const RENDER_PIPELINE = {
     analytics.renderCharts();
     analytics.renderRankings();
     dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
-    
+
     const tabEstoque = document.getElementById('tab-estoque');
     if (tabEstoque && !tabEstoque.classList.contains('hidden')) {
       inventory.renderEstoque({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
@@ -201,7 +203,7 @@ function setupDashboardListeners() {
     document.getElementById('table-custom-wrap')?.classList.toggle('hidden', e.target.value !== 'custom');
     dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
   });
-  
+
   document.getElementById('table-date-start')?.addEventListener('change', () => {
     dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
   });
@@ -289,7 +291,7 @@ function setupDashboardListeners() {
         thumb.classList.add('hidden');
       }
       if (placeholder) placeholder.classList.remove('hidden');
-      
+
       ui.showToast(`Imagem ${idx} removida`, 'blue', 'fa-trash-can');
     }
   });
@@ -308,7 +310,7 @@ function setupDashboardListeners() {
     for (let i = 0; i < Math.min(files.length, slotsToFill.length); i++) {
       const slotIdx = slotsToFill[i];
       const file = files[i];
-      
+
       const loading = document.getElementById(`cad-img-loading-${slotIdx}`);
       const placeholder = document.getElementById(`cad-img-placeholder-${slotIdx}`);
       const thumb = document.getElementById(`cad-img-thumb-${slotIdx}`);
@@ -403,7 +405,7 @@ function swapImages(idx1, idx2) {
   // Swap thumbnails
   const tempSrc = thumb1.src;
   const tempHidden = thumb1.classList.contains('hidden');
-  
+
   thumb1.src = thumb2.src;
   if (thumb2.classList.contains('hidden')) thumb1.classList.add('hidden');
   else thumb1.classList.remove('hidden');
@@ -415,7 +417,7 @@ function swapImages(idx1, idx2) {
   // Update placeholders
   if (thumb1.classList.contains('hidden')) placeholder1?.classList.remove('hidden');
   else placeholder1?.classList.add('hidden');
-  
+
   if (thumb2.classList.contains('hidden')) placeholder2?.classList.remove('hidden');
   else placeholder2?.classList.add('hidden');
 
