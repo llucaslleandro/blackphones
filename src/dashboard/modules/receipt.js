@@ -4,36 +4,41 @@ import { formatMoney } from './ui.js';
 // Coordenadas fixas para o template do recibo (Black Phones)
 // Valores em mm (A4 padrão: 210 x 297)
 const COORDS = {
-  data: { x: 25, y: 51 },
-  codigo: { x: 165, y: 51 },
-  nomeCliente: { x: 9, y: 75 },
-  cpfCnpj: { x: 83, y: 75 },
-  telefone: { x: 118, y: 75 },
-  email: { x: 160, y: 75 },
+  data: { x: 24, y: 37 },
+  codigo: { x: 166, y: 37 },
+  nomeCliente: { x: 9, y: 61 },
+  cpfCnpj: { x: 83, y: 61 },
+  telefone: { x: 117, y: 61 },
+  email: { x: 160, y: 61 },
+  endereco: { x: 9, y: 77 },
+  cidadeEstado: { x: 117, y: 77 },
 
   // Grid de Itens
   categoria: { x: 9, y: 100 },
-  modelo: { x: 44, y: 100 },
+  modelo: { x: 38, y: 100 },
   versao: { x: 63, y: 100 },
-  cor: { x: 80, y: 100 },
-  imei: { x: 98, y: 100 },
+  cor: { x: 82, y: 100 },
+  imei: { x: 101, y: 100 },
+  imei2: { x: 101, y: 115 },
   memoria: { x: 134, y: 100 },
-  bateria: { x: 152, y: 100 },
+  bateria: { x: 153, y: 100 },
+  condicao: { x: 9, y: 115 },
   quantidade: { x: 173, y: 100 },
   valor: { x: 182, y: 100 },
 
   // Totais
-  subtotal: { x: 148, y: 109 },
-  totalFinal: { x: 151, y: 116 },
+  subtotal: { x: 172, y: 109 },
+  totalFinal: { x: 175, y: 116 },
 
   // Pagamento
   vencimento: { x: 9, y: 140 },
-  valorPagamento: { x: 59, y: 140 },
+  valorPagamento: { x: 62, y: 140 },
   metodoPagamento: { x: 102, y: 140 },
-  dataPagamento: { x: 141, y: 140 }
+  dataPagamento: { x: 155, y: 140 }
 };
 
-const TEMPLATE_URL = '../../assets/images/recibo-template.png';
+const TEMPLATE_URL_NOVO = '../../assets/images/recibo-template-novo.png';
+const TEMPLATE_URL_SEMINOVO = '../../assets/images/recibo-template-seminovo.png';
 
 export function initReceiptModal() {
   const modal = document.getElementById('modal-recibo');
@@ -52,19 +57,25 @@ export function initReceiptModal() {
     const cpf = document.getElementById('rec-cpf').value.trim();
     const tel = document.getElementById('rec-tel').value.trim();
 
-    if (!nome || !cpf || !tel) {
-      alert('Por favor, preencha os campos obrigatórios: Nome, CPF/CNPJ e Telefone.');
-      
-      // Highlight empty fields
-      if (!nome) document.getElementById('rec-nome').classList.add('border-red-500');
-      else document.getElementById('rec-nome').classList.remove('border-red-500');
-      
-      if (!cpf) document.getElementById('rec-cpf').classList.add('border-red-500');
-      else document.getElementById('rec-cpf').classList.remove('border-red-500');
-      
-      if (!tel) document.getElementById('rec-tel').classList.add('border-red-500');
-      else document.getElementById('rec-tel').classList.remove('border-red-500');
-      
+    const cleanCpf = cpf.replace(/\D/g, "");
+    const cleanTel = tel.replace(/\D/g, "");
+    const isCpfValid = cleanCpf.length === 11 || cleanCpf.length === 14;
+    const isTelValid = cleanTel.length >= 10 && cleanTel.length <= 11;
+
+    if (!nome || !isCpfValid || !isTelValid) {
+      if (!nome) {
+        alert('Por favor, preencha o Nome do cliente.');
+      } else if (!isCpfValid) {
+        alert('O CPF/CNPJ deve conter 11 ou 14 dígitos.');
+      } else if (!isTelValid) {
+        alert('O Telefone deve conter entre 10 e 11 dígitos.');
+      }
+
+      // Highlight fields
+      document.getElementById('rec-nome').classList.toggle('border-red-500', !nome);
+      document.getElementById('rec-cpf').classList.toggle('border-red-500', !isCpfValid);
+      document.getElementById('rec-tel').classList.toggle('border-red-500', !isTelValid);
+
       return;
     }
 
@@ -84,7 +95,7 @@ export function initReceiptModal() {
       alert('Erro ao gerar PDF. Verifique se o template existe em assets/images/');
     } finally {
       btnGenerate.disabled = false;
-      btnGenerate.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Gerar Recibo Agora';
+      btnGenerate.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Gerar Recibo';
     }
   };
 
@@ -113,11 +124,11 @@ export function initReceiptModal() {
         console.log('Tentando gerar recibo para ID:', id);
 
         // Search by either item_id or id_do_pedido to be safe
-        const order = state.allOrders.find(o => 
-          (o.item_id && String(o.item_id) === String(id)) || 
+        const order = state.allOrders.find(o =>
+          (o.item_id && String(o.item_id) === String(id)) ||
           (o.id_do_pedido && String(o.id_do_pedido) === String(id))
         );
-        
+
         if (order) {
           abrirModalRecibo(order);
         } else {
@@ -138,7 +149,7 @@ export function abrirModalRecibo(order) {
 
   const hoje = new Date();
   const dataVenda = hoje.toISOString().split('T')[0];
-  
+
   // Calcula vencimento (padrão 3 meses)
   const venc = new Date();
   venc.setMonth(venc.getMonth() + 3);
@@ -151,17 +162,37 @@ export function abrirModalRecibo(order) {
   document.getElementById('rec-cpf').value = '';
   document.getElementById('rec-tel').value = formatPhone(order.telefone || '');
   document.getElementById('rec-email').value = order.email || '';
-  
-  document.getElementById('rec-modelo').value = order.produto || '';
-  document.getElementById('rec-versao').value = order.versao || '';
-  document.getElementById('rec-imei').value = order.imei_1 || order.imei1 || '';
-  document.getElementById('rec-cor').value = order.cor || '';
-  document.getElementById('rec-memoria').value = order.armazenamento || '';
-  
+
+  document.getElementById('rec-endereco').value = order.endereco || '';
+  document.getElementById('rec-cidade-estado').value = order.cidade || '';
+
+  // Buscar detalhes adicionais no estoque se existirem
+  let p = {};
+  if (order.item_id || order.id_do_pedido) {
+    p = state.allProducts.find(prod => String(prod.sku || prod.id) === String(order.item_id || order.id_do_pedido)) || {};
+  }
+  if (!p.id) {
+    p = state.allProducts.find(prod => prod.nome === order.produto) || {};
+  }
+
+  document.getElementById('rec-modelo').value = order.produto || p.nome || '';
+  document.getElementById('rec-versao').value = order.versao || p.versao || '';
+  document.getElementById('rec-imei').value = order.imei_1 || order.imei1 || p.imei1 || p.imei_1 || '';
+  document.getElementById('rec-imei2').value = order.imei_2 || order.imei2 || p.imei2 || p.imei_2 || '';
+  document.getElementById('rec-cor').value = order.cor || p.cor || '';
+  document.getElementById('rec-memoria').value = order.armazenamento || p.armazenamento || '';
+
+  const condicaoFinal = order.condicao || p.condicao || 'Novo';
+  let condStr = 'Novo';
+  if (condicaoFinal.toLowerCase().includes('seminovo')) {
+    condStr = 'Seminovo';
+  }
+  document.getElementById('rec-condicao').value = condStr;
+
   // Bateria - Safe check & Percentage formatting
-  let batValue = order.saude_bateria;
+  let batValue = order.saude_bateria || p.saude_bateria || p.saude;
   let batStr = '';
-  
+
   if (batValue !== undefined && batValue !== null && batValue !== '') {
     let n = Number(batValue);
     // If it's a decimal <= 1 (like 0.84), multiply by 100
@@ -172,7 +203,7 @@ export function abrirModalRecibo(order) {
     }
   }
   document.getElementById('rec-bateria').value = batStr;
-  
+
   document.getElementById('rec-qtd').value = order.quantidade || 1;
   document.getElementById('rec-categoria').value = order.categoria || 'Smartphone';
 
@@ -188,6 +219,7 @@ export function abrirModalRecibo(order) {
     document.getElementById(id).classList.remove('border-red-500');
   });
 
+  modal.dataset.orderId = order.id_do_pedido || '';
   modal.classList.remove('hidden');
 }
 
@@ -195,8 +227,18 @@ async function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'mm', 'a4');
 
+  const getVal = (id) => document.getElementById(id).value || '';
+  const condicao = getVal('rec-condicao');
+  const templateUrl = condicao === 'Seminovo' ? TEMPLATE_URL_SEMINOVO : TEMPLATE_URL_NOVO;
+
   // Load template
-  const img = await loadImage(TEMPLATE_URL);
+  let img;
+  try {
+    img = await loadImage(templateUrl);
+  } catch (err) {
+    console.warn(`Template para ${condicao} não encontrado, usando padrão.`);
+    img = await loadImage(TEMPLATE_URL_NOVO);
+  }
   doc.addImage(img, 'PNG', 0, 0, 210, 297);
 
   // Setup font
@@ -204,23 +246,29 @@ async function generatePDF() {
   doc.setFontSize(9);
   doc.setTextColor(40, 40, 40);
 
-  const getVal = (id) => document.getElementById(id).value || '---';
+
+  const orderId = document.getElementById('modal-recibo').dataset.orderId || '';
+  const last4 = orderId ? String(orderId).slice(-4) : (Math.floor(Math.random() * 9000) + 1000);
 
   // Overlay text
   const fields = {
     data: formatDate(getVal('rec-data')),
-    codigo: '#' + (Math.floor(Math.random() * 9000) + 1000),
+    codigo: '#' + last4,
     nomeCliente: getVal('rec-nome'),
     cpfCnpj: getVal('rec-cpf'),
     telefone: getVal('rec-tel'),
     email: getVal('rec-email'),
+    endereco: getVal('rec-endereco'),
+    cidadeEstado: getVal('rec-cidade-estado'),
     categoria: getVal('rec-categoria'),
     modelo: getVal('rec-modelo'),
     versao: getVal('rec-versao'),
     cor: getVal('rec-cor'),
     imei: getVal('rec-imei'),
+    imei2: getVal('rec-imei2'),
     memoria: getVal('rec-memoria'),
-    bateria: getVal('rec-bateria') + '%',
+    bateria: getVal('rec-bateria') ? getVal('rec-bateria') + '%' : '',
+    condicao: getVal('rec-condicao'),
     quantidade: getVal('rec-qtd').padStart(2, '0'),
     valor: formatMoney(getVal('rec-total')),
     subtotal: formatMoney(getVal('rec-subtotal')),
@@ -243,7 +291,7 @@ async function generatePDF() {
     }
   });
 
-  doc.save(`Recibo_BlackPhones_${getVal('rec-nome').replace(/\s+/g, '_')}.pdf`);
+  doc.save(`Recibo_BlackPhones_${getVal('rec-condicao')}_${getVal('rec-nome').replace(/\s+/g, '_')}.pdf`);
 }
 
 function loadImage(url) {
@@ -257,14 +305,14 @@ function loadImage(url) {
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return '---';
+  if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
   return `${d}/${m}/${y}`;
 }
 
 function formatCpfCnpj(val) {
   let v = val.replace(/\D/g, ""); // Remove não dígitos
-  
+
   if (v.length <= 11) {
     // CPF
     v = v.replace(/(\d{3})(\d)/, "$1.$2");
@@ -283,13 +331,20 @@ function formatCpfCnpj(val) {
 
 function formatPhone(val) {
   let v = val.replace(/\D/g, ""); // Remove não dígitos
-  v = v.slice(0, 11); // Limita a 11 dígitos
-  
-  if (v.length > 2) {
-    v = "(" + v.substring(0, 2) + ") " + v.substring(2);
-  }
-  if (v.length > 9) {
-    v = v.substring(0, 10) + "-" + v.substring(10);
+  if (v.length > 11) v = v.slice(0, 11); // Limita a 11 dígitos
+
+  if (v.length > 10) {
+    // Formato (XX) XXXXX-XXXX
+    return "(" + v.substring(0, 2) + ") " + v.substring(2, 7) + "-" + v.substring(7);
+  } else if (v.length > 6) {
+    // Formato (XX) XXXX-XXXX
+    return "(" + v.substring(0, 2) + ") " + v.substring(2, 6) + "-" + v.substring(6);
+  } else if (v.length > 2) {
+    // Formato (XX) XXXX
+    return "(" + v.substring(0, 2) + ") " + v.substring(2);
+  } else if (v.length > 0) {
+    // Formato (XX
+    return "(" + v;
   }
   return v;
 }

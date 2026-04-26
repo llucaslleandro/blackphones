@@ -62,7 +62,9 @@ export function renderEstoque(callbacks = {}) {
   if (searchEstoque.length > 0) {
     produtosValidos = produtosValidos.filter(p =>
       (p.nome || '').toLowerCase().includes(searchEstoque) ||
-      (p.sku || '').toLowerCase().includes(searchEstoque)
+      (p.sku || '').toLowerCase().includes(searchEstoque) ||
+      (p.imei1 || '').toLowerCase().includes(searchEstoque) ||
+      (p.imei2 || '').toLowerCase().includes(searchEstoque)
     );
   }
 
@@ -401,7 +403,10 @@ export function abrirModalEdicao(sku) {
   fill('cad-preco', prod.preco);
   fill('cad-custo', prod.custo);
   fill('cad-cor', prod.cor);
-
+  fill('cad-categoria', prod.categoria);
+  fill('cad-estoque', prod.estoque);
+  fill('cad-estoque-min', prod.estoque_minimo);
+  
   // Fill Images
   for (let i = 1; i <= 5; i++) {
     const imgUrl = (prod.images && prod.images[i - 1]) || '';
@@ -419,8 +424,6 @@ export function abrirModalEdicao(sku) {
     }
   }
 
-
-
   const parseNumUnit = (str) => {
     const s = String(str || '');
     return { num: s.replace(/[^0-9.]/g, ''), unit: s.replace(/[0-9.]/g, '').trim().toUpperCase() };
@@ -431,12 +434,24 @@ export function abrirModalEdicao(sku) {
   const btnAr = document.getElementById('cad-armaz-unit');
   if (btnAr) { btnAr.dataset.unit = ar.unit === 'TB' ? 'TB' : 'GB'; btnAr.textContent = btnAr.dataset.unit; }
 
+  const ram = parseNumUnit(prod.ram);
+  fill('cad-ram', ram.num);
+  const btnRam = document.getElementById('cad-ram-unit');
+  if (btnRam) { btnRam.dataset.unit = ram.unit || 'GB'; btnRam.textContent = btnRam.dataset.unit; }
+
+  fill('cad-cam-frontal', parseNumUnit(prod.camera_frontal).num);
+  fill('cad-cam-traseira', parseNumUnit(prod.camera_traseira).num);
+  fill('cad-bateria', parseNumUnit(prod.bateria).num);
+  fill('cad-tela', parseNumUnit(prod.tela).num);
+  fill('cad-imei2', prod.imei2);
+  fill('cad-serie', prod.codigo_serie);
+
   const tipo = (prod.condicao || '').toLowerCase().includes('seminovo') ? 'Seminovo' : 'Novo';
   updateTipoButtons(tipo);
 
   if (tipo === 'Seminovo') {
     fill('cad-imei1', prod.imei1);
-    fill('cad-saude', prod.saude_bateria);
+    fill('cad-saude', parseNumUnit(prod.saude_bateria).num);
     fill('cad-origem', prod.origem);
   }
 
@@ -466,7 +481,16 @@ export function updateVarButtons(hasvars) {
 }
 
 export function adicionarLinhaVariacao() {
-  const v = { cor: '', armazenamento_num: '', armazenamento_unit: 'GB', preco: '', custo: '', estoque: '1', condicao: cadastroTipo };
+  const v = { 
+    cor: '', 
+    armazenamento_num: '', 
+    armazenamento_unit: 'GB', 
+    preco: document.getElementById('cad-preco')?.value || '', 
+    custo: document.getElementById('cad-custo')?.value || '', 
+    estoque: '1', 
+    condicao: cadastroTipo,
+    images: [] 
+  };
   cadastroVariacoes.push(v);
   renderVariacoes();
 }
@@ -477,15 +501,139 @@ function renderVariacoes() {
   list.innerHTML = '';
   cadastroVariacoes.forEach((v, idx) => {
     const div = document.createElement('div');
-    div.className = 'bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2';
-    div.innerHTML = `<div class="flex items-center justify-between"><span class="text-xs font-bold">Variação ${idx + 1}</span><button type="button" class="var-remove text-red-500 text-xs font-bold" data-idx="${idx}">Remover</button></div>
-      <div class="grid grid-cols-2 gap-2">
-        <input type="text" class="var-cor w-full px-2 py-1.5 border rounded text-xs" value="${v.cor}" data-idx="${idx}" placeholder="Cor">
-        <input type="number" class="var-armaz w-full px-2 py-1.5 border rounded text-xs" value="${v.armazenamento_num}" data-idx="${idx}" placeholder="Armaz.">
-      </div>`;
+    div.className = 'bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3 relative transition-all hover:border-indigo-200';
+    div.innerHTML = `
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Variação #${idx + 1}</span>
+        <button type="button" class="var-remove text-red-500 hover:text-red-700 text-[10px] font-bold transition" data-idx="${idx}">
+          <i class="fa-solid fa-trash-can mr-1"></i>Remover
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Cor</label>
+          <input type="text" class="var-cor w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" value="${v.cor}" data-idx="${idx}" placeholder="Ex: Prata">
+        </div>
+        <div>
+          <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Armazenamento</label>
+          <div class="flex">
+            <input type="number" class="var-armaz w-full px-3 py-2 border border-r-0 rounded-l-lg text-sm focus:ring-2 focus:ring-indigo-500" value="${v.armazenamento_num}" data-idx="${idx}" placeholder="128">
+            <button type="button" class="var-unit px-2 py-2 border border-gray-200 rounded-r-lg bg-gray-100 text-[10px] font-black text-gray-600 hover:bg-gray-200 transition" data-idx="${idx}">${v.armazenamento_unit}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Preço Venda</label>
+          <div class="relative">
+            <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">R$</span>
+            <input type="number" class="var-preco w-full pl-7 pr-2 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" value="${v.preco}" data-idx="${idx}" placeholder="0.00">
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Preço Custo</label>
+          <div class="relative">
+            <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">R$</span>
+            <input type="number" class="var-custo w-full pl-7 pr-2 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" value="${v.custo}" data-idx="${idx}" placeholder="0.00">
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Estoque</label>
+          <input type="number" class="var-estoque w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" value="${v.estoque}" data-idx="${idx}" placeholder="1">
+        </div>
+      </div>
+
+      <!-- Imagens da Variação -->
+      <div class="pt-2 border-t border-gray-200/50">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-[9px] font-bold text-gray-400 uppercase block">Fotos da Variação</label>
+          <span class="text-[9px] font-medium text-gray-400 italic">Opcional</span>
+        </div>
+        <div class="grid grid-cols-5 gap-2 mb-3">
+          ${[0, 1, 2, 3, 4].map(i => {
+            const img = v.images[i] || '';
+            return `
+              <div class="var-img-slot group relative aspect-square bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden cursor-pointer" data-var="${idx}" data-img="${i}">
+                <img src="${img}" class="w-full h-full object-contain ${img ? '' : 'hidden'}">
+                <div class="absolute inset-0 flex items-center justify-center text-gray-300 ${img ? 'hidden' : ''}">
+                  <span class="text-xs font-black opacity-30">${i + 1}</span>
+                </div>
+                <div class="var-loading hidden absolute inset-0 bg-white/80 flex items-center justify-center">
+                  <i class="fa-solid fa-spinner fa-spin text-indigo-500 text-[10px]"></i>
+                </div>
+                ${img ? `
+                  <button type="button" class="var-img-del absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] opacity-0 group-hover:opacity-100 transition-opacity z-10" data-var="${idx}" data-img="${i}">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <input type="file" class="var-file-input hidden" id="var-input-${idx}" accept="image/*" multiple data-idx="${idx}">
+        <button type="button" class="w-full py-2.5 border border-indigo-100 rounded-xl bg-indigo-50/50 text-indigo-600 text-[10px] font-black hover:bg-indigo-100/50 transition-all var-upload-trigger active:scale-95 flex items-center justify-center gap-2" data-idx="${idx}">
+          <i class="fa-solid fa-cloud-arrow-up text-sm"></i> ENVIAR FOTOS PARA ESTA VARIAÇÃO
+        </button>
+      </div>
+    `;
     list.appendChild(div);
   });
-  list.querySelectorAll('.var-remove').forEach(btn => btn.addEventListener('click', () => { cadastroVariacoes.splice(btn.dataset.idx, 1); renderVariacoes(); }));
+
+  // Bind Listeners
+  list.querySelectorAll('.var-cor').forEach(inp => inp.addEventListener('input', (e) => { cadastroVariacoes[e.target.dataset.idx].cor = e.target.value; }));
+  list.querySelectorAll('.var-armaz').forEach(inp => inp.addEventListener('input', (e) => { cadastroVariacoes[e.target.dataset.idx].armazenamento_num = e.target.value; }));
+  list.querySelectorAll('.var-preco').forEach(inp => inp.addEventListener('input', (e) => { cadastroVariacoes[e.target.dataset.idx].preco = e.target.value; }));
+  list.querySelectorAll('.var-custo').forEach(inp => inp.addEventListener('input', (e) => { cadastroVariacoes[e.target.dataset.idx].custo = e.target.value; }));
+  list.querySelectorAll('.var-estoque').forEach(inp => inp.addEventListener('input', (e) => { cadastroVariacoes[e.target.dataset.idx].estoque = e.target.value; }));
+  
+  list.querySelectorAll('.var-unit').forEach(btn => btn.addEventListener('click', (e) => {
+    const v = cadastroVariacoes[e.target.dataset.idx];
+    v.armazenamento_unit = v.armazenamento_unit === 'GB' ? 'TB' : 'GB';
+    e.target.textContent = v.armazenamento_unit;
+  }));
+
+  list.querySelectorAll('.var-remove').forEach(btn => btn.addEventListener('click', (e) => { 
+    cadastroVariacoes.splice(btn.dataset.idx, 1); 
+    renderVariacoes(); 
+  }));
+
+  list.querySelectorAll('.var-upload-trigger').forEach(btn => btn.addEventListener('click', () => {
+    document.getElementById(`var-input-${btn.dataset.idx}`).click();
+  }));
+
+  list.querySelectorAll('.var-file-input').forEach(inp => inp.addEventListener('change', (e) => {
+    handleVarFiles(e.target.dataset.idx, e.target.files);
+  }));
+
+  list.querySelectorAll('.var-img-del').forEach(btn => btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    cadastroVariacoes[btn.dataset.var].images.splice(btn.dataset.img, 1);
+    renderVariacoes();
+  }));
+}
+
+async function handleVarFiles(idx, files) {
+  const variation = cadastroVariacoes[idx];
+  const fileList = Array.from(files);
+  if (fileList.length === 0) return;
+
+  showToast(`Enviando ${fileList.length} foto(s)...`, 'blue', 'fa-spinner', true);
+  
+  for (const file of fileList) {
+    if (variation.images.length >= 5) break;
+    try {
+      const compressed = await compressImage(file);
+      const url = await uploadImageToDrive(compressed, `var_${idx}_${file.name}`);
+      variation.images.push(url);
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao enviar imagem da variação.', 'red', 'fa-xmark');
+    }
+  }
+  
+  showToast('Fotos da variação carregadas!', 'green', 'fa-check');
+  renderVariacoes();
 }
 
 // ===== CATEGORY HANDLER =====
@@ -598,65 +746,103 @@ export async function salvarNovoProduto(callbacks = {}) {
   const ramNum = val('cad-ram');
   const ramUnit = document.getElementById('cad-ram-unit')?.dataset.unit || 'GB';
 
-  const payload = {
+  const baseProduct = {
     nome: nome,
     descricao: val('cad-desc'),
     categoria: getCategoria(),
-    preco: numVal('cad-preco'),
-    custo: numVal('cad-custo'),
     imagem_1: val('cad-imagem-1'),
     imagem_2: val('cad-imagem-2'),
     imagem_3: val('cad-imagem-3'),
     imagem_4: val('cad-imagem-4'),
     imagem_5: val('cad-imagem-5'),
-    imagem: val('cad-imagem-1'), // fallback for legacy code
-    cor: cor,
-    armazenamento: armazenamento,
+    imagem: val('cad-imagem-1'),
     ram: ramNum ? ramNum + ramUnit : '',
     camera_frontal: val('cad-cam-frontal') ? val('cad-cam-frontal') + 'MP' : '',
     camera_traseira: val('cad-cam-traseira') ? val('cad-cam-traseira') + 'MP' : '',
     bateria: val('cad-bateria') ? val('cad-bateria') + 'mAh' : '',
     tela: val('cad-tela') ? val('cad-tela') + '"' : '',
-    estoque: numVal('cad-estoque'),
-    estoque_minimo: numVal('cad-estoque-min'),
     condicao: cadastroTipo,
     ativo: 'true',
   };
 
-  // Seminovo fields
   if (cadastroTipo === 'Seminovo') {
-    payload.imei1 = val('cad-imei1');
-    payload.imei2 = val('cad-imei2');
-    payload.codigo_serie = val('cad-serie');
-    payload.origem = val('cad-origem');
-    payload.saude_bateria = val('cad-saude') ? val('cad-saude') + '%' : '';
+    baseProduct.imei1 = val('cad-imei1');
+    baseProduct.imei2 = val('cad-imei2');
+    baseProduct.codigo_serie = val('cad-serie');
+    baseProduct.origem = val('cad-origem');
+    baseProduct.saude_bateria = val('cad-saude') ? val('cad-saude') + '%' : '';
   }
 
-  if (editModeSku) {
-    payload.sku = editModeSku;
+  let finalProducts = [];
+
+  if (cadastroTemVariacoes && cadastroVariacoes.length > 0) {
+    cadastroVariacoes.forEach(v => {
+      const armaz = v.armazenamento_num ? v.armazenamento_num + v.armazenamento_unit : '';
+      const ids = gerarIds(nome, v.cor, armaz, v.condicao);
+      
+      const p = {
+        ...baseProduct,
+        cor: v.cor,
+        armazenamento: armaz,
+        preco: Number(v.preco) || baseProduct.preco || 0,
+        custo: Number(v.custo) || baseProduct.custo || 0,
+        estoque: Number(v.estoque) || 0,
+        estoque_minimo: numVal('cad-estoque-min'),
+        id: ids.id,
+        sku: ids.sku,
+        grupo_id: ids.grupo_id
+      };
+
+      // Se a variação tem imagens próprias, substitui as do base
+      if (v.images && v.images.length > 0) {
+        for (let i = 0; i < 5; i++) {
+          p[`imagem_${i + 1}`] = v.images[i] || '';
+        }
+        p.imagem = v.images[0];
+      }
+
+      finalProducts.push(p);
+    });
   } else {
-    // Generate id, sku, grupo_id for new products
-    const ids = gerarIds(nome, cor, armazenamento, cadastroTipo);
-    payload.id = ids.id;
-    payload.sku = ids.sku;
-    payload.grupo_id = ids.grupo_id;
+    const ids = editModeSku ? { id: editModeSku, sku: editModeSku, grupo_id: val('cad-grupo-id') || editModeSku } : gerarIds(nome, cor, armazenamento, cadastroTipo);
+    const p = {
+      ...baseProduct,
+      cor: cor,
+      armazenamento: armazenamento,
+      preco: numVal('cad-preco'),
+      custo: numVal('cad-custo'),
+      estoque: numVal('cad-estoque'),
+      estoque_minimo: numVal('cad-estoque-min'),
+      id: ids.id,
+      sku: ids.sku,
+      grupo_id: ids.grupo_id
+    };
+    finalProducts.push(p);
   }
 
   try {
     showToast('Salvando...', 'blue', 'fa-spinner', true);
-    const action = editModeSku ? 'editar_produto' : 'salvar_produto';
-    const body = editModeSku ? payload : { produtos: [payload] };
-
-    const resp = await fetch(`${CONFIG.apiBaseUrl}?action=${action}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(body)
-    });
-
-    if (!(await resp.json()).ok) throw new Error('Erro na API');
+    
+    if (editModeSku) {
+      // Editar modo (sempre um por um)
+      const resp = await fetch(`${CONFIG.apiBaseUrl}?action=editar_produto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(finalProducts[0])
+      });
+      if (!(await resp.json()).ok) throw new Error('Erro na API');
+    } else {
+      // Cadastro modo (pode ser múltiplos)
+      const resp = await fetch(`${CONFIG.apiBaseUrl}?action=salvar_produto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ produtos: finalProducts })
+      });
+      if (!(await resp.json()).ok) throw new Error('Erro na API');
+    }
 
     fecharModalCadastro();
-    showToast('Produto salvo com sucesso!', 'green', 'fa-check');
+    showToast('Produto(s) salvo(s) com sucesso!', 'green', 'fa-check');
     await loadDashboardData(callbacks.dataCallbacks || {}, true);
     renderEstoque(callbacks);
   } catch (err) {

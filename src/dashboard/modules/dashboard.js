@@ -6,7 +6,7 @@ export function aplicarFiltroPeriodo(callbacks = {}) {
   const periodFilter = document.getElementById('period-filter');
   const dateStart = document.getElementById('date-start');
   const dateEnd = document.getElementById('date-end');
-  
+
   if (!periodFilter || state.allOrders.length === 0) return;
 
   const mode = periodFilter.value;
@@ -105,7 +105,7 @@ export function renderTable(callbacks = {}) {
 
   const labelCount = document.getElementById('label-table-count');
   if (labelCount) labelCount.textContent = `${displayOrders.length} itens exibidos`;
-  
+
   tbody.innerHTML = '';
 
   if (displayOrders.length === 0) {
@@ -157,7 +157,7 @@ export function renderTable(callbacks = {}) {
           </div>
         </td>
         <td class="px-6 py-3 whitespace-nowrap text-center pt-4">
-          <div class="flex gap-2 justify-center">
+          <div class="flex gap-2 justify-end sm:justify-center">
             <button data-id="${o.item_id || o.id_do_pedido}" class="btn-gerar-recibo w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition flex items-center justify-center border border-gray-100 hover:border-indigo-200 shadow-sm" title="Gerar Recibo">
               <i class="fa-solid fa-file-invoice-dollar text-xs"></i>
             </button>
@@ -204,7 +204,7 @@ export async function handleStatusChange(e, callbacks = {}) {
         if (s === 'Cancelado') return 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100';
         return 'bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100';
       };
-      
+
       sel.classList.add(...getStatusColorLocal(oldStatus).split(' '));
     });
     return;
@@ -230,9 +230,9 @@ async function updateStatusAPI(sel, itemId, newStatus, finalPrice, callbacks) {
     if (!json.ok) throw new Error(json.error || 'Erro na API');
 
     state.allOrders.forEach(o => { if (o.item_id === itemId) o.status = newStatus; });
-    
+
     if (callbacks.onStatusUpdated) callbacks.onStatusUpdated();
-    
+
     showToast('Status modificado! Atualizando estoque...', 'green', 'fa-check', true);
     await loadDashboardData(callbacks.dataCallbacks || {}, true);
     showToast('Estoque e Dashboard sincronizados!', 'green', 'fa-check');
@@ -309,13 +309,13 @@ export function showNegotiationModal(pedidoId, currentTotal, onConfirm, onCancel
   const modal = document.getElementById('modal-negociacao');
   const inputFinal = document.getElementById('input-final-price');
   const inputWrap = document.getElementById('input-negoc-wrap');
-  
+
   if (!modal) return;
 
   inputFinal.value = currentTotal;
   inputWrap.classList.add('hidden');
   document.getElementById('btn-negoc-nao').click();
-  
+
   modal.classList.remove('hidden');
 }
 
@@ -325,17 +325,41 @@ const formNovoPedido = document.getElementById('form-novo-pedido');
 
 export function abrirModalNovoPedido() {
   if (!modalNovoPedido) return;
-  
+
   // Popular select de produtos
   const select = document.getElementById('man-produto');
   if (select) {
     select.innerHTML = '<option value="">Selecione um produto...</option>';
-    state.allProducts.forEach(p => {
-      const desc = `${p.nome} ${p.armazenamento ? '- ' + p.armazenamento : ''} ${p.cor ? '(' + p.cor + ')' : ''}`;
+    const sortedProducts = [...state.allProducts].sort((a, b) => {
+      const estA = parseInt(a.estoque) || 0;
+      const estB = parseInt(b.estoque) || 0;
+      if (estA > 0 && estB <= 0) return -1;
+      if (estA <= 0 && estB > 0) return 1;
+      // Desempate por nome
+      return (a.nome || '').localeCompare(b.nome || '');
+    });
+
+    sortedProducts.forEach(p => {
+      let desc = `${p.nome} ${p.armazenamento ? '- ' + p.armazenamento : ''} ${p.cor ? '(' + p.cor + ')' : ''}`;
+      
+      if (p.condicao) {
+        desc += ` [${p.condicao}]`;
+      }
+      
+      const estoque = parseInt(p.estoque) || 0;
+      if (estoque <= 0) {
+        desc += ' (sem estoque)';
+      }
+
       const opt = document.createElement('option');
       opt.value = p.sku || p.id;
       opt.textContent = desc;
       opt.dataset.preco = p.preco;
+      
+      if (estoque <= 0) {
+        opt.disabled = true;
+      }
+      
       select.appendChild(opt);
     });
   }
@@ -354,7 +378,7 @@ export async function salvarPedidoManual(callbacks = {}) {
   const sku = document.getElementById('man-produto').value;
   const qtd = parseInt(document.getElementById('man-qtd').value) || 1;
   const precoCustom = parseFloat(document.getElementById('man-preco').value);
-  
+
   const erros = [];
   if (!sku) erros.push('Selecione um produto');
   if (qtd <= 0) erros.push('Quantidade deve ser maior que zero');
@@ -419,7 +443,7 @@ export function confirmarExclusao(itemId, callbacks = {}) {
 
   const btnConfirm = document.getElementById('btn-excluir-confirm');
   btnConfirm.onclick = () => excluirPedidoAPI(itemId, callbacks);
-  
+
   const btnCancel = document.getElementById('btn-excluir-cancel');
   btnCancel.onclick = () => modalExcluir.classList.add('hidden');
 }

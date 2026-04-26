@@ -57,7 +57,7 @@ const RENDER_PIPELINE = {
   onBrandsLoaded: (brands) => {
     const brandSelect = document.getElementById('table-brand');
     if (brandSelect) {
-      brandSelect.innerHTML = '<option value="all">Todas Marcas</option>';
+      brandSelect.innerHTML = '<option value="all">Todas Categorias</option>';
       brands.forEach(b => brandSelect.innerHTML += `<option value="${b}">${b}</option>`);
     }
   },
@@ -229,6 +229,17 @@ function setupDashboardListeners() {
   document.getElementById('cadastro-cancel')?.addEventListener('click', inventory.fecharModalCadastro);
   document.getElementById('cadastro-submit')?.addEventListener('click', () => inventory.salvarNovoProduto({ dataCallbacks: RENDER_PIPELINE, onEdit: inventory.abrirModalEdicao }));
   inventory.setupCategoriaHandler();
+  
+  // Unit Toggles (GB/TB)
+  ['cad-armaz-unit', 'cad-ram-unit'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      const current = btn.dataset.unit || 'GB';
+      const next = current === 'GB' ? 'TB' : 'GB';
+      btn.dataset.unit = next;
+      btn.textContent = next;
+    });
+  });
 
   document.querySelectorAll('.cadastro-tipo-btn').forEach(btn => {
     btn.addEventListener('click', () => inventory.updateTipoButtons(btn.dataset.tipo));
