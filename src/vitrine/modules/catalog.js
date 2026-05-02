@@ -204,10 +204,11 @@ export function filtrarProdutos(useAnimation = false) {
   const sort = elements.sortSelect.value;
 
   let filtrados = store.produtos.filter(p => {
+    const isAtivo = p.ativo === true;
     const byCat = categoria === 'all' || p.categoria === categoria;
     const byCond = condition === 'all' || (p.condicao && p.condicao.toLowerCase() === condition.toLowerCase());
     const byText = p.nome.toLowerCase().includes(query) || p.descricao.toLowerCase().includes(query);
-    return byCat && byCond && byText;
+    return isAtivo && byCat && byCond && byText;
   });
 
   filtrados.sort((a, b) => {

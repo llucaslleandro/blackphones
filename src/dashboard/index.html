@@ -564,6 +564,10 @@
         <i class="fa-solid fa-chart-bar"></i> Métricas <span
           class="bg-purple-100 text-purple-700 text-[10px] py-0.5 px-1.5 rounded font-bold">LIVE</span>
       </button>
+      <button id="tab-btn-encomendados"
+        class="pb-3 border-b-2 border-transparent font-medium text-gray-500 hover:text-gray-700 transition text-sm focus:outline-none flex items-center gap-2 ml-6">
+        <i class="fa-solid fa-truck-fast"></i> Compras
+      </button>
     </div>
 
     <!-- Loading / Error States -->
@@ -594,6 +598,12 @@
 
     <!-- Dashboard Content (Hidden initially) -->
     <div id="dashboard-content" class="hidden animate-[fadeIn_0.5s_ease-out]">
+
+      <!-- CONTEÚDO: ENCOMENDADOS -->
+      <div id="tab-encomendados" class="hidden space-y-6">
+        <!-- Renderizado via JS para manter a modularidade -->
+      </div>
+
 
       <!-- CONTEÚDO: ANÁLISE ESTRATÉGICA -->
       <div id="tab-estrategia" class="hidden space-y-6">
@@ -1570,6 +1580,22 @@
                 <i class="fa-solid fa-plus"></i> Adicionar Variação
               </button>
             </div>
+          </div>
+
+          <!-- Status Vitrine -->
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <label class="flex items-center justify-between cursor-pointer group">
+              <div>
+                <p class="text-sm font-bold text-gray-800">Publicar na Vitrine</p>
+                <p class="text-[10px] text-gray-500">Se desativado, o produto ficará apenas no estoque interno.</p>
+              </div>
+              <div class="relative flex items-center">
+                <input type="checkbox" id="cad-ativo" class="sr-only peer" checked>
+                <div
+                  class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
+                </div>
+              </div>
+            </label>
           </div>
 
           <!-- Errors -->

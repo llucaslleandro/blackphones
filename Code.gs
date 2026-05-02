@@ -15,6 +15,10 @@ function doGet(e) {
       result.data = getPedidos();
       result.ok = true;
       return buildResponse(result);
+    } else if (action === 'encomendados') {
+      result.data = getEncomendados();
+      result.ok = true;
+      return buildResponse(result);
     } else if (action === 'click') {
       var produtoId = e.parameter.produtoId || '';
       var clickResult = registrarClick(produtoId);
@@ -163,6 +167,51 @@ function doPost(e) {
     }
   }
   
+  if (action === 'salvar_encomendado') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      var res = salvarEncomendado(payload);
+      return buildResponse({ ok: true, item_id: res.item_id });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  if (action === 'salvar_lote_encomendado') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      var res = salvarLoteEncomendado(payload);
+      return buildResponse({ ok: true, lote_id: res.lote_id });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  if (action === 'marcar_chegou') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      var res = marcarChegou(payload);
+      return buildResponse({ ok: true });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+  
+  if (action === 'remover_encomendado') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      if (!payload.id) throw new Error('ID não fornecido.');
+      removerEncomendado_(payload.id);
+      return buildResponse({ ok: true });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
   if (action !== 'pedido') {
     return buildResponse({ ok: false, error: 'Ação inválida.' });
   }
@@ -979,3 +1028,299 @@ function getMetricas_(periodo) {
 
   return result;
 }
+
+// ============================================
+// Produtos Encomendados
+// ============================================
+
+function getEncomendados() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Produtos_Encomendados');
+  if (!sheet) return [];
+
+  var rows = sheet.getDataRange().getValues();
+  if (rows.length < 2) return [];
+
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase(); });
+  var dataRows = rows.slice(1);
+
+  return dataRows.map(function(r) {
+    var obj = {};
+    headers.forEach(function(h, idx) {
+      obj[h.replace(/ /g, '_')] = r[idx];
+    });
+    return obj;
+  });
+}
+
+function salvarEncomendado(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Produtos_Encomendados');
+  if (!sheet) {
+    sheet = ss.insertSheet('Produtos_Encomendados');
+    var defaultHeaders = ['ID', 'Categoria', 'Modelo', 'Versao', 'Cor', 'Memoria', 'Condicao', 'Fornecedor', 'Data Compra', 'Previsao Chegada', 'Custo Compra', 'Custo Adicional', 'Custo Total', 'Preco Venda Previsto', 'Bateria', 'IMEI', 'Serial', 'Observacoes', 'Status'];
+    sheet.appendRow(defaultHeaders);
+  }
+
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+
+  var itemId = payload.id || ('ENC-' + new Date().getTime());
+  payload.status = payload.status || 'encomendado';
+
+  // Verifica se existe para atualizar
+  var isEdit = false;
+  var idColIdx = headers.indexOf('id');
+  if (idColIdx !== -1 && payload.id) {
+    for (var i = 1; i < rows.length; i++) {
+      if (String(rows[i][idColIdx]) === String(payload.id)) {
+        isEdit = true;
+        for (var key in payload) {
+          var colIdx = headers.indexOf(key.toLowerCase());
+          if (colIdx !== -1) {
+            sheet.getRange(i + 1, colIdx + 1).setValue(payload[key]);
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  if (!isEdit) {
+    var rowData = new Array(headers.length);
+    for (var i = 0; i < headers.length; i++) rowData[i] = '';
+    
+    // Set ID
+    if (idColIdx !== -1) rowData[idColIdx] = itemId;
+
+    for (var key in payload) {
+      var colIdx = headers.indexOf(key.toLowerCase());
+      if (colIdx !== -1) rowData[colIdx] = payload[key];
+    }
+    sheet.appendRow(rowData);
+  }
+
+  return { item_id: itemId };
+}
+
+function salvarLoteEncomendado(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Produtos_Encomendados');
+  if (!sheet) {
+    sheet = ss.insertSheet('Produtos_Encomendados');
+    var defaultHeaders = ['ID', 'Lote ID', 'Categoria', 'Modelo', 'Versao', 'Cor', 'Memoria', 'Condicao', 'Fornecedor', 'Data Compra', 'Previsao Chegada', 'Custo Compra', 'Custo Frete', 'Custo Taxas', 'Custo Adicional Lote', 'Custo Adicional', 'Custo Total', 'Preco Venda Previsto', 'Bateria', 'IMEI', 'Serial', 'Observacoes', 'Observacoes Lote', 'Status', 'Status Lote', 'Created At'];
+    sheet.appendRow(defaultHeaders);
+  }
+
+  // Ensure dynamic headers exist
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  
+  var loteData = payload.lote || {};
+  var itens = payload.itens || [];
+  
+  var loteId = loteData.id || ('LOTE-' + new Date().getTime());
+  loteData.id = loteId;
+  loteData.status_lote = loteData.status_lote || 'encomendado';
+  loteData.created_at = loteData.created_at || new Date().toISOString();
+
+  // Verifica headers necessarios
+  var tempRow = Object.assign({ lote_id: loteId }, loteData, (itens[0] || {}));
+  for (var key in tempRow) {
+    var kLower = key.toLowerCase();
+    if (headers.indexOf(kLower) === -1) {
+      headers.push(kLower);
+      sheet.getRange(1, headers.length).setValue(kLower);
+    }
+  }
+  
+  // Reload rows/headers after potentially adding headers
+  headers = sheet.getDataRange().getValues()[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  rows = sheet.getDataRange().getValues();
+  
+  var idColIdx = headers.indexOf('id');
+  var loteIdColIdx = headers.indexOf('lote_id');
+
+  // Deletar linhas antigas do lote
+  if (loteIdColIdx !== -1) {
+    for (var i = rows.length - 1; i >= 1; i--) {
+      var rLoteId = rows[i][loteIdColIdx] || rows[i][idColIdx]; 
+      if (String(rLoteId) === String(loteId)) {
+        sheet.deleteRow(i + 1);
+      }
+    }
+  }
+
+  // Inserir os novos items
+  itens.forEach(function(item) {
+    var itemId = item.id || ('ENC-' + Math.random().toString(36).substring(2, 9) + Date.now());
+    var flatRow = {
+      id: itemId,
+      lote_id: loteId,
+      fornecedor: loteData.fornecedor,
+      data_compra: loteData.data_compra,
+      previsao_chegada: loteData.previsao_chegada,
+      custo_frete: loteData.custo_frete,
+      custo_taxas: loteData.custo_taxas,
+      custo_adicional_lote: loteData.custo_adicional_lote,
+      observacoes_lote: loteData.observacoes_lote,
+      status_lote: loteData.status_lote,
+      created_at: loteData.created_at,
+      
+      categoria: item.categoria,
+      modelo: item.modelo,
+      versao: item.versao,
+      cor: item.cor,
+      memoria: item.memoria,
+      condicao: item.condicao,
+      custo_compra: item.custo_compra,
+      custo_adicional: item.custo_adicional,
+      custo_total: item.custo_total,
+      preco_venda_previsto: item.preco_venda_previsto,
+      bateria: item.bateria,
+      imei: item.imei,
+      serial: item.serial,
+      observacoes: item.observacoes,
+      status: item.status || 'encomendado'
+    };
+
+    var rowData = new Array(headers.length);
+    for (var i=0; i<headers.length; i++) rowData[i] = '';
+    
+    for (var key in flatRow) {
+      var colIdx = headers.indexOf(key);
+      if (colIdx !== -1) rowData[colIdx] = flatRow[key] !== undefined ? flatRow[key] : '';
+    }
+    sheet.appendRow(rowData);
+  });
+
+  return { lote_id: loteId };
+}
+
+function marcarChegou(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var encomendadosSheet = ss.getSheetByName('Produtos_Encomendados');
+  if (!encomendadosSheet) throw new Error('Aba Produtos_Encomendados não encontrada.');
+
+  var rows = encomendadosSheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var idColIdx = headers.indexOf('id');
+  
+  if (idColIdx === -1) throw new Error('Coluna ID não encontrada em Produtos_Encomendados.');
+
+  var encomendadoData = null;
+  var encomendadoRowIdx = -1;
+
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][idColIdx]) === String(payload.id)) {
+      encomendadoData = {};
+      headers.forEach(function(h, idx) {
+        encomendadoData[h] = rows[i][idx];
+      });
+      encomendadoRowIdx = i + 1;
+      break;
+    }
+  }
+
+  if (!encomendadoData) throw new Error('Produto encomendado não encontrado.');
+
+  // Cria payload para salvar em Produtos
+  var produtoPayload = {
+    nome: encomendadoData.modelo || '',
+    categoria: encomendadoData.categoria || '',
+    descricao: encomendadoData.observacoes || '',
+    cor: encomendadoData.cor || '',
+    armazenamento: encomendadoData.memoria || '',
+    condicao: encomendadoData.condicao || '',
+    bateria: payload.bateria || encomendadoData.bateria || '',
+    imei1: payload.imei || encomendadoData.imei || '',
+    codigo_serie: payload.serial || encomendadoData.serial || '',
+    preco: payload.precoVenda || encomendadoData.preco_venda_previsto || 0,
+    custo: encomendadoData.custo_total || encomendadoData.custo_compra || 0,
+    origem: encomendadoData.fornecedor || '',
+    estoque: 1,
+    estoque_minimo: 1,
+    ativo: payload.publicarNaVitrine ? 'true' : 'false',
+    imagem_1: payload.imagem_1 || '',
+    imagem_2: payload.imagem_2 || '',
+    imagem_3: payload.imagem_3 || '',
+    imagem_4: payload.imagem_4 || '',
+    imagem_5: payload.imagem_5 || ''
+  };
+
+  // Salva no Produtos principal
+  salvarNovoProduto([produtoPayload]);
+
+  // Atualiza status no Encomendados
+  var statusColIdx = headers.indexOf('status');
+  if (statusColIdx !== -1) {
+    encomendadosSheet.getRange(encomendadoRowIdx, statusColIdx + 1).setValue('chegou');
+    rows[encomendadoRowIdx-1][statusColIdx] = 'chegou';
+  }
+
+  // Atualiza status do lote se existir
+  var loteIdColIdx = headers.indexOf('lote_id');
+  var statusLoteColIdx = headers.indexOf('status_lote');
+  if (loteIdColIdx !== -1 && statusLoteColIdx !== -1) {
+    var currentLoteId = rows[encomendadoRowIdx-1][loteIdColIdx];
+    if (currentLoteId) {
+      var allArrived = true;
+      var someArrived = false;
+      for (var i = 1; i < rows.length; i++) {
+        if (rows[i][loteIdColIdx] == currentLoteId) {
+          var s = rows[i][statusColIdx];
+          if (s === 'chegou') someArrived = true;
+          else allArrived = false;
+        }
+      }
+      var newLoteStatus = allArrived ? 'recebido' : (someArrived ? 'parcial' : 'encomendado');
+      for (var i = 1; i < rows.length; i++) {
+        if (rows[i][loteIdColIdx] == currentLoteId) {
+          encomendadosSheet.getRange(i + 1, statusLoteColIdx + 1).setValue(newLoteStatus);
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+function removerEncomendado_(id) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Produtos_Encomendados');
+  if (!sheet) return;
+
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var idColIdx = headers.indexOf('id');
+  var loteIdColIdx = headers.indexOf('lote_id');
+
+  if (idColIdx === -1) return;
+
+  // Find if it's a lote
+  var isLote = false;
+  var rowsToDelete = [];
+  
+  if (loteIdColIdx !== -1) {
+    for (var i = 1; i < rows.length; i++) {
+      if (String(rows[i][loteIdColIdx]) === String(id)) {
+        rowsToDelete.push(i + 1);
+        isLote = true;
+      }
+    }
+  }
+
+  if (isLote && rowsToDelete.length > 0) {
+    for (var i = rowsToDelete.length - 1; i >= 0; i--) {
+      sheet.deleteRow(rowsToDelete[i]);
+    }
+  } else {
+    for (var i = 1; i < rows.length; i++) {
+      if (String(rows[i][idColIdx]) === String(id)) {
+        sheet.deleteRow(i + 1);
+        return;
+      }
+    }
+  }
+}
+

@@ -375,6 +375,9 @@ export function abrirModalCadastro() {
   document.getElementById('cad-var-list').innerHTML = '';
   updateVarButtons(false);
   document.getElementById('cad-errors')?.classList.add('hidden');
+  
+  const ativoToggle = document.getElementById('cad-ativo');
+  if (ativoToggle) ativoToggle.checked = true;
 
   // Clear any previous validation highlights
   modalCadastro.querySelectorAll('.cad-field-error').forEach(el => el.classList.remove('cad-field-error', 'border-red-400', 'ring-2', 'ring-red-200'));
@@ -454,6 +457,9 @@ export function abrirModalEdicao(sku) {
     fill('cad-saude', parseNumUnit(prod.saude_bateria).num);
     fill('cad-origem', prod.origem);
   }
+
+  const ativoToggle = document.getElementById('cad-ativo');
+  if (ativoToggle) ativoToggle.checked = String(prod.ativo).toLowerCase() === 'true';
 
   updateVarButtons(false);
 }
@@ -717,16 +723,30 @@ function validarCamposObrigatorios() {
   }
 
   // Display errors
-  const errContainer = document.getElementById('cad-errors');
-  const errList = document.getElementById('cad-errors-list');
   if (erros.length > 0) {
-    errList.innerHTML = erros.map(e => `<li>${e}</li>`).join('');
-    errContainer?.classList.remove('hidden');
-    errContainer?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    console.warn('Validação falhou:', erros);
+    exibirErrosNoModal(erros);
     return false;
   }
+  
+  console.log('Validação concluída com sucesso.');
+  document.getElementById('cad-errors')?.classList.add('hidden');
+  return true;
+}
 
-  errContainer?.classList.add('hidden');
+function exibirErrosNoModal(erros) {
+  const errContainer = document.getElementById('cad-errors');
+  const errList = document.getElementById('cad-errors-list');
+  if (!errContainer || !errList) return;
+
+  if (erros.length > 0) {
+    errList.innerHTML = erros.map(e => `<li>${e}</li>`).join('');
+    errContainer.classList.remove('hidden');
+    // Forçar scroll para o container de erros
+    errContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return false;
+  }
+  errContainer.classList.add('hidden');
   return true;
 }
 
@@ -734,9 +754,38 @@ function validarCamposObrigatorios() {
 export async function salvarNovoProduto(callbacks = {}) {
   const val = (id) => (document.getElementById(id)?.value || '').trim();
   const numVal = (id) => Number(document.getElementById(id)?.value || 0);
+  const btnSubmit = document.getElementById('cadastro-submit');
+  if (btnSubmit?.disabled) return; // Prevent double click
+  const publicar = document.getElementById('cad-ativo')?.checked ?? true;
 
-  // Run validation (skip for edit mode since some fields may not change)
-  if (!editModeSku && !validarCamposObrigatorios()) return;
+  // Se for para publicar na Vitrine, valida tudo. 
+  // Se for rascunho (inativo), valida apenas nome e categoria.
+  if (publicar) {
+    if (!validarCamposObrigatorios()) return;
+    
+    // Validação extra para variações se houver
+    if (cadastroTemVariacoes && cadastroVariacoes.length > 0) {
+      const errosVars = [];
+      cadastroVariacoes.forEach((v, i) => {
+        if (!v.preco || Number(v.preco) <= 0) errosVars.push(`Variação ${i+1}: Preço é obrigatório`);
+        if (!v.cor) errosVars.push(`Variação ${i+1}: Cor é obrigatória`);
+      });
+      if (errosVars.length > 0) {
+        exibirErrosNoModal(errosVars);
+        return;
+      }
+    }
+  } else {
+    // Validação mínima para rascunho
+    const errosRascunho = [];
+    if (!val('cad-nome')) errosRascunho.push('Nome do Produto é obrigatório');
+    if (!getCategoria()) errosRascunho.push('Categoria é obrigatória');
+    
+    if (errosRascunho.length > 0) {
+      exibirErrosNoModal(errosRascunho);
+      return;
+    }
+  }
 
   const nome = val('cad-nome');
   const cor = val('cad-cor');
@@ -762,7 +811,7 @@ export async function salvarNovoProduto(callbacks = {}) {
     bateria: val('cad-bateria') ? val('cad-bateria') + 'mAh' : '',
     tela: val('cad-tela') ? val('cad-tela') + '"' : '',
     condicao: cadastroTipo,
-    ativo: 'true',
+    ativo: publicar ? 'true' : 'false',
   };
 
   if (cadastroTipo === 'Seminovo') {
@@ -822,7 +871,11 @@ export async function salvarNovoProduto(callbacks = {}) {
 
   try {
     showToast('Salvando...', 'blue', 'fa-spinner', true);
-    
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+    }
+
     if (editModeSku) {
       // Editar modo (sempre um por um)
       const resp = await fetch(`${CONFIG.apiBaseUrl}?action=editar_produto`, {
@@ -830,7 +883,8 @@ export async function salvarNovoProduto(callbacks = {}) {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(finalProducts[0])
       });
-      if (!(await resp.json()).ok) throw new Error('Erro na API');
+      const res = await resp.json();
+      if (!res.ok) throw new Error(res.error || 'Erro na API');
     } else {
       // Cadastro modo (pode ser múltiplos)
       const resp = await fetch(`${CONFIG.apiBaseUrl}?action=salvar_produto`, {
@@ -838,7 +892,8 @@ export async function salvarNovoProduto(callbacks = {}) {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ produtos: finalProducts })
       });
-      if (!(await resp.json()).ok) throw new Error('Erro na API');
+      const res = await resp.json();
+      if (!res.ok) throw new Error(res.error || 'Erro na API');
     }
 
     fecharModalCadastro();
@@ -848,5 +903,11 @@ export async function salvarNovoProduto(callbacks = {}) {
   } catch (err) {
     console.error('Erro ao salvar produto:', err);
     showToast('Erro ao salvar produto.', 'red', 'fa-xmark');
+  } finally {
+    const btnSubmit = document.getElementById('cadastro-submit');
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = editModeSku ? '<i class="fa-solid fa-check"></i> Salvar Alterações' : '<i class="fa-solid fa-check"></i> Salvar Produto';
+    }
   }
 }

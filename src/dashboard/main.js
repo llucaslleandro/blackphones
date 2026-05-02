@@ -5,6 +5,7 @@ import * as analytics from './modules/analytics.js';
 import * as dashboard from './modules/dashboard.js';
 import * as inventory from './modules/inventory.js';
 import * as notifications from './modules/notifications.js';
+import * as compras from './modules/compras.js';
 import { initOnboarding } from './modules/onboarding.js';
 import { renderMetricas, refreshActiveCount } from './modules/metrics.js';
 import { initReceiptModal } from './modules/receipt.js';
@@ -105,13 +106,16 @@ function setupDashboardListeners() {
   const btnTabEstrategia = document.getElementById('tab-btn-estrategia');
   const btnTabEstoque = document.getElementById('tab-btn-estoque');
   const btnTabMetricas = document.getElementById('tab-btn-metricas');
+  const btnTabEncomendados = document.getElementById('tab-btn-encomendados');
+  
   const tabGeral = document.getElementById('tab-geral');
   const tabEstrategia = document.getElementById('tab-estrategia');
   const tabEstoque = document.getElementById('tab-estoque');
   const tabMetricas = document.getElementById('tab-metricas');
+  const tabEncomendados = document.getElementById('tab-encomendados');
 
-  const tabs = [tabGeral, tabEstrategia, tabEstoque, tabMetricas];
-  const btns = [btnTabGeral, btnTabEstrategia, btnTabEstoque, btnTabMetricas];
+  const tabs = [tabGeral, tabEstrategia, tabEstoque, tabMetricas, tabEncomendados];
+  const btns = [btnTabGeral, btnTabEstrategia, btnTabEstoque, btnTabMetricas, btnTabEncomendados];
 
   const globalFilterWrap = document.getElementById('global-filter-wrap');
 
@@ -136,6 +140,11 @@ function setupDashboardListeners() {
     ui.setTab(btnTabMetricas, tabMetricas, btns, tabs);
     showGlobalFilters(false);
     renderMetricas();
+  });
+  btnTabEncomendados?.addEventListener('click', () => {
+    ui.setTab(btnTabEncomendados, tabEncomendados, btns, tabs);
+    showGlobalFilters(false);
+    compras.initAndRender();
   });
 
   // Métricas: Period filter
