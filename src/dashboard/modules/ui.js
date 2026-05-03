@@ -36,14 +36,17 @@ export function toggleLoading(isLoading, isSuccess = false, hasOrders = false) {
 
 export function setTab(activeBtn, activeTab, allBtns, allTabs) {
   allBtns.forEach(btn => {
-    if (btn) btn.className = 'pb-3 border-b-2 border-transparent font-medium text-gray-500 hover:text-gray-700 transition text-sm focus:outline-none flex items-center gap-2';
+    if (btn) btn.className = 'sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700';
   });
   allTabs.forEach(tab => {
     if (tab) tab.classList.add('hidden');
   });
 
-  if (activeBtn) activeBtn.className = 'pb-3 border-b-2 border-gray-900 font-bold text-gray-900 transition text-sm focus:outline-none flex items-center gap-2';
+  if (activeBtn) activeBtn.className = 'sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-gray-900 bg-gray-100';
   if (activeTab) activeTab.classList.remove('hidden');
+
+  // Reset scroll to top
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 // Formatters

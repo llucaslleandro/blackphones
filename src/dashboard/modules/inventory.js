@@ -17,7 +17,7 @@ export function renderEstoque(callbacks = {}) {
     const est = Number(p.estoque) || 0;
     const min = Number(p.estoque_minimo) || 2;
     const custo = parseNumber(p.custo ?? p.preco_custo ?? 0);
-    
+
     totalAparelhos += est;
     if (est <= 0) esgotados++;
     else if (est <= min) poucas++;
@@ -72,11 +72,11 @@ export function renderEstoque(callbacks = {}) {
     produtosValidos = produtosValidos.filter(p => {
       const est = Number(p.estoque) || 0;
       const min = Number(p.estoque_minimo) || 2;
-      
+
       if (filterEstoque === 'em-estoque') return est > 0;
       if (filterEstoque === 'esgotados') return est <= 0;
       if (filterEstoque === 'baixo-estoque') return est > 0 && est <= min;
-      
+
       if (filterEstoque === 'parados') {
         if (est <= 0) return false;
         const sku = String(p.sku || '').trim().toLowerCase();
@@ -84,7 +84,7 @@ export function renderEstoque(callbacks = {}) {
         if (p.armazenamento && !combinedName.includes(p.armazenamento)) combinedName += ' ' + p.armazenamento;
         if (p.cor && !combinedName.includes(p.cor)) combinedName += ' ' + p.cor;
         const fullNomeNormalized = normalizeText(combinedName);
-        
+
         let lastDate = sku && lastSaleMap[sku] ? lastSaleMap[sku] : (fullNomeNormalized && lastSaleMap[fullNomeNormalized] ? lastSaleMap[fullNomeNormalized] : null);
         const days = lastDate ? Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24)) : 999;
         return days >= 15;
@@ -109,18 +109,18 @@ export function renderEstoque(callbacks = {}) {
     let statusColor = 'text-green-600';
     let statusText = 'Em Estoque';
     if (estVal <= 0) { statusColor = 'text-red-600'; statusText = 'Esgotado'; }
-    else if (estVal <= minVal) { statusColor = 'text-orange-600'; statusText = estVal === 1 ? 'Última Unid' : 'Abaixo do Mín'; }
+    else if (estVal <= minVal) { statusColor = 'text-orange-600'; statusText = estVal === 1 ? 'Última Unidade' : 'Abaixo do Mínimo'; }
 
     const varList = [p.armazenamento, p.cor, p.condicao].filter(v => v && v.trim() !== '');
     const isActive = String(p.ativo).toLowerCase() === 'true';
     const rowOpacity = isActive ? '' : 'opacity-60 bg-gray-50';
-    
+
     const skuKey = String(p.sku || '').trim().toLowerCase();
     let combinedName = String(p.nome || '');
     if (p.armazenamento && !combinedName.includes(p.armazenamento)) combinedName += ' ' + p.armazenamento;
     if (p.cor && !combinedName.includes(p.cor)) combinedName += ' ' + p.cor;
     const fullNomeNormalized = normalizeText(combinedName);
-    
+
     const lastDate = skuKey && lastSaleMap[skuKey] ? lastSaleMap[skuKey] : (fullNomeNormalized && lastSaleMap[fullNomeNormalized] ? lastSaleMap[fullNomeNormalized] : null);
     const giroStr = lastDate ? (Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24)) === 0 ? 'Hoje' : `${Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24))} dias`) : '-';
 
@@ -130,32 +130,52 @@ export function renderEstoque(callbacks = {}) {
 
     tbody.innerHTML += `
       <tr class="hover:bg-gray-50/50 transition border-b border-gray-100 last:border-0 ${rowOpacity}">
-        <td class="px-6 py-4">
-          <div class="flex flex-col min-w-0">
-            <div class="flex items-center gap-2">
-               <span class="text-sm font-bold text-gray-900 truncate">${formatText(p.nome)}</span>
-               ${!isActive ? '<span class="px-1.5 py-0.5 bg-gray-200 text-gray-500 text-[8px] font-black uppercase rounded">Inativo</span>' : ''}
+        <td class="px-4 sm:px-6 py-3 sm:py-4">
+          <div class="flex items-start sm:items-center justify-between gap-2">
+            <div class="flex flex-col min-w-0">
+              <div class="flex items-center gap-2">
+                 <span class="text-sm font-bold text-gray-900 truncate">${formatText(p.nome)}</span>
+                 ${!isActive ? '<span class="px-1.5 py-0.5 bg-gray-200 text-gray-500 text-[8px] font-black uppercase rounded">Inativo</span>' : ''}
+              </div>
+              <span class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">${p.sku}</span>
+              <div class="flex flex-wrap gap-x-2 gap-y-1 mt-1.5">
+                 ${varList.map(v => `<span class="text-[9px] font-extrabold text-gray-500 px-1.5 py-0.5 bg-gray-100 rounded uppercase tracking-wider">${v}</span>`).join('')}
+              </div>
             </div>
-            <span class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">${p.sku}</span>
-            <div class="flex flex-wrap gap-x-2 gap-y-1 mt-1.5">
-               ${varList.map(v => `<span class="text-[9px] font-extrabold text-gray-500 px-1.5 py-0.5 bg-gray-100 rounded uppercase tracking-wider">${v}</span>`).join('')}
+            <!-- Mobile actions (visible only on mobile) -->
+            <div class="flex sm:hidden items-center gap-1.5 shrink-0">
+              <button class="est-toggle-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition" data-sku="${p.sku}" title="${isActive ? 'Desativar' : 'Ativar'}">
+                 <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-[10px]"></i>
+              </button>
+              <button class="est-edit-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-indigo-500 hover:bg-indigo-50 transition" data-sku="${p.sku}">
+                 <i class="fa-solid fa-pen text-[10px]"></i>
+              </button>
+              <button class="est-delete-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-300 hover:text-red-500 hover:border-red-200 transition" data-sku="${p.sku}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
+                 <i class="fa-solid fa-trash-can text-[10px]"></i>
+              </button>
             </div>
           </div>
         </td>
-        <td class="px-6 py-4 text-center">
+        <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
+          <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Custo:</span>
           <span class="text-xs font-bold text-gray-700 font-mono">${formatMoney(custoUnid).replace('R$ ', 'R$')}</span>
         </td>
-        <td class="px-6 py-4 text-center">
-          <div class="flex flex-col items-center">
-            <span class="text-xs font-bold text-indigo-600 font-mono">${formatMoney(precoVenda).replace('R$ ', 'R$')}</span>
+        <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
+          <div class="flex flex-col sm:items-center">
+            <div>
+              <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Venda:</span>
+              <span class="text-xs font-bold text-indigo-600 font-mono">${formatMoney(precoVenda).replace('R$ ', 'R$')}</span>
+            </div>
             <span class="text-[9px] font-bold text-emerald-600 mt-0.5">+ ${formatMoney(lucro).replace('R$ ', 'R$')} lucro</span>
           </div>
         </td>
-        <td class="px-6 py-4 text-center">
+        <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
+          <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Giro:</span>
           <span class="text-[10px] font-black px-2 py-1 rounded bg-gray-50 text-gray-500 border border-gray-200/50">${giroStr}</span>
         </td>
-        <td class="px-6 py-4">
-          <div class="flex flex-col items-center">
+        <td class="px-4 sm:px-6 py-1 sm:py-4">
+          <div class="flex flex-col sm:items-center">
+             <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Estoque:</span>
              <div class="flex items-center gap-1.5">
                 <input type="number" value="${estVal}" class="est-val-input w-14 px-1.5 py-1 text-center text-xs font-black border border-gray-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all ${estVal <= 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-gray-900'}" data-sku="${p.sku}">
                 <span class="text-gray-300 text-[10px] font-bold">/</span>
@@ -164,7 +184,7 @@ export function renderEstoque(callbacks = {}) {
              <span class="text-[8px] font-black uppercase tracking-tighter mt-1.5 ${statusColor}">${statusText}</span>
           </div>
         </td>
-        <td class="px-6 py-4">
+        <td class="hidden sm:table-cell px-6 py-4">
           <div class="flex items-center justify-center gap-1.5">
             <button class="est-toggle-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition" data-sku="${p.sku}" title="${isActive ? 'Desativar' : 'Ativar'}">
                <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-[10px]"></i>
@@ -180,7 +200,7 @@ export function renderEstoque(callbacks = {}) {
       </tr>
     `;
   });
-;
+  ;
 
   // Bind Events
   document.querySelectorAll('.est-min-input').forEach(inp => {
@@ -337,13 +357,13 @@ export function abrirModalCadastro() {
   for (let i = 1; i <= 5; i++) {
     const imgInput = document.getElementById(`cad-imagem-${i}`);
     if (imgInput) imgInput.value = '';
-    
+
     const thumb = document.getElementById(`cad-img-thumb-${i}`);
     if (thumb) { thumb.src = ''; thumb.classList.add('hidden'); }
-    
+
     const placeholder = document.getElementById(`cad-img-placeholder-${i}`);
     if (placeholder) placeholder.classList.remove('hidden');
-    
+
     const loading = document.getElementById(`cad-img-loading-${i}`);
     if (loading) loading.classList.add('hidden');
   }
@@ -375,7 +395,7 @@ export function abrirModalCadastro() {
   document.getElementById('cad-var-list').innerHTML = '';
   updateVarButtons(false);
   document.getElementById('cad-errors')?.classList.add('hidden');
-  
+
   const ativoToggle = document.getElementById('cad-ativo');
   if (ativoToggle) ativoToggle.checked = true;
 
@@ -409,7 +429,7 @@ export function abrirModalEdicao(sku) {
   fill('cad-categoria', prod.categoria);
   fill('cad-estoque', prod.estoque);
   fill('cad-estoque-min', prod.estoque_minimo);
-  
+
   // Fill Images
   for (let i = 1; i <= 5; i++) {
     const imgUrl = (prod.images && prod.images[i - 1]) || '';
@@ -487,15 +507,15 @@ export function updateVarButtons(hasvars) {
 }
 
 export function adicionarLinhaVariacao() {
-  const v = { 
-    cor: '', 
-    armazenamento_num: '', 
-    armazenamento_unit: 'GB', 
-    preco: document.getElementById('cad-preco')?.value || '', 
-    custo: document.getElementById('cad-custo')?.value || '', 
-    estoque: '1', 
+  const v = {
+    cor: '',
+    armazenamento_num: '',
+    armazenamento_unit: 'GB',
+    preco: document.getElementById('cad-preco')?.value || '',
+    custo: document.getElementById('cad-custo')?.value || '',
+    estoque: '1',
     condicao: cadastroTipo,
-    images: [] 
+    images: []
   };
   cadastroVariacoes.push(v);
   renderVariacoes();
@@ -559,8 +579,8 @@ function renderVariacoes() {
         </div>
         <div class="grid grid-cols-5 gap-2 mb-3">
           ${[0, 1, 2, 3, 4].map(i => {
-            const img = v.images[i] || '';
-            return `
+      const img = v.images[i] || '';
+      return `
               <div class="var-img-slot group relative aspect-square bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden cursor-pointer" data-var="${idx}" data-img="${i}">
                 <img src="${img}" class="w-full h-full object-contain ${img ? '' : 'hidden'}">
                 <div class="absolute inset-0 flex items-center justify-center text-gray-300 ${img ? 'hidden' : ''}">
@@ -575,7 +595,7 @@ function renderVariacoes() {
                   </button>` : ''}
               </div>
             `;
-          }).join('')}
+    }).join('')}
         </div>
         <input type="file" class="var-file-input hidden" id="var-input-${idx}" accept="image/*" multiple data-idx="${idx}">
         <button type="button" class="w-full py-2.5 border border-indigo-100 rounded-xl bg-indigo-50/50 text-indigo-600 text-[10px] font-black hover:bg-indigo-100/50 transition-all var-upload-trigger active:scale-95 flex items-center justify-center gap-2" data-idx="${idx}">
@@ -592,16 +612,16 @@ function renderVariacoes() {
   list.querySelectorAll('.var-preco').forEach(inp => inp.addEventListener('input', (e) => { cadastroVariacoes[e.target.dataset.idx].preco = e.target.value; }));
   list.querySelectorAll('.var-custo').forEach(inp => inp.addEventListener('input', (e) => { cadastroVariacoes[e.target.dataset.idx].custo = e.target.value; }));
   list.querySelectorAll('.var-estoque').forEach(inp => inp.addEventListener('input', (e) => { cadastroVariacoes[e.target.dataset.idx].estoque = e.target.value; }));
-  
+
   list.querySelectorAll('.var-unit').forEach(btn => btn.addEventListener('click', (e) => {
     const v = cadastroVariacoes[e.target.dataset.idx];
     v.armazenamento_unit = v.armazenamento_unit === 'GB' ? 'TB' : 'GB';
     e.target.textContent = v.armazenamento_unit;
   }));
 
-  list.querySelectorAll('.var-remove').forEach(btn => btn.addEventListener('click', (e) => { 
-    cadastroVariacoes.splice(btn.dataset.idx, 1); 
-    renderVariacoes(); 
+  list.querySelectorAll('.var-remove').forEach(btn => btn.addEventListener('click', (e) => {
+    cadastroVariacoes.splice(btn.dataset.idx, 1);
+    renderVariacoes();
   }));
 
   list.querySelectorAll('.var-upload-trigger').forEach(btn => btn.addEventListener('click', () => {
@@ -625,7 +645,7 @@ async function handleVarFiles(idx, files) {
   if (fileList.length === 0) return;
 
   showToast(`Enviando ${fileList.length} foto(s)...`, 'blue', 'fa-spinner', true);
-  
+
   for (const file of fileList) {
     if (variation.images.length >= 5) break;
     try {
@@ -637,7 +657,7 @@ async function handleVarFiles(idx, files) {
       showToast('Erro ao enviar imagem da variação.', 'red', 'fa-xmark');
     }
   }
-  
+
   showToast('Fotos da variação carregadas!', 'green', 'fa-check');
   renderVariacoes();
 }
@@ -728,7 +748,7 @@ function validarCamposObrigatorios() {
     exibirErrosNoModal(erros);
     return false;
   }
-  
+
   console.log('Validação concluída com sucesso.');
   document.getElementById('cad-errors')?.classList.add('hidden');
   return true;
@@ -762,13 +782,13 @@ export async function salvarNovoProduto(callbacks = {}) {
   // Se for rascunho (inativo), valida apenas nome e categoria.
   if (publicar) {
     if (!validarCamposObrigatorios()) return;
-    
+
     // Validação extra para variações se houver
     if (cadastroTemVariacoes && cadastroVariacoes.length > 0) {
       const errosVars = [];
       cadastroVariacoes.forEach((v, i) => {
-        if (!v.preco || Number(v.preco) <= 0) errosVars.push(`Variação ${i+1}: Preço é obrigatório`);
-        if (!v.cor) errosVars.push(`Variação ${i+1}: Cor é obrigatória`);
+        if (!v.preco || Number(v.preco) <= 0) errosVars.push(`Variação ${i + 1}: Preço é obrigatório`);
+        if (!v.cor) errosVars.push(`Variação ${i + 1}: Cor é obrigatória`);
       });
       if (errosVars.length > 0) {
         exibirErrosNoModal(errosVars);
@@ -780,7 +800,7 @@ export async function salvarNovoProduto(callbacks = {}) {
     const errosRascunho = [];
     if (!val('cad-nome')) errosRascunho.push('Nome do Produto é obrigatório');
     if (!getCategoria()) errosRascunho.push('Categoria é obrigatória');
-    
+
     if (errosRascunho.length > 0) {
       exibirErrosNoModal(errosRascunho);
       return;
@@ -828,7 +848,7 @@ export async function salvarNovoProduto(callbacks = {}) {
     cadastroVariacoes.forEach(v => {
       const armaz = v.armazenamento_num ? v.armazenamento_num + v.armazenamento_unit : '';
       const ids = gerarIds(nome, v.cor, armaz, v.condicao);
-      
+
       const p = {
         ...baseProduct,
         cor: v.cor,

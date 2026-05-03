@@ -118,34 +118,101 @@ function setupDashboardListeners() {
   const btns = [btnTabGeral, btnTabEstrategia, btnTabEstoque, btnTabMetricas, btnTabEncomendados];
 
   const globalFilterWrap = document.getElementById('global-filter-wrap');
+  const globalFilterWrapMobile = document.getElementById('global-filter-wrap-mobile');
 
   const showGlobalFilters = (show) => {
-    globalFilterWrap?.classList.toggle('hidden', !show);
+    // Desktop: toggle visibility via style (the element has hidden lg:flex by default)
+    if (globalFilterWrap) {
+      if (show) {
+        globalFilterWrap.classList.remove('!hidden');
+      } else {
+        globalFilterWrap.classList.add('!hidden');
+      }
+    }
+    // Mobile: toggle the separate filter row
+    if (globalFilterWrapMobile) {
+      globalFilterWrapMobile.style.display = show ? '' : 'none';
+    }
+  };
+
+  // Helper: close mobile sidebar
+  const sidebar = document.getElementById('app-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const mainWrapper = document.getElementById('main-wrapper');
+
+  const closeMobileSidebar = () => {
+    sidebar?.classList.remove('mobile-open');
+    overlay?.classList.remove('active');
+    document.body.classList.remove('sidebar-open');
   };
 
   btnTabGeral?.addEventListener('click', () => {
     ui.setTab(btnTabGeral, tabGeral, btns, tabs);
     showGlobalFilters(true);
+    closeMobileSidebar();
   });
   btnTabEstrategia?.addEventListener('click', () => {
     ui.setTab(btnTabEstrategia, tabEstrategia, btns, tabs);
     showGlobalFilters(true);
+    closeMobileSidebar();
   });
   btnTabEstoque?.addEventListener('click', () => {
     ui.setTab(btnTabEstoque, tabEstoque, btns, tabs);
     showGlobalFilters(false);
     inventory.renderEstoque({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
+    closeMobileSidebar();
   });
   btnTabMetricas?.addEventListener('click', () => {
     ui.setTab(btnTabMetricas, tabMetricas, btns, tabs);
     showGlobalFilters(false);
     renderMetricas();
+    closeMobileSidebar();
   });
   btnTabEncomendados?.addEventListener('click', () => {
     ui.setTab(btnTabEncomendados, tabEncomendados, btns, tabs);
     showGlobalFilters(false);
     compras.initAndRender();
+    closeMobileSidebar();
   });
+
+  // ---- SIDEBAR COLLAPSE / MOBILE DRAWER ----
+  const toggleBtn = document.getElementById('btn-sidebar-toggle');
+  const mobileBtn = document.getElementById('btn-sidebar-mobile');
+  const SIDEBAR_KEY = 'vendly_sidebar_collapsed';
+
+  const updateSidebarState = (collapsed) => {
+    if (!sidebar) return;
+    sidebar.classList.toggle('collapsed', collapsed);
+    // Only apply margin on desktop (lg = 1024px+)
+    if (window.innerWidth >= 1024 && mainWrapper) {
+      mainWrapper.style.marginLeft = collapsed ? 'var(--sidebar-collapsed-w)' : '';
+    }
+    
+    if (toggleBtn) {
+      const ico = toggleBtn.querySelector('i');
+      if (ico) ico.style.transform = collapsed ? 'rotate(180deg)' : '';
+      toggleBtn.title = collapsed ? 'Expandir Sidebar' : 'Recolher Sidebar';
+    }
+  };
+
+  // Restore saved state (desktop only - lg breakpoint = 1024px)
+  if (sidebar && window.innerWidth >= 1024 && localStorage.getItem(SIDEBAR_KEY) === '1') {
+    updateSidebarState(true);
+  }
+
+  toggleBtn?.addEventListener('click', () => {
+    const isNowCollapsed = !sidebar.classList.contains('collapsed');
+    updateSidebarState(isNowCollapsed);
+    localStorage.setItem(SIDEBAR_KEY, isNowCollapsed ? '1' : '0');
+  });
+
+  mobileBtn?.addEventListener('click', () => {
+    sidebar?.classList.add('mobile-open');
+    overlay?.classList.add('active');
+    document.body.classList.add('sidebar-open');
+  });
+
+  overlay?.addEventListener('click', closeMobileSidebar);
 
   // Métricas: Period filter
   document.getElementById('metricas-period')?.addEventListener('change', () => renderMetricas());
@@ -163,24 +230,60 @@ function setupDashboardListeners() {
 
   // Global Refresh
   document.getElementById('btn-refresh')?.addEventListener('click', () => store.loadDashboardData(RENDER_PIPELINE));
+  document.getElementById('btn-refresh-mobile')?.addEventListener('click', () => store.loadDashboardData(RENDER_PIPELINE));
   document.getElementById('btn-retry')?.addEventListener('click', () => store.loadDashboardData(RENDER_PIPELINE));
 
-  // Period Filter (with auto-refresh)
+  // Period Filter (with auto-refresh) - Desktop
   const periodFilter = document.getElementById('period-filter');
-  periodFilter?.addEventListener('change', async () => {
-    document.getElementById('custom-date-wrap')?.classList.toggle('hidden', periodFilter.value !== 'custom');
-    // Only auto-refresh for non-custom (custom waits for date inputs)
-    if (periodFilter.value !== 'custom') {
+  const periodFilterMobile = document.getElementById('period-filter-mobile');
+
+  // Sync helper: when one filter changes, mirror to the other and trigger refresh
+  const handlePeriodChange = async (sourceFilter, otherFilter) => {
+    const val = sourceFilter.value;
+    if (otherFilter) otherFilter.value = val;
+
+    // Toggle custom date wraps
+    document.getElementById('custom-date-wrap')?.classList.toggle('hidden', val !== 'custom');
+    const mobileWrap = document.getElementById('custom-date-wrap-mobile');
+    if (mobileWrap) mobileWrap.classList.toggle('hidden', val !== 'custom');
+
+    if (val !== 'custom') {
       await store.loadDashboardData(RENDER_PIPELINE, true);
     }
     dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
-  });
+  };
 
+  periodFilter?.addEventListener('change', () => handlePeriodChange(periodFilter, periodFilterMobile));
+  periodFilterMobile?.addEventListener('change', () => handlePeriodChange(periodFilterMobile, periodFilter));
+
+  // Custom date inputs - Desktop
   document.getElementById('date-start')?.addEventListener('change', async () => {
+    const val = document.getElementById('date-start').value;
+    const mob = document.getElementById('date-start-mobile');
+    if (mob) mob.value = val;
     await store.loadDashboardData(RENDER_PIPELINE, true);
     dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
   });
   document.getElementById('date-end')?.addEventListener('change', async () => {
+    const val = document.getElementById('date-end').value;
+    const mob = document.getElementById('date-end-mobile');
+    if (mob) mob.value = val;
+    await store.loadDashboardData(RENDER_PIPELINE, true);
+    dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
+  });
+
+  // Custom date inputs - Mobile
+  document.getElementById('date-start-mobile')?.addEventListener('change', async () => {
+    const val = document.getElementById('date-start-mobile').value;
+    const desk = document.getElementById('date-start');
+    if (desk) desk.value = val;
+    await store.loadDashboardData(RENDER_PIPELINE, true);
+    dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
+  });
+  document.getElementById('date-end-mobile')?.addEventListener('change', async () => {
+    const val = document.getElementById('date-end-mobile').value;
+    const desk = document.getElementById('date-end');
+    if (desk) desk.value = val;
     await store.loadDashboardData(RENDER_PIPELINE, true);
     dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
   });
