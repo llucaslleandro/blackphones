@@ -1294,7 +1294,7 @@
                 <p class="text-sm text-gray-500 mt-1">Acompanhe a disponibilidade e bloqueie as compras de itens
                   esgotados.</p>
               </div>
-              <div class="flex gap-2 w-full sm:w-auto flex-wrap">
+              <div class="flex gap-2 w-full sm:w-auto flex-wrap lg:flex-nowrap">
                 <input type="text" id="estoque-search" placeholder="Buscar por nome ou SKU..."
                   class="w-full sm:w-64 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400">
                 <select id="estoque-filter"
@@ -1317,70 +1317,71 @@
             </div>
 
             <!-- Cards Alertas (Estoque) -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
               <!-- Patrimônio -->
-              <div class="col-span-2 sm:col-span-1 bg-white border border-gray-200 rounded-xl p-3 sm:p-4 shadow-sm">
-                <div class="flex items-center gap-3">
+              <div
+                class="col-span-2 sm:col-span-2 lg:col-span-2 bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]">
+                <div class="flex items-center gap-3 w-full">
                   <div
                     class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 shrink-0">
-                    <i class="fa-solid fa-sack-dollar"></i>
+                    <i class="fa-solid fa-sack-dollar text-sm"></i>
                   </div>
                   <div class="min-w-0">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Patrimônio Estimado</p>
-                    <h4 id="alert-patrimonio" class="text-lg font-black text-gray-800 truncate leading-tight mt-0.5">R$
-                      0
-                    </h4>
+                    <h4 id="alert-patrimonio" class="text-lg font-black text-gray-800 leading-tight">R$ 0</h4>
                   </div>
                 </div>
               </div>
               <!-- Total Aparelhos -->
-              <div class="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 shadow-sm">
-                <div class="flex items-center gap-3">
+              <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]">
+                <div class="flex items-center gap-3 w-full">
                   <div
                     class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 shrink-0">
-                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <i class="fa-solid fa-mobile-screen-button text-sm"></i>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Aparelhos</p>
-                    <h4 id="alert-total-qtd" class="text-lg font-black text-blue-700 leading-tight mt-0.5">0</h4>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Produtos Totais</p>
+                    <h4 id="alert-total-qtd" class="text-lg font-black text-blue-700 leading-tight">0</h4>
                   </div>
                 </div>
               </div>
               <!-- Esgotados -->
-              <div class="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 shadow-sm">
-                <div class="flex items-center gap-3">
+              <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]">
+                <div class="flex items-center gap-3 w-full">
                   <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-500 shrink-0">
-                    <i class="fa-solid fa-ban"></i>
+                    <i class="fa-solid fa-ban text-sm"></i>
                   </div>
                   <div class="min-w-0">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Esgotados</p>
-                    <h4 id="alert-esgotados" class="text-lg font-black text-red-600 leading-tight mt-0.5">0</h4>
+                    <h4 id="alert-esgotados" class="text-lg font-black text-red-600 leading-tight">0</h4>
                   </div>
                 </div>
               </div>
               <!-- Poucas -->
-              <div class="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 shadow-sm">
-                <div class="flex items-center gap-3">
+              <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]"
+                title="Produtos abaixo do estoque mínimo configurado">
+                <div class="flex items-center gap-3 w-full">
                   <div
                     class="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-500 shrink-0">
-                    <i class="fa-solid fa-exclamation"></i>
+                    <i class="fa-solid fa-exclamation text-sm"></i>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Atenção</p>
-                    <h4 id="alert-poucas" class="text-lg font-black text-orange-600 leading-tight mt-0.5">0</h4>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Baixo estoque</p>
+                    <h4 id="alert-poucas" class="text-lg font-black text-orange-600 leading-tight">0</h4>
                   </div>
                 </div>
               </div>
               <!-- Disponíveis -->
-              <div class="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 shadow-sm">
-                <div class="flex items-center gap-1">
+              <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]"
+                title="Produtos com pelo menos 1 unidade em estoque">
+                <div class="flex items-center gap-3 w-full">
                   <div
                     class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center text-green-500 shrink-0">
-                    <i class="fa-solid fa-check-double"></i>
+                    <i class="fa-solid fa-check-double text-sm"></i>
                   </div>
                   <div class="min-w-0">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Disponíveis</p>
-                    <h4 id="alert-estoque" class="text-lg font-black text-green-600 leading-tight mt-0.5">0</h4>
+                    <h4 id="alert-estoque" class="text-lg font-black text-green-600 leading-tight">0</h4>
                   </div>
                 </div>
               </div>

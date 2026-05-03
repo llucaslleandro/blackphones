@@ -11,17 +11,22 @@ export function renderEstoque(callbacks = {}) {
   if (!tbody) return;
 
   let produtosValidos = state.allProducts.filter(p => p.sku && p.sku !== '');
-  let esgotados = 0, poucas = 0, disponiveis = 0, patrimonioTotal = 0, totalAparelhos = 0;
+  let esgotados = 0, baixoEstoque = 0, disponiveis = 0, patrimonioTotal = 0;
+  const produtosTotais = produtosValidos.length;
 
   produtosValidos.forEach(p => {
-    const est = Number(p.estoque) || 0;
-    const min = Number(p.estoque_minimo) || 2;
+    const pending = pendingEstoqueUpdates[p.sku] || {};
+    const est = pending.estoque !== undefined ? pending.estoque : (Number(p.estoque) || 0);
+    // Usando a mesma lógica da tabela para consistência (padrão 2 se não definido)
+    const min = pending.estoque_minimo !== undefined ? pending.estoque_minimo : (Number(p.estoque_minimo) || 2);
     const custo = parseNumber(p.custo ?? p.preco_custo ?? 0);
-
-    totalAparelhos += est;
-    if (est <= 0) esgotados++;
-    else if (est <= min) poucas++;
-    else disponiveis++;
+    
+    if (est <= 0) {
+      esgotados++;
+    } else {
+      disponiveis++;
+      if (est <= min) baixoEstoque++;
+    }
 
     if (est > 0) {
       patrimonioTotal += custo * est;
@@ -29,9 +34,9 @@ export function renderEstoque(callbacks = {}) {
   });
 
   document.getElementById('alert-patrimonio').textContent = formatMoney(patrimonioTotal);
-  document.getElementById('alert-total-qtd').textContent = totalAparelhos;
+  document.getElementById('alert-total-qtd').textContent = produtosTotais;
   document.getElementById('alert-esgotados').textContent = esgotados;
-  document.getElementById('alert-poucas').textContent = poucas;
+  document.getElementById('alert-poucas').textContent = baixoEstoque;
   document.getElementById('alert-estoque').textContent = disponiveis;
 
   const searchEstoque = document.getElementById('estoque-search')?.value.toLowerCase() || '';
@@ -135,8 +140,13 @@ export function renderEstoque(callbacks = {}) {
 
     let statusColor = 'text-green-600';
     let statusText = 'Em Estoque';
-    if (estVal <= 0) { statusColor = 'text-red-600'; statusText = 'Esgotado'; }
-    else if (estVal <= minVal) { statusColor = 'text-orange-600'; statusText = estVal === 1 ? 'Última Unidade' : 'Abaixo do Mínimo'; }
+    if (estVal <= 0) { 
+      statusColor = 'text-red-600'; 
+      statusText = 'Esgotado'; 
+    } else if (estVal <= minVal) { 
+      statusColor = 'text-orange-600'; 
+      statusText = estVal === 1 ? 'Última Unidade' : 'Abaixo do Mínimo'; 
+    }
 
     const varList = [p.armazenamento, p.cor, p.condicao].filter(v => v && v.trim() !== '');
     const isActive = String(p.ativo).toLowerCase() === 'true';
