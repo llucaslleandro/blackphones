@@ -93,6 +93,33 @@ export function renderEstoque(callbacks = {}) {
     });
   }
 
+  // Ordenar: 
+  // 1. Ativos COM ESTOQUE (Top)
+  // 2. Ativos SEM ESTOQUE (Meio)
+  // 3. Desativados (Final)
+  produtosValidos.sort((a, b) => {
+    const aActive = String(a.ativo).toLowerCase() === 'true';
+    const bActive = String(b.ativo).toLowerCase() === 'true';
+    const aStock = Number(a.estoque) || 0;
+    const bStock = Number(b.estoque) || 0;
+
+    // Calcular "score" de prioridade
+    const getScore = (active, stock) => {
+      if (!active) return 0; // Desativados = 0
+      return stock > 0 ? 2 : 1; // Ativo com estoque = 2, Ativo sem estoque = 1
+    };
+
+    const scoreA = getScore(aActive, aStock);
+    const scoreB = getScore(bActive, bStock);
+
+    if (scoreA !== scoreB) {
+      return scoreB - scoreA; // Maior score primeiro
+    }
+
+    // Desempate secundário por nome
+    return (a.nome || '').localeCompare(b.nome || '');
+  });
+
   tbody.innerHTML = '';
   if (produtosValidos.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 text-sm italic">Nenhum produto em estoque.</td></tr>`;
@@ -135,7 +162,7 @@ export function renderEstoque(callbacks = {}) {
             <div class="flex flex-col min-w-0">
               <div class="flex items-center gap-2">
                  <span class="text-sm font-bold text-gray-900 truncate">${formatText(p.nome)}</span>
-                 ${!isActive ? '<span class="px-1.5 py-0.5 bg-gray-200 text-gray-500 text-[8px] font-black uppercase rounded">Inativo</span>' : ''}
+                 ${!isActive ? '<span class="px-1.5 py-0.5 bg-red-300 text-gray-600 text-[8px] font-black uppercase rounded">Inativo</span>' : ''}
               </div>
               <span class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">${p.sku}</span>
               <div class="flex flex-wrap gap-x-2 gap-y-1 mt-1.5">
