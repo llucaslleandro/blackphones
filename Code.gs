@@ -23,6 +23,10 @@ function doGet(e) {
       var produtoId = e.parameter.produtoId || '';
       var clickResult = registrarClick(produtoId);
       return buildResponse({ ok: true, clicks: clickResult.clicks });
+    } else if (action === 'fiados') {
+      result.data = getFiados();
+      result.ok = true;
+      return buildResponse(result);
     } else if (action === 'metricas') {
       var periodo = e.parameter.periodo || 'hoje';
       result.data = getMetricas_(periodo);
@@ -206,6 +210,39 @@ function doPost(e) {
       if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
       if (!payload.id) throw new Error('ID não fornecido.');
       removerEncomendado_(payload.id);
+      return buildResponse({ ok: true });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  if (action === 'salvar_fiado') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      var res = salvarFiado(payload);
+      return buildResponse({ ok: true, fiado_id: res.fiado_id });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  if (action === 'pagar_parcela_fiado') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      var res = pagarParcelaFiado(payload.fiado_id, payload.parcela_id);
+      return buildResponse({ ok: true });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  if (action === 'cancelar_fiado') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      cancelarFiado(payload.fiado_id);
       return buildResponse({ ok: true });
     } catch (err) {
       return buildResponse({ ok: false, error: err.toString() });
@@ -1324,3 +1361,213 @@ function removerEncomendado_(id) {
   }
 }
 
+function getFiados() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Fiados');
+  if (!sheet) return [];
+
+  var rows = sheet.getDataRange().getValues();
+  if (rows.length < 2) return [];
+
+  var headers = rows[0].map(function(h) { return String(h).trim(); });
+  var dataRows = rows.slice(1);
+
+  return dataRows.map(function(r) {
+    var obj = {};
+    headers.forEach(function(h, idx) {
+      var key = h.toLowerCase().replace(/ /g, '_');
+      obj[key] = r[idx];
+    });
+    // Parse JSON strings back to objects
+    try { if (obj.produto_vendido_snapshot) obj.produtoVendidoSnapshot = JSON.parse(obj.produto_vendido_snapshot); } catch(e) {}
+    try { if (obj.produto_recebido_dados) obj.produtoRecebidoDados = JSON.parse(obj.produto_recebido_dados); } catch(e) {}
+    try { if (obj.parcelas) obj.parcelas = JSON.parse(obj.parcelas); } catch(e) {}
+    return obj;
+  });
+}
+
+function salvarFiado(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Fiados');
+  if (!sheet) {
+    sheet = ss.insertSheet('Fiados');
+    sheet.appendRow([
+      'ID', 'Cliente', 'Telefone', 'CPF CNPJ', 'Produto Vendido ID', 'Produto Vendido Snapshot',
+      'Valor Venda', 'Entrada Dinheiro', 'Tem Produto Recebido', 'Produto Recebido Dados',
+      'Valor Avaliado Produto Recebido', 'Produto Recebido Adicionado Ao Estoque',
+      'Valor Restante', 'Quantidade Parcelas', 'Parcelas', 'Status', 'Data Venda', 'Created At', 'Updated At'
+    ]);
+  }
+
+  var fiadoId = 'FIA-' + new Date().getTime();
+  var dataHora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+  var parcelasStr = JSON.stringify(payload.parcelas || []);
+  var snapshotStr = JSON.stringify(payload.produtoVendidoSnapshot || {});
+  var recebidoStr = JSON.stringify(payload.produtoRecebidoDados || {});
+
+  sheet.appendRow([
+    fiadoId,
+    payload.cliente || '',
+    payload.telefone || '',
+    payload.cpfCnpj || '',
+    payload.produtoVendidoId || '',
+    snapshotStr,
+    payload.valorVenda || 0,
+    payload.entradaDinheiro || 0,
+    payload.temProdutoRecebido ? 'SIM' : 'NAO',
+    recebidoStr,
+    payload.valorAvaliadoProdutoRecebido || 0,
+    payload.produtoRecebidoAdicionadoAoEstoque ? 'SIM' : 'NAO',
+    payload.valorRestante || 0,
+    payload.quantidadeParcelas || 0,
+    parcelasStr,
+    payload.status || 'em_aberto',
+    payload.dataVenda || dataHora,
+    dataHora,
+    dataHora
+  ]);
+
+  // Remove produto do estoque
+  if (payload.produtoVendidoId) {
+    var prodSheet = ss.getSheetByName('Produtos');
+    if (prodSheet) {
+      var prodRows = prodSheet.getDataRange().getValues();
+      var prodHeaders = prodRows[0].map(function(h) { return String(h).trim().toLowerCase(); });
+      var idColIdx = prodHeaders.indexOf('id');
+      var estoqueColIdx = prodHeaders.indexOf('estoque');
+      var ativoColIdx = prodHeaders.indexOf('ativo');
+      
+      if (idColIdx !== -1 && estoqueColIdx !== -1) {
+        for (var i = 1; i < prodRows.length; i++) {
+          if (String(prodRows[i][idColIdx]) === String(payload.produtoVendidoId)) {
+            var currentStock = Number(prodRows[i][estoqueColIdx]) || 0;
+            prodSheet.getRange(i + 1, estoqueColIdx + 1).setValue(Math.max(0, currentStock - 1));
+            // Opcional: remover da vitrine se o estoque ficar 0
+            if (currentStock - 1 <= 0 && ativoColIdx !== -1) {
+              prodSheet.getRange(i + 1, ativoColIdx + 1).setValue(false);
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // Se tem produto recebido e deve adicionar ao estoque
+  if (payload.temProdutoRecebido && payload.produtoRecebidoAdicionadoAoEstoque && payload.produtoRecebidoDados) {
+    salvarNovoProduto([payload.produtoRecebidoDados]);
+  }
+
+  return { fiado_id: fiadoId };
+}
+
+function pagarParcelaFiado(fiadoId, parcelaId) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Fiados');
+  if (!sheet) throw new Error('Aba Fiados não encontrada.');
+
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var idColIdx = headers.indexOf('id');
+  var parcelasColIdx = headers.indexOf('parcelas');
+  var statusColIdx = headers.indexOf('status');
+  var updatedColIdx = headers.indexOf('updated_at');
+
+  if (idColIdx === -1 || parcelasColIdx === -1) throw new Error('Colunas necessárias não encontradas.');
+
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][idColIdx]) === String(fiadoId)) {
+      var parcelasStr = rows[i][parcelasColIdx];
+      var parcelas = [];
+      try { parcelas = JSON.parse(parcelasStr); } catch(e) {}
+      
+      var allPaid = true;
+      var dataHora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+      
+      for (var p = 0; p < parcelas.length; p++) {
+        if (String(parcelas[p].id) === String(parcelaId)) {
+          parcelas[p].status = 'pago';
+          parcelas[p].dataPagamento = dataHora;
+        }
+        if (parcelas[p].status !== 'pago') {
+          allPaid = false;
+        }
+      }
+      
+      sheet.getRange(i + 1, parcelasColIdx + 1).setValue(JSON.stringify(parcelas));
+      if (updatedColIdx !== -1) {
+        sheet.getRange(i + 1, updatedColIdx + 1).setValue(dataHora);
+      }
+      if (statusColIdx !== -1) {
+        var novoStatus = allPaid ? 'quitado' : 'parcial';
+        sheet.getRange(i + 1, statusColIdx + 1).setValue(novoStatus);
+      }
+      
+      return true;
+    }
+  }
+  
+  throw new Error('Fiado não encontrado.');
+}
+
+function cancelarFiado(fiadoId) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Fiados');
+  if (!sheet) throw new Error('Aba Fiados não encontrada.');
+
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var idColIdx = headers.indexOf('id');
+  var statusColIdx = headers.indexOf('status');
+  var prodColIdx = headers.indexOf('produto_vendido_id');
+  var updatedColIdx = headers.indexOf('updated_at');
+
+  if (idColIdx === -1 || statusColIdx === -1) throw new Error('Colunas necessárias não encontradas em Fiados.');
+
+  var produtoVendidoId = null;
+  var rowToUpdate = -1;
+
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][idColIdx]) === String(fiadoId)) {
+      if (rows[i][statusColIdx] === 'cancelado') throw new Error('Esta dívida já está cancelada.');
+      rowToUpdate = i + 1;
+      produtoVendidoId = prodColIdx !== -1 ? rows[i][prodColIdx] : null;
+      break;
+    }
+  }
+
+  if (rowToUpdate === -1) throw new Error('Fiado não encontrado.');
+
+  var dataHora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+  sheet.getRange(rowToUpdate, statusColIdx + 1).setValue('cancelado');
+  if (updatedColIdx !== -1) {
+    sheet.getRange(rowToUpdate, updatedColIdx + 1).setValue(dataHora);
+  }
+
+  // Volta pro estoque
+  if (produtoVendidoId) {
+    var pSheet = ss.getSheetByName('Produtos');
+    if (pSheet) {
+      var pRows = pSheet.getDataRange().getValues();
+      var pHeaders = pRows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+      var pIdCol = pHeaders.indexOf('id');
+      var pEstCol = pHeaders.indexOf('estoque');
+      var pAtivoCol = pHeaders.indexOf('ativo');
+
+      if (pIdCol !== -1 && pEstCol !== -1) {
+        for (var j = 1; j < pRows.length; j++) {
+          if (String(pRows[j][pIdCol]) === String(produtoVendidoId)) {
+            var currentStock = Number(pRows[j][pEstCol]) || 0;
+            pSheet.getRange(j + 1, pEstCol + 1).setValue(currentStock + 1);
+            if (pAtivoCol !== -1) {
+              pSheet.getRange(j + 1, pAtivoCol + 1).setValue(true);
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return true;
+}

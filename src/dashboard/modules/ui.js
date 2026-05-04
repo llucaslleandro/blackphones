@@ -214,3 +214,37 @@ export function showNotification(order) {
   // Auto remove after 10 seconds
   setTimeout(close, 10000);
 }
+
+export function setupViewToggle(btnListId, btnGridId, storageKey, onToggleCallback) {
+  const btnList = document.getElementById(btnListId);
+  const btnGrid = document.getElementById(btnGridId);
+  if (!btnList || !btnGrid) return;
+
+  const setActive = (viewType) => {
+    localStorage.setItem(storageKey, viewType);
+    if (viewType === 'list') {
+      btnList.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
+      btnList.classList.remove('text-gray-500');
+      btnGrid.classList.remove('bg-white', 'shadow-sm', 'text-gray-900');
+      btnGrid.classList.add('text-gray-500');
+    } else {
+      btnGrid.classList.add('bg-white', 'shadow-sm', 'text-gray-900');
+      btnGrid.classList.remove('text-gray-500');
+      btnList.classList.remove('bg-white', 'shadow-sm', 'text-gray-900');
+      btnList.classList.add('text-gray-500');
+    }
+    if (onToggleCallback) onToggleCallback(viewType);
+  };
+
+  const initialView = localStorage.getItem(storageKey) || 'list';
+  setActive(initialView);
+
+  btnList.addEventListener('click', () => setActive('list'));
+  btnGrid.addEventListener('click', () => setActive('grid'));
+  
+  return initialView;
+}
+
+export function getViewPreference(storageKey, defaultView = 'list') {
+  return localStorage.getItem(storageKey) || defaultView;
+}

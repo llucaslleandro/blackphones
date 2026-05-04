@@ -9,7 +9,8 @@ export const state = {
   tableSearchTerm: "",
   tableBrandFilter: "all",
   tableStatusFilter: "all",
-  tablePeriodFilter: "all"
+  tablePeriodFilter: "all",
+  allFiados: []
 };
 
 export async function fetchJSON(url) {
@@ -24,7 +25,8 @@ export async function fetchJSON(url) {
 export async function fetchPedidosEProdutos() {
   return Promise.all([
     fetchJSON(`${CONFIG.apiBaseUrl}?action=pedidos`),
-    fetchJSON(`${CONFIG.apiBaseUrl}?action=produtos`)
+    fetchJSON(`${CONFIG.apiBaseUrl}?action=produtos`),
+    fetchJSON(`${CONFIG.apiBaseUrl}?action=fiados`)
   ]);
 }
 
@@ -42,9 +44,10 @@ export async function uploadImageToDrive(base64, filename) {
 export async function loadDashboardData(callbacks, silent = false) {
   if (!silent) toggleLoading(true);
   try {
-    const [rawPedidos, rawProdutos] = await fetchPedidosEProdutos();
+    const [rawPedidos, rawProdutos, rawFiados] = await fetchPedidosEProdutos();
 
     state.allProducts = rawProdutos;
+    state.allFiados = rawFiados;
 
     // Trigger callback to populate brand select
     if (callbacks.onBrandsLoaded) {

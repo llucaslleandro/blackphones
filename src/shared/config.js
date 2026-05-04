@@ -38,16 +38,19 @@ export const CONFIG = {
   },
 
   // Google Apps Script API
-  apiBaseUrl: 'https://script.google.com/macros/s/AKfycbwjnaayf93Vaf18sbgDSAUHJkcOas_1TWUyD7_k0aJsPIiJUqCMcGsDGzRtvpGKLZZs/exec',
+  apiBaseUrl: 'https://script.google.com/macros/s/AKfycbwdDsW10m7fEjlnk3TMdZ9LXomYAik0wSDy1ukWN7bRALDde-h2i2372HFpJ1jZ8iJx/exec',
 
   // Banners do Carrossel
   // Para Desktop: tamanho recomendado 1200x400px (proporção 3:1)
   // Para Mobile (Opcional): tamanho recomendado 600x600px (Formato Quadrado 1:1)
   // Se "imageMobile" não for enviada, a de desktop é usada em todas as telas
   banners: [
-    { image: 'assets/images/banner1.png', imageMobile: 'assets/images/banner1-teste.png', alt: 'Ofertas Especiais' },
-    { image: 'assets/images/banner2.png', imageMobile: 'assets/images/banner2-mobile.png', alt: 'Novidades' },
-    { image: 'assets/images/banner3.png', imageMobile: 'assets/images/banner3-mobile.png', alt: 'Frete Grátis' },
+    { image: 'assets/images/01 (DESKTOP).png', imageMobile: 'assets/images/01 (MOBILE).png', alt: '' },
+    { image: 'assets/images/02 (DESKTOP).png', imageMobile: 'assets/images/02 (MOBILE).png', alt: '' },
+    { image: 'assets/images/03 (DESKTOP).png', imageMobile: 'assets/images/03 (MOBILE).png', alt: '' },
+    { image: 'assets/images/04 (DESKTOP).png', imageMobile: 'assets/images/04 (MOBILE).png', alt: '' },
+    { image: 'assets/images/05 (DESKTOP).png', imageMobile: 'assets/images/05 (MOBILE).png', alt: '' },
+    { image: 'assets/images/06 (DESKTOP).png', imageMobile: 'assets/images/06 (MOBILE).png', alt: '' },
   ],
 
   // Intervalo de rotação dos banners em ms (padrão: 5 segundos)

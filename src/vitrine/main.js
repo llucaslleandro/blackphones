@@ -134,7 +134,8 @@ function initBannerCarousel() {
       const picture = document.createElement('picture');
       const sourceMobile = document.createElement('source');
       sourceMobile.media = '(max-width: 639px)';
-      sourceMobile.srcset = banner.imageMobile;
+      // Encode URI to prevent spaces in filenames from breaking the srcset parser
+      sourceMobile.srcset = encodeURI(banner.imageMobile);
 
       const img = document.createElement('img');
       img.src = banner.image;

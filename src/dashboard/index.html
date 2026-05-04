@@ -776,6 +776,12 @@
           <i class="fa-solid fa-truck-fast sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
           <span class="sidebar-label">Compras</span>
         </button>
+
+        <button id="tab-btn-fiado" data-tooltip="Fiado"
+          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
+          <i class="fa-solid fa-hand-holding-dollar sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+          <span class="sidebar-label">Fiado</span>
+        </button>
       </nav>
 
       <!-- Sidebar Footer -->
@@ -939,6 +945,255 @@
         <!-- CONTEÚDO: ENCOMENDADOS -->
         <div id="tab-encomendados" class="hidden space-y-6">
           <!-- Renderizado via JS para manter a modularidade -->
+        </div>
+
+        <!-- CONTEÚDO: FIADO -->
+        <div id="tab-fiado" class="hidden space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Fiado</h2>
+              <p class="text-sm text-gray-500 mt-1">Controle de vendas a prazo e parcelas</p>
+            </div>
+            <button id="btn-nova-divida" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
+              <i class="fa-solid fa-plus"></i> Nova Dívida
+            </button>
+          </div>
+
+          <!-- Métricas Fiado -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Clientes Pendentes</p>
+              <p id="metric-clientes-pendentes" class="text-xl md:text-2xl font-bold text-gray-900">-</p>
+            </div>
+            <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">A Receber</p>
+              <p id="metric-a-receber" class="text-xl md:text-2xl font-bold text-indigo-600">-</p>
+            </div>
+            <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Recebido</p>
+              <p id="metric-recebido" class="text-xl md:text-2xl font-bold text-green-600">-</p>
+            </div>
+            <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Total Vendido</p>
+              <p id="metric-total-fiado" class="text-xl md:text-2xl font-bold text-gray-900">-</p>
+            </div>
+            <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Parcelas Vencidas</p>
+              <p id="metric-parcelas-vencidas" class="text-xl md:text-2xl font-bold text-red-600">-</p>
+            </div>
+          </div>
+
+          <!-- Listagem -->
+          <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 class="text-base font-bold text-gray-900">Dívidas Ativas</h3>
+              <div class="flex bg-gray-100 p-1 rounded-lg">
+                <button id="view-fiado-list" class="px-3 py-1.5 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center bg-white shadow-sm" data-tooltip="Visualização em Linhas">
+                  <i class="fa-solid fa-list text-sm"></i>
+                </button>
+                <button id="view-fiado-grid" class="px-3 py-1.5 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center" data-tooltip="Visualização em Cards">
+                  <i class="fa-solid fa-border-all text-sm"></i>
+                </button>
+              </div>
+            </div>
+            <div id="fiado-list-container" class="p-0">
+              <!-- Renderizado via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL NOVA DÍVIDA -->
+        <div id="modal-nova-divida" class="fixed inset-0 z-[100] hidden">
+          <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" id="overlay-nova-divida"></div>
+          <div class="absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300" id="drawer-nova-divida">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <h3 class="text-lg font-bold text-gray-900">Registrar Venda Fiada</h3>
+              <button id="btn-close-nova-divida" class="text-gray-400 hover:text-gray-600 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50" id="form-nova-divida">
+              
+              <!-- Bloco 1: Cliente -->
+              <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-user text-indigo-500"></i> Dados do Cliente</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Nome do Cliente *</label>
+                    <input type="text" id="fiado-nome-cliente" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nome completo">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Telefone</label>
+                    <input type="text" id="fiado-telefone" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="(11) 99999-9999">
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">CPF/CNPJ</label>
+                    <input type="text" id="fiado-cpf" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Opcional">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloco 2: Produto -->
+              <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-mobile-screen text-indigo-500"></i> Produto Vendido</h4>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-600 mb-1">Selecionar Produto do Estoque *</label>
+                  <select id="fiado-produto-estoque" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Carregando produtos...</option>
+                  </select>
+                </div>
+                <div id="fiado-produto-detalhes" class="hidden grid grid-cols-2 gap-3 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <div><span class="text-gray-500 text-xs block">Modelo</span><span id="fp-modelo" class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">Memória</span><span id="fp-memoria" class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">Cor</span><span id="fp-cor" class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">IMEI</span><span id="fp-imei" class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">Custo</span><span id="fp-custo" class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">Preço Sugerido</span><span id="fp-preco" class="font-bold text-green-600">-</span></div>
+                </div>
+              </div>
+
+              <!-- Bloco 3: Entrada e Aparelho Recebido -->
+              <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-indigo-500"></i> Entrada & Pagamento</h4>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-600 mb-1">Entrada em Dinheiro (R$)</label>
+                  <input type="number" id="fiado-entrada-dinheiro" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="0.00">
+                </div>
+                
+                <div class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                  <input type="checkbox" id="fiado-tem-aparelho" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                  <label for="fiado-tem-aparelho" class="text-sm font-medium text-gray-700 cursor-pointer">Recebi aparelho como parte do pagamento</label>
+                </div>
+
+                <div id="fiado-aparelho-campos" class="hidden space-y-4 mt-3 pl-6 border-l-2 border-indigo-100">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">Modelo Recebido</label>
+                      <input type="text" id="far-modelo" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">Memória</label>
+                      <input type="text" id="far-memoria" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">Condição</label>
+                      <select id="far-condicao" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="Usado - Excelente">Usado - Excelente</option>
+                        <option value="Usado - Bom">Usado - Bom</option>
+                        <option value="Usado - Com marcas">Usado - Com marcas</option>
+                        <option value="Com defeito">Com defeito</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">Valor Avaliado (R$)</label>
+                      <input type="number" id="far-valor" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-green-50 font-bold" placeholder="0.00">
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                    <input type="checkbox" id="fiado-add-estoque" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                    <label for="fiado-add-estoque" class="text-sm font-medium text-gray-700 cursor-pointer">Adicionar aparelho recebido ao estoque</label>
+                  </div>
+                  
+                  <div id="fiado-estoque-campos" class="hidden space-y-4 mt-3 bg-indigo-50 p-4 rounded-xl">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Preço de Venda (R$)</label>
+                        <input type="number" id="far-preco-venda" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="0.00">
+                      </div>
+                      <div class="flex items-center gap-2 mt-6">
+                        <input type="checkbox" id="far-vitrine" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <label for="far-vitrine" class="text-sm text-gray-700">Publicar na vitrine</label>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">URL Imagem 1 *</label>
+                      <input type="url" id="far-imagem" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://...">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloco 4: Parcelamento -->
+              <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-calendar-days text-indigo-500"></i> Parcelamento</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Valor Total da Venda (R$)</label>
+                    <input type="number" id="fiado-valor-venda" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-bold" placeholder="0.00">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Saldo a Parcelar (R$)</label>
+                    <input type="number" id="fiado-saldo-parcelar" class="w-full text-sm border-gray-300 rounded-lg bg-gray-100 font-bold" disabled>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Quantidade de Parcelas</label>
+                    <input type="number" id="fiado-qtd-parcelas" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value="1" min="1">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Vencimento 1ª Parcela</label>
+                    <input type="date" id="fiado-vencimento-1" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Frequência</label>
+                    <select id="fiado-frequencia" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                      <option value="mensal">Mensal</option>
+                      <option value="quinzenal">Quinzenal</option>
+                      <option value="semanal">Semanal</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Resumo -->
+              <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
+                <h4 class="text-sm font-bold text-indigo-900 mb-3">Resumo da Negociação</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between"><span class="text-indigo-700">Valor da Venda</span><span id="resumo-venda" class="font-medium">R$ 0,00</span></div>
+                  <div class="flex justify-between"><span class="text-indigo-700">Entrada (Dinheiro)</span><span id="resumo-entrada-dinheiro" class="font-medium">- R$ 0,00</span></div>
+                  <div class="flex justify-between"><span class="text-indigo-700">Aparelho Recebido</span><span id="resumo-entrada-aparelho" class="font-medium">- R$ 0,00</span></div>
+                  <div class="flex justify-between pt-2 border-t border-indigo-200"><span class="text-indigo-900 font-bold">Saldo Restante</span><span id="resumo-saldo" class="font-bold text-lg">R$ 0,00</span></div>
+                  <div class="flex justify-between"><span class="text-indigo-700" id="resumo-qtd-parcelas">1x de</span><span id="resumo-valor-parcela" class="font-medium">R$ 0,00</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="p-4 border-t border-gray-100 bg-white flex justify-end gap-3 shrink-0">
+              <button id="btn-cancel-nova-divida" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+              <button id="btn-save-nova-divida" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-sm flex items-center gap-2">Salvar Dívida</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL DETALHES FIADO -->
+        <div id="modal-detalhes-fiado" class="fixed inset-0 z-[100] hidden">
+          <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" id="overlay-detalhes-fiado"></div>
+          <div class="absolute right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300" id="drawer-detalhes-fiado">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <h3 class="text-lg font-bold text-gray-900">Detalhes do Fiado</h3>
+              <button id="btn-close-detalhes-fiado" class="text-gray-400 hover:text-gray-600 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 space-y-6" id="detalhes-fiado-content">
+              <!-- Renderizado via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL CONFIRMAR CANCELAMENTO -->
+        <div id="modal-confirmar-cancelamento" class="fixed inset-0 z-[120] hidden flex items-center justify-center">
+          <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" id="overlay-confirmar-cancelamento"></div>
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="box-confirmar-cancelamento">
+            <div class="p-6 text-center space-y-4">
+              <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-900">Cancelar Dívida?</h3>
+                <p class="text-sm text-gray-500 mt-2">Esta ação não pode ser desfeita. O aparelho será devolvido ao estoque disponível.</p>
+              </div>
+            </div>
+            <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3 rounded-b-2xl">
+              <button id="btn-cancel-cancelar" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-200 transition">Não, voltar</button>
+              <button id="btn-confirm-cancelar" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition shadow-sm">Sim, Cancelar</button>
+            </div>
+          </div>
         </div>
 
 
