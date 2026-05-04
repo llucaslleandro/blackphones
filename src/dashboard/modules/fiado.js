@@ -21,6 +21,14 @@ export function setupListeners() {
   document.getElementById('btn-close-detalhes-fiado')?.addEventListener('click', fecharModalDetalhes);
   document.getElementById('overlay-detalhes-fiado')?.addEventListener('click', fecharModalDetalhes);
 
+  // Mascaras
+  document.getElementById('fiado-telefone')?.addEventListener('input', (e) => {
+    e.target.value = ui.formatPhone(e.target.value);
+  });
+  document.getElementById('fiado-cpf')?.addEventListener('input', (e) => {
+    e.target.value = ui.formatCpfCnpj(e.target.value);
+  });
+
   // Interações do formulário
   document.getElementById('fiado-produto-estoque')?.addEventListener('change', preencherDetalhesProduto);
   

@@ -53,6 +53,45 @@ export function setTab(activeBtn, activeTab, allBtns, allTabs) {
 export const formatText = (val) => val && val.trim() !== '' ? val : 'N/A';
 export const formatMoney = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 export const parseNumber = (val) => { let n = Number(String(val).replace(/[^0-9.-]+/g, "")); return isNaN(n) ? 0 : n; };
+
+export function formatCpfCnpj(val) {
+  let v = val.replace(/\D/g, ""); // Remove não dígitos
+
+  if (v.length <= 11) {
+    // CPF
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  } else {
+    // CNPJ
+    v = v.slice(0, 14); // Limita a 14
+    v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+    v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+    v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+  }
+  return v;
+}
+
+export function formatPhone(val) {
+  let v = val.replace(/\D/g, ""); // Remove não dígitos
+  if (v.length > 11) v = v.slice(0, 11); // Limita a 11 dígitos
+
+  if (v.length > 10) {
+    // Formato (XX) XXXXX-XXXX
+    return "(" + v.substring(0, 2) + ") " + v.substring(2, 7) + "-" + v.substring(7);
+  } else if (v.length > 6) {
+    // Formato (XX) XXXX-XXXX
+    return "(" + v.substring(0, 2) + ") " + v.substring(2, 6) + "-" + v.substring(6);
+  } else if (v.length > 2) {
+    // Formato (XX) XXXX
+    return "(" + v.substring(0, 2) + ") " + v.substring(2);
+  } else if (v.length > 0) {
+    // Formato (XX
+    return "(" + v;
+  }
+  return v;
+}
 export const formatPercent = (val) => {
   const isPos = val >= 0;
   const color = isPos ? 'text-green-500' : 'text-red-500';
