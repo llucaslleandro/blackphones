@@ -11,6 +11,30 @@ let loteChegouQueue = [];
 let loteChegouIndex = 0;
 let isLoteFlow = false;
 
+function getCustoItemReal(item, loteGroup) {
+  // Se o item já tem custo_total e custo_adicional salvos pelo novo fluxo
+  if (item.custo_total !== undefined && item.custo_total !== null && String(item.custo_total) !== '') {
+    return Number(item.custo_total) || 0;
+  }
+  
+  // Compatibilidade com lotes antigos: calcula o rateio dinamicamente
+  const custoBase = Number(item.custo_compra) || 0;
+  if (!loteGroup) return custoBase;
+  
+  const frete = Number(loteGroup.frete || loteGroup.custo_frete) || 0;
+  const taxas = Number(loteGroup.taxas || loteGroup.custo_taxas) || 0;
+  const adicLote = Number(loteGroup.adicLote || loteGroup.custo_adicional_lote) || 0;
+  
+  const custosGerais = frete + taxas + adicLote;
+  
+  const itemsArray = loteGroup.items || loteGroup.allItems || [];
+  const qtd = itemsArray.length;
+  
+  const rateio = qtd > 0 ? custosGerais / qtd : 0;
+  
+  return custoBase + rateio;
+}
+
 export async function initAndRender() {
   const container = document.getElementById('tab-encomendados');
   if (!container) return;
@@ -178,13 +202,7 @@ function renderMetrics() {
       const lid = i.lote_id || `SINGLE-${i.id}`;
       lotesUnique.add(lid);
 
-      const custoItem = Number(i.custo_compra) || 0;
-      const custoAdicItem = Number(i.custo_adicional) || 0;
-      const itemFallback = Number(i.custo_total) || 0;
-
-      const custoBase = (custoItem === 0 && itemFallback > 0) ? itemFallback : (custoItem + custoAdicItem);
-      const custoReal = custoBase + rateio;
-
+      const custoReal = getCustoItemReal(i, lote);
       totalCustoReal += custoReal;
 
       const precoVenda = Number(i.preco_venda_previsto) || 0;
@@ -505,9 +523,6 @@ function renderTable() {
     const lid = lote.lote_id || lote.id;
     const isAtrasado = lote.previsao_chegada && new Date(lote.previsao_chegada) < new Date(new Date().setHours(0, 0, 0, 0));
 
-    const loteTotalCustosExtra = (Number(lote.custo_frete) || 0) + (Number(lote.custo_taxas) || 0) + (Number(lote.custo_adicional_lote) || 0);
-    const rateio = lote.totalItemsInLote > 0 ? loteTotalCustosExtra / lote.totalItemsInLote : 0;
-
     let pendingCount = 0;
     let arrivedCount = 0;
     let totalLoteValue = 0;
@@ -516,8 +531,8 @@ function renderTable() {
       if (i.status === 'chegou' || i.status === 'recebido') arrivedCount++;
       else pendingCount++;
 
-      const custoItemBase = (Number(i.custo_compra) || 0) + (Number(i.custo_adicional) || 0) || Number(i.custo_total) || 0;
-      totalLoteValue += (custoItemBase + rateio);
+      const custoItemReal = getCustoItemReal(i, loteGroup);
+      totalLoteValue += custoItemReal;
     });
 
     let statusBadge = '';
@@ -597,8 +612,8 @@ function renderTable() {
     `;
 
     items.forEach(i => {
-      const custoItemBase = (Number(i.custo_compra) || 0) + (Number(i.custo_adicional) || 0) || Number(i.custo_total) || 0;
-      const custoItemReal = custoItemBase + rateio;
+      const custoItemBase = Number(i.custo_compra) || 0;
+      const custoItemReal = getCustoItemReal(i, loteGroup);
       const isChegou = i.status === 'chegou' || i.status === 'recebido';
 
       // Hide received items if filter is 'pendentes'
@@ -728,6 +743,38 @@ function renderModals() {
             <div id="lote-items-container" class="space-y-4">
               <!-- JS Injects items here -->
             </div>
+          </div>
+          
+          <!-- Lote Summary (Dynamic) -->
+          <div class="mt-8 bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+             <h4 class="text-sm font-bold text-indigo-900 mb-3"><i class="fa-solid fa-calculator text-indigo-500 mr-2"></i>Resumo Financeiro do Lote</h4>
+             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p class="text-[10px] font-bold text-indigo-400 uppercase mb-0.5">Total Unidades</p>
+                  <p class="text-lg font-black text-indigo-900" id="resumo-lote-qtd">0</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-indigo-400 uppercase mb-0.5">Custos Gerais</p>
+                  <p class="text-lg font-black text-indigo-900" id="resumo-lote-gerais">R$ 0,00</p>
+                  <p class="text-[9px] font-bold text-indigo-500" id="resumo-lote-rateio">Rateio: R$ 0,00/un</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-indigo-400 uppercase mb-0.5">Custo Real do Lote</p>
+                  <p class="text-lg font-black text-indigo-900" id="resumo-lote-custo">R$ 0,00</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-indigo-400 uppercase mb-0.5">Venda Prevista Total</p>
+                  <p class="text-lg font-black text-indigo-900" id="resumo-lote-venda">R$ 0,00</p>
+                </div>
+                <div class="md:col-span-2">
+                  <p class="text-[10px] font-bold text-emerald-500 uppercase mb-0.5">Lucro Estimado</p>
+                  <p class="text-lg font-black text-emerald-600" id="resumo-lote-lucro">R$ 0,00</p>
+                </div>
+                <div class="md:col-span-2">
+                  <p class="text-[10px] font-bold text-indigo-400 uppercase mb-0.5">ROI Estimado</p>
+                  <p class="text-lg font-black text-indigo-900" id="resumo-lote-roi">0.0%</p>
+                </div>
+             </div>
           </div>
 
         </div>
@@ -927,6 +974,14 @@ function renderModals() {
       });
     }
   });
+
+  // Rateio updates
+  ['lote-frete', 'lote-taxas', 'lote-adic'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', window.updateRateioAndSummary);
+    }
+  });
 }
 
 function clearLoteErrors() {
@@ -936,6 +991,66 @@ function clearLoteErrors() {
     el.classList.remove('border-red-500', 'ring-1', 'ring-red-200');
   });
 }
+
+window.updateRateioAndSummary = function() {
+  const itemForms = document.querySelectorAll('.item-enc-form');
+  let totalUnidades = 0;
+  
+  itemForms.forEach(form => {
+    const qtd = parseInt(form.querySelector('.i-qtd').value) || 0;
+    totalUnidades += qtd;
+  });
+
+  const frete = Number(document.getElementById('lote-frete')?.value) || 0;
+  const taxas = Number(document.getElementById('lote-taxas')?.value) || 0;
+  const adic = Number(document.getElementById('lote-adic')?.value) || 0;
+  
+  const custosGeraisLote = frete + taxas + adic;
+  const rateioPorUnidade = totalUnidades > 0 ? (custosGeraisLote / totalUnidades) : 0;
+  
+  let custoTotalRealLote = 0;
+  let vendaPrevistaTotal = 0;
+
+  itemForms.forEach(form => {
+    const qtd = parseInt(form.querySelector('.i-qtd').value) || 0;
+    const custoUnitario = Number(form.querySelector('.i-custo').value) || 0;
+    const vendaPrevista = Number(form.querySelector('.i-venda').value) || 0;
+
+    const custoRealUnitario = custoUnitario + rateioPorUnidade;
+    const custoRealTotalItem = custoRealUnitario * qtd;
+    
+    custoTotalRealLote += custoRealTotalItem;
+    vendaPrevistaTotal += (vendaPrevista * qtd);
+
+    const previewDiv = form.querySelector('.rateio-preview');
+    if (previewDiv) {
+      if (rateioPorUnidade > 0) {
+        previewDiv.classList.remove('hidden');
+        previewDiv.querySelector('.v-base').textContent = formatMoney(custoUnitario);
+        previewDiv.querySelector('.v-rateio').textContent = formatMoney(rateioPorUnidade);
+        previewDiv.querySelector('.v-real').textContent = formatMoney(custoRealUnitario);
+      } else {
+        previewDiv.classList.add('hidden');
+      }
+    }
+    
+    // Armazena dados calculados no form para salvar no payload
+    form.dataset.rateioCalculado = rateioPorUnidade;
+    form.dataset.custoRealTotal = custoRealUnitario;
+  });
+
+  const lucroEstimado = vendaPrevistaTotal - custoTotalRealLote;
+  const roiEstimado = custoTotalRealLote > 0 ? (lucroEstimado / custoTotalRealLote) * 100 : 0;
+
+  // Atualiza resumos DOM
+  if (document.getElementById('resumo-lote-qtd')) document.getElementById('resumo-lote-qtd').textContent = totalUnidades;
+  if (document.getElementById('resumo-lote-gerais')) document.getElementById('resumo-lote-gerais').textContent = formatMoney(custosGeraisLote);
+  if (document.getElementById('resumo-lote-rateio')) document.getElementById('resumo-lote-rateio').textContent = `Rateio: ${formatMoney(rateioPorUnidade)}/un`;
+  if (document.getElementById('resumo-lote-custo')) document.getElementById('resumo-lote-custo').textContent = formatMoney(custoTotalRealLote);
+  if (document.getElementById('resumo-lote-venda')) document.getElementById('resumo-lote-venda').textContent = formatMoney(vendaPrevistaTotal);
+  if (document.getElementById('resumo-lote-lucro')) document.getElementById('resumo-lote-lucro').textContent = formatMoney(lucroEstimado);
+  if (document.getElementById('resumo-lote-roi')) document.getElementById('resumo-lote-roi').textContent = roiEstimado.toFixed(1) + '%';
+};
 
 let deleteTarget = null;
 
@@ -954,7 +1069,7 @@ function appendItemForm(itemData = null) {
   const isChegou = itemData && (itemData.status === 'chegou' || itemData.status === 'recebido');
 
   div.innerHTML = `
-    <button type="button" onclick="document.getElementById('item-enc-${itemCounter}').remove()" class="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition" title="Remover">
+    <button type="button" onclick="window.removerItemForm('${itemCounter}')" class="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition" title="Remover">
       <i class="fa-solid fa-xmark text-xs"></i>
     </button>
     <button type="button" onclick="window.duplicarItemForm('${itemCounter}')" class="absolute top-2 right-10 w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition" title="Duplicar">
@@ -1004,6 +1119,11 @@ function appendItemForm(itemData = null) {
       <div>
         <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Custo Unitário (R$)</label>
         <input type="number" class="i-custo w-full px-2 py-1.5 border rounded-lg text-sm outline-none" placeholder="0.00">
+        <div class="rateio-preview hidden mt-1.5 p-1.5 bg-gray-50 border border-gray-100 rounded text-[9px] text-gray-500 flex flex-col gap-0.5">
+          <div class="flex justify-between"><span>Custo base:</span> <span class="v-base font-medium">R$ 0,00</span></div>
+          <div class="flex justify-between text-indigo-500"><span>+ Rateio lote:</span> <span class="v-rateio font-medium">R$ 0,00</span></div>
+          <div class="flex justify-between text-gray-800 border-t border-gray-200 mt-0.5 pt-0.5 font-bold"><span>Custo real:</span> <span class="v-real">R$ 0,00</span></div>
+        </div>
       </div>
       <div>
         <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Venda Prevista (R$)</label>
@@ -1013,10 +1133,11 @@ function appendItemForm(itemData = null) {
   `;
   container.appendChild(div);
 
-  // Clear error on input
+  // Trigger update on inputs
   div.querySelectorAll('input').forEach(input => {
     input.addEventListener('input', () => {
       input.classList.remove('border-red-500', 'ring-1', 'ring-red-200');
+      window.updateRateioAndSummary();
     });
   });
 
@@ -1027,9 +1148,11 @@ function appendItemForm(itemData = null) {
     div.querySelector('.i-memoria').value = itemData.memoria || '';
     div.querySelector('.i-cor').value = itemData.cor || '';
     div.querySelector('.i-condicao').value = itemData.condicao || 'Novo';
-    div.querySelector('.i-custo').value = (Number(itemData.custo_compra) || 0) + (Number(itemData.custo_adicional) || 0) || Number(itemData.custo_total) || '';
+    div.querySelector('.i-custo').value = Number(itemData.custo_compra) || 0; // Mostrar apenas o custo base no input
     div.querySelector('.i-venda').value = itemData.preco_venda_previsto || '';
   }
+  
+  window.updateRateioAndSummary();
 }
 
 window.duplicarItemForm = function (counterId) {
@@ -1048,6 +1171,16 @@ window.duplicarItemForm = function (counterId) {
   newItem.querySelector('.i-custo').value = original.querySelector('.i-custo').value;
   newItem.querySelector('.i-venda').value = original.querySelector('.i-venda').value;
   newItem.querySelector('.i-qtd').value = original.querySelector('.i-qtd').value;
+  
+  window.updateRateioAndSummary();
+}
+
+window.removerItemForm = function (counterId) {
+  const el = document.getElementById(`item-enc-${counterId}`);
+  if (el) {
+    el.remove();
+    window.updateRateioAndSummary();
+  }
 }
 
 // ==========================================
@@ -1177,7 +1310,9 @@ async function salvarLoteEncomenda() {
         memoria: form.querySelector('.i-memoria').value.trim(),
         cor: form.querySelector('.i-cor').value.trim(),
         condicao: form.querySelector('.i-condicao').value,
-        custo_compra: custo,
+        custo_compra: custo, // Custo unitário base digitado
+        custo_adicional: Number(form.dataset.rateioCalculado) || 0, // Rateio salvo para o item
+        custo_total: Number(form.dataset.custoRealTotal) || custo, // Custo base + rateio
         preco_venda_previsto: Number(form.querySelector('.i-venda').value) || 0
       };
 
