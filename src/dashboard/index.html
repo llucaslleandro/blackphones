@@ -1560,6 +1560,14 @@
                   <option value="baixo-estoque">Baixo Estoque</option>
                   <option value="parados">Faltam Vender (15 dias+)</option>
                 </select>
+                <div class="flex bg-gray-100 p-1 rounded-lg shrink-0">
+                  <button id="view-estoque-list" class="px-3 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center bg-white shadow-sm" data-tooltip="Visualização em Linhas">
+                    <i class="fa-solid fa-list text-sm"></i>
+                  </button>
+                  <button id="view-estoque-grid" class="px-3 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center" data-tooltip="Visualização em Cards">
+                    <i class="fa-solid fa-border-all text-sm"></i>
+                  </button>
+                </div>
                 <button id="btn-add-produto"
                   class="px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg hover:bg-gray-800 transition whitespace-nowrap flex items-center gap-2">
                   <i class="fa-solid fa-plus"></i> Adicionar Produto
@@ -1642,7 +1650,7 @@
               </div>
             </div>
 
-            <div class="overflow-x-auto sm:overflow-visible">
+            <div id="estoque-list-container" class="overflow-x-auto sm:overflow-visible">
               <table class="estoque-table w-full text-left border-collapse">
                 <thead>
                   <tr

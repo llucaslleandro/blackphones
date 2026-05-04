@@ -345,6 +345,11 @@ function setupDashboardListeners() {
     inventory.salvarEstoqueManualmente({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
   });
 
+  // View Toggle Estoque
+  ui.setupViewToggle('view-estoque-list', 'view-estoque-grid', 'vendly_estoque_view', () => {
+    inventory.renderEstoque({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
+  });
+
   document.getElementById('btn-add-produto')?.addEventListener('click', inventory.abrirModalCadastro);
   document.getElementById('cadastro-close')?.addEventListener('click', inventory.fecharModalCadastro);
   document.getElementById('cadastro-cancel')?.addEventListener('click', inventory.fecharModalCadastro);

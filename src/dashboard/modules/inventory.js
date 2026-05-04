@@ -1,14 +1,16 @@
 import { CONFIG } from '../../shared/config.js';
 import { state, loadDashboardData, uploadImageToDrive } from './store.js';
-import { formatMoney, formatText, showToast, compressImage, parseNumber } from './ui.js';
+import { formatMoney, formatText, showToast, compressImage, parseNumber, getViewPreference } from './ui.js';
 
 let pendingEstoqueUpdates = {};
 let pendingDeleteSku = null;
 
 export function renderEstoque(callbacks = {}) {
-  const tbody = document.getElementById('estoque-table-body');
+  const container = document.getElementById('estoque-list-container');
   const btnSalvar = document.getElementById('btn-salvar-estoque');
-  if (!tbody) return;
+  if (!container) return;
+
+  const viewMode = getViewPreference('vendly_estoque_view', 'list');
 
   let produtosValidos = state.allProducts.filter(p => p.sku && p.sku !== '');
   let esgotados = 0, baixoEstoque = 0, disponiveis = 0, patrimonioTotal = 0;
@@ -125,11 +127,17 @@ export function renderEstoque(callbacks = {}) {
     return (a.nome || '').localeCompare(b.nome || '');
   });
 
-  tbody.innerHTML = '';
   if (produtosValidos.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 text-sm italic">Nenhum produto em estoque.</td></tr>`;
+    if (viewMode === 'grid') {
+      container.innerHTML = `<div class="p-8 text-center text-gray-500 text-sm italic w-full border border-gray-100 rounded-xl bg-white">Nenhum produto em estoque.</div>`;
+    } else {
+      container.innerHTML = `<table class="estoque-table w-full text-left border-collapse"><thead><tr class="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold tracking-[0.1em] border-b border-gray-100"><th class="px-6 py-4">Produto / Variação</th><th class="px-6 py-4 text-center">Custo Unit</th><th class="px-6 py-4 text-center">Preço Venda</th><th class="px-6 py-4 text-center">Giro</th><th class="px-6 py-4 text-center">Estoque (Atual/Mín)</th><th class="px-6 py-4 text-center">Ações</th></tr></thead><tbody class="divide-y divide-gray-100 bg-white border-b border-gray-100"><tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 text-sm italic">Nenhum produto em estoque.</td></tr></tbody></table>`;
+    }
     return;
   }
+
+  let htmlListRows = '';
+  let htmlCards = '';
 
 
 
@@ -165,22 +173,65 @@ export function renderEstoque(callbacks = {}) {
     const custoUnid = parseNumber(p.custo ?? p.preco_custo ?? 0);
     const lucro = precoVenda - custoUnid;
 
-    tbody.innerHTML += `
-      <tr class="hover:bg-gray-50/50 transition border-b border-gray-100 last:border-0 ${rowOpacity}">
-        <td class="px-4 sm:px-6 py-3 sm:py-4">
-          <div class="flex items-start sm:items-center justify-between gap-2">
-            <div class="flex flex-col min-w-0">
-              <div class="flex items-center gap-2">
-                 <span class="text-sm font-bold text-gray-900 truncate">${formatText(p.nome)}</span>
-                 ${!isActive ? '<span class="px-1.5 py-0.5 bg-red-300 text-gray-600 text-[8px] font-black uppercase rounded">Inativo</span>' : ''}
+    if (viewMode === 'list') {
+      htmlListRows += `
+        <tr class="hover:bg-gray-50/50 transition border-b border-gray-100 last:border-0 ${rowOpacity}">
+          <td class="px-4 sm:px-6 py-3 sm:py-4">
+            <div class="flex items-start sm:items-center justify-between gap-2">
+              <div class="flex flex-col min-w-0">
+                <div class="flex items-center gap-2">
+                   <span class="text-sm font-bold text-gray-900 truncate">${formatText(p.nome)}</span>
+                   ${!isActive ? '<span class="px-1.5 py-0.5 bg-red-300 text-gray-600 text-[8px] font-black uppercase rounded">Inativo</span>' : ''}
+                </div>
+                <span class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">${p.sku}</span>
+                <div class="flex flex-wrap gap-x-2 gap-y-1 mt-1.5">
+                   ${varList.map(v => `<span class="text-[9px] font-extrabold text-gray-500 px-1.5 py-0.5 bg-gray-100 rounded uppercase tracking-wider">${v}</span>`).join('')}
+                </div>
               </div>
-              <span class="text-[9px] text-gray-400 font-mono tracking-tighter uppercase">${p.sku}</span>
-              <div class="flex flex-wrap gap-x-2 gap-y-1 mt-1.5">
-                 ${varList.map(v => `<span class="text-[9px] font-extrabold text-gray-500 px-1.5 py-0.5 bg-gray-100 rounded uppercase tracking-wider">${v}</span>`).join('')}
+              <!-- Mobile actions (visible only on mobile) -->
+              <div class="flex sm:hidden items-center gap-1.5 shrink-0">
+                <button class="est-toggle-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition" data-sku="${p.sku}" title="${isActive ? 'Desativar' : 'Ativar'}">
+                   <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-[10px]"></i>
+                </button>
+                <button class="est-edit-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-indigo-500 hover:bg-indigo-50 transition" data-sku="${p.sku}">
+                   <i class="fa-solid fa-pen text-[10px]"></i>
+                </button>
+                <button class="est-delete-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-300 hover:text-red-500 hover:border-red-200 transition" data-sku="${p.sku}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
+                   <i class="fa-solid fa-trash-can text-[10px]"></i>
+                </button>
               </div>
             </div>
-            <!-- Mobile actions (visible only on mobile) -->
-            <div class="flex sm:hidden items-center gap-1.5 shrink-0">
+          </td>
+          <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
+            <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Custo:</span>
+            <span class="text-xs font-bold text-gray-700 font-mono">${formatMoney(custoUnid).replace('R$ ', 'R$')}</span>
+          </td>
+          <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
+            <div class="flex flex-col sm:items-center">
+              <div>
+                <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Venda:</span>
+                <span class="text-xs font-bold text-indigo-600 font-mono">${formatMoney(precoVenda).replace('R$ ', 'R$')}</span>
+              </div>
+              <span class="text-[9px] font-bold text-emerald-600 mt-0.5">+ ${formatMoney(lucro).replace('R$ ', 'R$')} lucro</span>
+            </div>
+          </td>
+          <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
+            <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Giro:</span>
+            <span class="text-[10px] font-black px-2 py-1 rounded bg-gray-50 text-gray-500 border border-gray-200/50">${giroStr}</span>
+          </td>
+          <td class="px-4 sm:px-6 py-1 sm:py-4">
+            <div class="flex flex-col sm:items-center">
+               <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Estoque:</span>
+               <div class="flex items-center gap-1.5">
+                  <input type="number" value="${estVal}" class="est-val-input w-14 px-1.5 py-1 text-center text-xs font-black border border-gray-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all ${estVal <= 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-gray-900'}" data-sku="${p.sku}">
+                  <span class="text-gray-300 text-[10px] font-bold">/</span>
+                  <input type="number" min="0" value="${minVal}" class="est-min-input w-12 px-1 py-1 text-center text-[10px] font-bold border border-gray-100 bg-gray-50 rounded text-gray-500 outline-none" data-sku="${p.sku}">
+               </div>
+               <span class="text-[8px] font-black uppercase tracking-tighter mt-1.5 ${statusColor}">${statusText}</span>
+            </div>
+          </td>
+          <td class="hidden sm:table-cell px-6 py-4">
+            <div class="flex items-center justify-center gap-1.5">
               <button class="est-toggle-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition" data-sku="${p.sku}" title="${isActive ? 'Desativar' : 'Ativar'}">
                  <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-[10px]"></i>
               </button>
@@ -191,53 +242,124 @@ export function renderEstoque(callbacks = {}) {
                  <i class="fa-solid fa-trash-can text-[10px]"></i>
               </button>
             </div>
+          </td>
+        </tr>
+      `;
+    } else {
+      const imageUrl = (p.images && p.images[0]) || p.imagem1 || p.imagem || '../../assets/images/placeholder.png';
+      const margin = precoVenda > 0 ? Math.round((lucro / precoVenda) * 100) : 0;
+      let badgeCondicao = p.condicao ? p.condicao.toUpperCase() : 'NOVO';
+      
+      htmlCards += `
+        <div class="bg-white border ${estVal > 0 ? 'border-green-200' : 'border-gray-200'} rounded-xl p-4 shadow-sm relative group flex flex-col transition hover:shadow-md ${rowOpacity}">
+          
+          <!-- Header (Nome + Ícone) -->
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h3 class="text-[13px] font-extrabold text-gray-900 uppercase leading-tight">${formatText(p.nome)} <i class="fa-regular fa-circle-check text-green-500 text-[10px] align-baseline ml-0.5"></i></h3>
           </div>
-        </td>
-        <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
-          <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Custo:</span>
-          <span class="text-xs font-bold text-gray-700 font-mono">${formatMoney(custoUnid).replace('R$ ', 'R$')}</span>
-        </td>
-        <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
-          <div class="flex flex-col sm:items-center">
-            <div>
-              <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Venda:</span>
-              <span class="text-xs font-bold text-indigo-600 font-mono">${formatMoney(precoVenda).replace('R$ ', 'R$')}</span>
+          
+          <!-- Badges & Actions -->
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex gap-2">
+              <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-bold uppercase rounded">${badgeCondicao}</span>
+              <span class="px-2 py-0.5 ${estVal > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'} text-[8px] font-bold uppercase rounded">${estVal > 0 ? 'Em Estoque' : 'Esgotado'}</span>
+              ${!isActive ? '<span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-bold uppercase rounded">Inativo</span>' : ''}
             </div>
-            <span class="text-[9px] font-bold text-emerald-600 mt-0.5">+ ${formatMoney(lucro).replace('R$ ', 'R$')} lucro</span>
+            <div class="flex gap-2 text-gray-300">
+              <button class="est-toggle-btn hover:text-indigo-500 transition" data-sku="${p.sku}" title="${isActive ? 'Desativar' : 'Ativar'}">
+                 <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-xs"></i>
+              </button>
+              <button class="est-edit-btn hover:text-indigo-500 transition" data-sku="${p.sku}">
+                 <i class="fa-solid fa-pen text-xs"></i>
+              </button>
+              <button class="est-delete-btn hover:text-red-500 transition" data-sku="${p.sku}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
+                 <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            </div>
           </div>
-        </td>
-        <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
-          <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Giro:</span>
-          <span class="text-[10px] font-black px-2 py-1 rounded bg-gray-50 text-gray-500 border border-gray-200/50">${giroStr}</span>
-        </td>
-        <td class="px-4 sm:px-6 py-1 sm:py-4">
-          <div class="flex flex-col sm:items-center">
-             <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Estoque:</span>
-             <div class="flex items-center gap-1.5">
-                <input type="number" value="${estVal}" class="est-val-input w-14 px-1.5 py-1 text-center text-xs font-black border border-gray-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all ${estVal <= 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-gray-900'}" data-sku="${p.sku}">
-                <span class="text-gray-300 text-[10px] font-bold">/</span>
-                <input type="number" min="0" value="${minVal}" class="est-min-input w-12 px-1 py-1 text-center text-[10px] font-bold border border-gray-100 bg-gray-50 rounded text-gray-500 outline-none" data-sku="${p.sku}">
-             </div>
-             <span class="text-[8px] font-black uppercase tracking-tighter mt-1.5 ${statusColor}">${statusText}</span>
+          
+          <!-- Product Image -->
+          <div class="w-full aspect-[4/3] rounded-lg overflow-hidden mb-3 bg-gray-50 border border-gray-100">
+             <img src="${imageUrl}" class="w-full h-full object-cover" onerror="this.src='../../assets/images/placeholder.png'">
           </div>
-        </td>
-        <td class="hidden sm:table-cell px-6 py-4">
-          <div class="flex items-center justify-center gap-1.5">
-            <button class="est-toggle-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition" data-sku="${p.sku}" title="${isActive ? 'Desativar' : 'Ativar'}">
-               <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-[10px]"></i>
-            </button>
-            <button class="est-edit-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-indigo-500 hover:bg-indigo-50 transition" data-sku="${p.sku}">
-               <i class="fa-solid fa-pen text-[10px]"></i>
-            </button>
-            <button class="est-delete-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-300 hover:text-red-500 hover:border-red-200 transition" data-sku="${p.sku}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
-               <i class="fa-solid fa-trash-can text-[10px]"></i>
-            </button>
+          
+          <!-- Detalhes / Observações -->
+          <div class="bg-blue-50/40 border border-blue-100 rounded-lg p-2.5 mb-4">
+             <span class="text-[10px] font-bold text-blue-600 block mb-0.5">Observações:</span>
+             <p class="text-[9px] text-blue-800 leading-relaxed uppercase">SKU: ${p.sku} ${p.imei1 ? `| IMEI: ${p.imei1}` : ''} ${p.imei2 ? `| IMEI2: ${p.imei2}` : ''} ${p.codigo_serie ? `| SERIAL: ${p.codigo_serie}` : ''}</p>
           </div>
-        </td>
-      </tr>
-    `;
+          
+          <hr class="border-gray-100 mb-4">
+          
+          <!-- Custo vs Preço -->
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <p class="text-[9px] text-gray-400 font-medium mb-1">Custo Base</p>
+              <p class="text-[13px] font-bold text-orange-500">${formatMoney(custoUnid)}</p>
+            </div>
+            <div>
+              <p class="text-[9px] text-gray-400 font-medium mb-1">Preço Sugerido</p>
+              <p class="text-[13px] font-bold text-blue-500">${formatMoney(precoVenda)}</p>
+            </div>
+          </div>
+          
+          <!-- Lucro Estimado Box -->
+          <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3 mb-4 mt-auto">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-[10px] font-bold text-emerald-700 flex items-center gap-1"><i class="fa-solid fa-dollar-sign text-[8px]"></i> Lucro Estimado</span>
+              <span class="text-[10px] font-bold text-emerald-800">${margin}%</span>
+            </div>
+            <div class="text-base font-black text-emerald-700 mb-2 border-b border-emerald-200/50 pb-2">
+              + ${formatMoney(lucro)}
+            </div>
+            <div class="flex justify-between items-center pt-1">
+              <span class="text-[9px] text-emerald-600 font-medium">Giro de Estoque:</span>
+              <span class="text-[9px] font-bold text-emerald-700">${giroStr}</span>
+            </div>
+          </div>
+          
+          <!-- Estoque Inputs -->
+          <div class="flex items-center justify-between text-[11px] text-gray-500 mt-2">
+            <div class="flex items-center gap-1.5">
+               <i class="fa-solid fa-box-open text-gray-400"></i> <span class="font-medium">Em Estoque</span>
+            </div>
+            <div class="flex items-center gap-1">
+               <input type="number" value="${estVal}" class="est-val-input w-12 px-1 py-0.5 text-center text-xs font-bold border border-gray-200 rounded focus:border-indigo-500 transition-all ${estVal <= 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-gray-900'}" data-sku="${p.sku}">
+               <span class="text-gray-300">/ min</span>
+               <input type="number" min="0" value="${minVal}" class="est-min-input w-10 px-1 py-0.5 text-center text-[10px] font-bold border border-gray-100 bg-gray-50 rounded text-gray-500 outline-none" data-sku="${p.sku}" title="Estoque mínimo">
+            </div>
+          </div>
+          
+        </div>
+      `;
+    }
   });
-  ;
+
+  if (viewMode === 'list') {
+    container.innerHTML = `
+      <table class="estoque-table w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold tracking-[0.1em] border-b border-gray-100">
+            <th class="px-6 py-4">Produto / Variação</th>
+            <th class="px-6 py-4 text-center">Custo Unit</th>
+            <th class="px-6 py-4 text-center">Preço Venda</th>
+            <th class="px-6 py-4 text-center">Giro</th>
+            <th class="px-6 py-4 text-center">Estoque (Atual/Mín)</th>
+            <th class="hidden sm:table-cell px-6 py-4 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 bg-white border-b border-gray-100">
+          ${htmlListRows}
+        </tbody>
+      </table>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
+        ${htmlCards}
+      </div>
+    `;
+  }
 
   // Bind Events
   document.querySelectorAll('.est-min-input').forEach(inp => {
