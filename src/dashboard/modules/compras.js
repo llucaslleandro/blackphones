@@ -89,9 +89,6 @@ export async function initAndRender() {
           </table>
         </div>
       </div>
-
-      <!-- Modals Container -->
-      <div id="enc-modals-container"></div>
     `;
 
   const btnAdd = document.getElementById('btn-add-encomendado');
@@ -664,12 +661,16 @@ function renderTable() {
 let itemCounter = 0;
 
 function renderModals() {
-  const container = document.getElementById('enc-modals-container');
-  if (!container) return;
+  let container = document.getElementById('enc-modals-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'enc-modals-container';
+    document.body.appendChild(container);
+  }
 
   container.innerHTML = `
     <!-- Modal Cadastro Lote Encomenda -->
-    <div id="modal-add-enc" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div id="modal-add-enc" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[100] p-4">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden">
         <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl shrink-0">
           <h3 class="text-lg font-bold text-gray-900"><i class="fa-solid fa-truck-fast text-indigo-500 mr-2"></i>Novo Lote de Encomenda</h3>
@@ -741,7 +742,7 @@ function renderModals() {
     </div>
 
     <!-- Modal Confirmação Chegada (Integração Estoque) -->
-    <div id="modal-chegou" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm hidden items-center justify-center z-[60] p-4">
+    <div id="modal-chegou" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[110] p-4">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         <div class="p-6 border-b border-green-100 flex justify-between items-center bg-green-50/50">
           <h3 class="text-lg font-bold text-green-800" id="chegou-modal-title"><i class="fa-solid fa-box-open text-green-500 mr-2"></i>Confirmar Chegada</h3>
@@ -881,7 +882,7 @@ function renderModals() {
     </div>
 
     <!-- Modal Confirmação Exclusão -->
-    <div id="modal-confirm-delete" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm hidden items-center justify-center z-[70] p-4">
+    <div id="modal-confirm-delete" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[120] p-4">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col p-6 text-center">
         <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
           <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
