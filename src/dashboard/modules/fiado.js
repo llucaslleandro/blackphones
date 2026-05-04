@@ -250,7 +250,8 @@ function abrirModalNovaDivida() {
   
   const disponíveis = store.state.allProducts.filter(p => p.ativo && Number(p.estoque) > 0);
   disponíveis.forEach(p => {
-    select.innerHTML += `<option value="${p.id}">${p.nome} - ${p.armazenamento} - ${p.cor} (Estoque: ${p.estoque})</option>`;
+    const condicaoStr = p.condicao ? ` - ${p.condicao}` : '';
+    select.innerHTML += `<option value="${p.id}">${p.nome} - ${p.armazenamento} - ${p.cor}${condicaoStr} (Estoque: ${p.estoque})</option>`;
   });
   
   // Limpa campos
@@ -329,14 +330,41 @@ function atualizarResumo() {
 }
 
 async function salvarNovaDivida() {
-  const cliente = document.getElementById('fiado-nome-cliente').value.trim();
-  const produtoId = document.getElementById('fiado-produto-estoque').value;
-  const valorVenda = Number(document.getElementById('fiado-valor-venda').value) || 0;
-  const qtdParcelas = Number(document.getElementById('fiado-qtd-parcelas').value) || 1;
+  const fieldCliente = document.getElementById('fiado-nome-cliente');
+  const fieldProduto = document.getElementById('fiado-produto-estoque');
+  const fieldValorVenda = document.getElementById('fiado-valor-venda');
+  const fieldQtdParcelas = document.getElementById('fiado-qtd-parcelas');
+
+  const cliente = fieldCliente.value.trim();
+  const produtoId = fieldProduto.value;
+  const valorVenda = Number(fieldValorVenda.value) || 0;
+  const qtdParcelas = Number(fieldQtdParcelas.value) || 1;
   
-  if (!cliente) return ui.showToast('Preencha o nome do cliente', 'red');
-  if (!produtoId) return ui.showToast('Selecione um produto do estoque', 'red');
-  if (valorVenda <= 0) return ui.showToast('Valor de venda inválido', 'red');
+  let hasError = false;
+
+  const showError = (field) => {
+    field.style.borderColor = '#ef4444'; // border-red-500
+    field.style.backgroundColor = '#fef2f2'; // bg-red-50
+    field.style.boxShadow = '0 0 0 1px #ef4444'; // ring-red-500
+    
+    const removeError = () => {
+      field.style.borderColor = '';
+      field.style.backgroundColor = '';
+      field.style.boxShadow = '';
+      field.removeEventListener('input', removeError);
+      field.removeEventListener('change', removeError);
+    };
+    field.addEventListener('input', removeError);
+    field.addEventListener('change', removeError);
+  };
+
+  if (!cliente) { showError(fieldCliente); hasError = true; }
+  if (!produtoId) { showError(fieldProduto); hasError = true; }
+  if (valorVenda <= 0) { showError(fieldValorVenda); hasError = true; }
+
+  if (hasError) {
+    return ui.showToast('Preencha os dados obrigatórios destacados em vermelho', 'red');
+  }
   
   const entradaDinheiro = Number(document.getElementById('fiado-entrada-dinheiro').value) || 0;
   const temAparelho = document.getElementById('fiado-tem-aparelho').checked;
