@@ -27,7 +27,7 @@ export function renderEstoque(callbacks = {}) {
       esgotados++;
     } else {
       disponiveis++;
-      if (est <= min) baixoEstoque++;
+      if (est === 1) baixoEstoque++;
     }
 
     if (est > 0) {
@@ -82,7 +82,7 @@ export function renderEstoque(callbacks = {}) {
 
       if (filterEstoque === 'em-estoque') return est > 0;
       if (filterEstoque === 'esgotados') return est <= 0;
-      if (filterEstoque === 'baixo-estoque') return est > 0 && est <= min;
+      if (filterEstoque === 'baixo-estoque') return est === 1;
 
       if (filterEstoque === 'parados') {
         if (est <= 0) return false;
