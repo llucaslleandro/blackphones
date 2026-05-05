@@ -32,7 +32,7 @@ export const CONFIG = {
     },
     {
       name: 'Rony',
-      phone: '5579996564920',
+      phone: '5579981188632',
       avatar: 'assets/images/avatar-rony.png',
       message: 'Olá! Vim pela vitrine da Black Phones e quero ajuda para escolher um celular.'
     }
@@ -43,15 +43,15 @@ export const CONFIG = {
   installment: {
     defaultInstallments: 10,
     taxas: {
-      1:  3.99,
-      2:  5.52,
-      3:  6.26,
-      4:  7.00,
-      5:  7.74,
-      6:  8.48,
-      7:  9.49,
-      8:  10.23,
-      9:  10.97,
+      1: 3.99,
+      2: 5.52,
+      3: 6.26,
+      4: 7.00,
+      5: 7.74,
+      6: 8.48,
+      7: 9.49,
+      8: 10.23,
+      9: 10.97,
       10: 11.71,
       11: 12.45,
       12: 13.19,
