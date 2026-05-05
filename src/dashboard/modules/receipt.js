@@ -20,7 +20,7 @@ const COORDS = {
   cor: { x: 82, y: 100 },
   imei: { x: 101, y: 100 },
   imei2: { x: 101, y: 115 },
-  memoria: { x: 134, y: 100 },
+  memoria: { x: 135, y: 100 },
   bateria: { x: 153, y: 100 },
   condicao: { x: 9, y: 115 },
   quantidade: { x: 173, y: 100 },
@@ -242,7 +242,7 @@ async function generatePDF() {
   doc.addImage(img, 'PNG', 0, 0, 210, 297);
 
   // Setup font
-  doc.setFont('helvetica', 'regular');
+  doc.setFont('helvetica');
   doc.setFontSize(9);
   doc.setTextColor(40, 40, 40);
 
