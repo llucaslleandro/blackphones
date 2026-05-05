@@ -86,7 +86,7 @@ export const CONFIG = {
     { image: 'assets/images/03 (DESKTOP).png', imageMobile: 'assets/images/03 (MOBILE).png', alt: '' },
     { image: 'assets/images/04 (DESKTOP).png', imageMobile: 'assets/images/04 (MOBILE).png', alt: '' },
     { image: 'assets/images/05 (DESKTOP).png', imageMobile: 'assets/images/05 (MOBILE).png', alt: '' },
-    { image: 'assets/images/06 (DESKTOP).png', imageMobile: 'assets/images/06 (MOBILE).png', alt: '' },
+    { image: 'assets/images/06 (DESKTOP).png', imageMobile: 'assets/images/06 (MOBILE).png', alt: '', mobileOnly: true },
   ],
 
   // Intervalo de rotação dos banners em ms (padrão: 5 segundos)

@@ -87,7 +87,13 @@ function aplicarEventos() {
 
 // ===== Banner Carousel =====
 function initBannerCarousel() {
-  const banners = CONFIG.banners || [];
+  const isMobile = window.innerWidth < 640;
+  const banners = (CONFIG.banners || []).filter(b => {
+    if (b.mobileOnly && !isMobile) return false;
+    if (b.desktopOnly && isMobile) return false;
+    return true;
+  });
+
   if (!banners.length) {
     const carouselEl = document.getElementById('banner-carousel');
     if (carouselEl) carouselEl.style.display = 'none';
@@ -225,12 +231,12 @@ function initBannerCarousel() {
   prevBtn.addEventListener('click', prevSlide);
 
   function startAutoPlay() {
+    if (autoPlayTimer) clearInterval(autoPlayTimer);
     const interval = CONFIG.bannerInterval || 5000;
     autoPlayTimer = setInterval(nextSlide, interval);
   }
 
   function resetAutoPlay() {
-    clearInterval(autoPlayTimer);
     startAutoPlay();
   }
 
@@ -265,7 +271,7 @@ function initBannerCarousel() {
 
 async function fetchProdutos() {
   const cache = carregarCacheProdutos();
-  
+
   // No localhost, ignoramos o cache inicial para evitar confusão no desenvolvimento
   const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
@@ -379,7 +385,7 @@ function initHeroWhatsApp() {
     // Text + small WhatsApp icon
     const textSpan = document.createElement('span');
     textSpan.className = 'flex items-center gap-1.5';
-    textSpan.innerHTML = `Fale com ${contact.name} <i class="fa-brands fa-whatsapp text-green-500 text-base opacity-60"></i>`;
+    textSpan.innerHTML = `Falar com ${contact.name} <i class="fa-brands fa-whatsapp text-green-500 text-base opacity-60"></i>`;
     a.appendChild(textSpan);
 
     wrapper.appendChild(a);

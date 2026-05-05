@@ -211,6 +211,9 @@ export function filtrarProdutos(useAnimation = false) {
     return isAtivo && byCat && byCond && byText;
   });
 
+  const allSalesValues = Object.values(store.vendasProduto || {});
+  const maxSales = allSalesValues.length > 0 ? Math.max(...allSalesValues) : 0;
+
   filtrados.sort((a, b) => {
     const estA = Number(a.estoque) || 0;
     const estB = Number(b.estoque) || 0;
@@ -236,18 +239,27 @@ export function filtrarProdutos(useAnimation = false) {
     const minA = Number(a.estoque_minimo) || 2;
     const minB = Number(b.estoque_minimo) || 2;
 
+    const realSalesA = store.vendasProduto[`${a.nome}|${a.cor}|${a.armazenamento}`.toLowerCase()] || 0;
+    const isBestSellerA = realSalesA > 0 && realSalesA === maxSales;
+
+    const realSalesB = store.vendasProduto[`${b.nome}|${b.cor}|${b.armazenamento}`.toLowerCase()] || 0;
+    const isBestSellerB = realSalesB > 0 && realSalesB === maxSales;
+
     // Definindo "Tiers" ou "Score" de relevância:
+    // Nível 4: Mais Vendidos (Maior número de vendas)
     // Nível 3: Populares (> 5 cliques)
     // Nível 2: Apenas 1 Unidade
     // Nível 1: Poucas Unidades (<= mínimo)
     // Nível 0: Restante
     let scoreA = 0, scoreB = 0;
 
-    if (clicksA > 5) scoreA = 3;
+    if (isBestSellerA) scoreA = 4;
+    else if (clicksA > 5) scoreA = 3;
     else if (estA === 1) scoreA = 2;
     else if (estA <= minA) scoreA = 1;
 
-    if (clicksB > 5) scoreB = 3;
+    if (isBestSellerB) scoreB = 4;
+    else if (clicksB > 5) scoreB = 3;
     else if (estB === 1) scoreB = 2;
     else if (estB <= minB) scoreB = 1;
 
