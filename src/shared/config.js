@@ -23,6 +23,20 @@ export const CONFIG = {
 
   // WhatsApp
   whatsappNumber: '5579999662466', // sem +
+  whatsappContacts: [
+    {
+      name: 'Júlio',
+      phone: '5579999662466',
+      avatar: 'assets/images/avatar-julio.png',
+      message: 'Olá! Vim pela vitrine da Black Phones e quero ajuda para escolher um celular.'
+    },
+    {
+      name: 'Rony',
+      phone: '5579996564920',
+      avatar: 'assets/images/avatar-rony.png',
+      message: 'Olá! Vim pela vitrine da Black Phones e quero ajuda para escolher um celular.'
+    }
+  ],
 
   // Parcelamento (Simulador no carrinho)
   // Taxas fixas da maquininha por número de parcelas (em %)

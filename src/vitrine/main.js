@@ -320,6 +320,72 @@ async function fetchProdutos() {
   }
 }
 
+// ===== Hero WhatsApp CTA =====
+function initHeroWhatsApp() {
+  const container = document.getElementById('hero-whatsapp-cta');
+  const contacts = CONFIG.whatsappContacts;
+  if (!container || !contacts || !contacts.length) return;
+
+  // Microcopy
+  const label = document.createElement('p');
+  label.className = 'text-sm text-gray-400 mb-3 font-medium';
+  label.textContent = 'Prefere falar direto?';
+  container.appendChild(label);
+
+  // Buttons wrapper
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex flex-wrap items-center justify-center gap-3';
+  container.appendChild(wrapper);
+
+  contacts.forEach(contact => {
+    const url = `https://wa.me/${contact.phone}?text=${encodeURIComponent(contact.message)}`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = [
+      'inline-flex items-center gap-2.5 sm:gap-3',
+      'px-4 py-2.5 sm:px-6 sm:py-3.5',
+      'bg-white border border-gray-200 rounded-full',
+      'text-sm sm:text-base font-medium text-gray-700',
+      'shadow-sm',
+      'hover:border-gray-300 hover:shadow-md hover:text-gray-900',
+      'active:scale-[0.97]',
+      'transition-all duration-200',
+      'select-none cursor-pointer'
+    ].join(' ');
+
+    // Avatar
+    const avatarWrap = document.createElement('span');
+    avatarWrap.className = 'relative w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center shrink-0 ring-2 ring-gray-100';
+
+    const img = document.createElement('img');
+    img.src = contact.avatar;
+    img.alt = contact.name;
+    img.className = 'w-full h-full object-cover';
+    img.loading = 'lazy';
+    // Fallback: show initial if image fails
+    img.onerror = function () {
+      this.style.display = 'none';
+      const fallback = document.createElement('span');
+      fallback.className = 'text-xs font-bold text-gray-500';
+      fallback.textContent = contact.name.charAt(0).toUpperCase();
+      avatarWrap.appendChild(fallback);
+    };
+    avatarWrap.appendChild(img);
+    a.appendChild(avatarWrap);
+
+    // Text + small WhatsApp icon
+    const textSpan = document.createElement('span');
+    textSpan.className = 'flex items-center gap-1.5';
+    textSpan.innerHTML = `Fale com ${contact.name} <i class="fa-brands fa-whatsapp text-green-500 text-base opacity-60"></i>`;
+    a.appendChild(textSpan);
+
+    wrapper.appendChild(a);
+  });
+}
+
 // ===== INÍCIO DA APLICAÇÃO =====
 function init() {
   applyTheme();
@@ -327,6 +393,7 @@ function init() {
   elements.overlay.classList.add('hidden');
 
   initBannerCarousel();
+  initHeroWhatsApp();
   carregarCarrinhoLocalStorage();
   renderCarrinho();
   fetchProdutos();
