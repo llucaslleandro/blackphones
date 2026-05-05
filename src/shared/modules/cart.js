@@ -40,9 +40,23 @@ function calcularTotalAncorado() {
 
 // ===== Parcelamento (Frontend only) =====
 const PARCELAMENTO_KEY = 'catalogo_parcelamento_v1';
-const PARCELAMENTO_JUROS = Number(CONFIG?.installment?.interestRatePerInstallment ?? 0.025);
-const PARCELAMENTO_MAX = Number(CONFIG?.installment?.maxInstallments ?? 12);
+const TAXAS_MAQUININHA = CONFIG?.installment?.taxas ?? {};
+const PARCELAMENTO_MAX = Math.max(...Object.keys(TAXAS_MAQUININHA).map(Number).filter(n => !isNaN(n)), 12);
 const PARCELAMENTO_DEFAULT = Number(CONFIG?.installment?.defaultInstallments ?? 10);
+
+/**
+ * Retorna a taxa percentual fixa da maquininha para o número de parcelas.
+ * Se não existir na tabela, usa fallback linear seguro.
+ */
+function obterTaxaPercentual(numeroParcelas) {
+  const p = Number(numeroParcelas) || 1;
+  if (TAXAS_MAQUININHA[p] !== undefined) return Number(TAXAS_MAQUININHA[p]);
+  // Fallback seguro: interpola linearmente com base na maior taxa existente
+  const keys = Object.keys(TAXAS_MAQUININHA).map(Number).sort((a, b) => a - b);
+  if (!keys.length) return 0;
+  if (p < keys[0]) return Number(TAXAS_MAQUININHA[keys[0]]);
+  return Number(TAXAS_MAQUININHA[keys[keys.length - 1]]);
+}
 
 let parcelamentoSelecionado = (() => {
   try {
@@ -63,29 +77,53 @@ function salvarParcelamentoSelecionado() {
   try { localStorage.setItem(PARCELAMENTO_KEY, JSON.stringify(parcelamentoSelecionado)); } catch { }
 }
 
+/**
+ * Calcula o parcelamento usando a taxa fixa da maquininha.
+ *
+ * Fórmula: valorFinalComTaxa = valorBase / (1 - taxaPercentual / 100)
+ *
+ * O objetivo é que, após a maquininha descontar sua taxa,
+ * o lojista receba líquido o valor base do produto.
+ */
 function calcularParcelamento(preco, parcelas, entrada = 0, modo = 'parcelado') {
   const base = Math.max(0, Number(preco) || 0);
   const ent = Math.min(Math.max(0, Number(entrada) || 0), base);
   const p = Math.min(Math.max(1, Number(parcelas) || 1), PARCELAMENTO_MAX);
 
   if (modo === 'avista') {
+    // À vista: aplica taxa de 1x (crédito à vista)
+    const taxaPercentual = obterTaxaPercentual(1);
+    const taxaDecimal = taxaPercentual / 100;
+    const fatorLiquido = 1 - taxaDecimal;
+    const valorFinalComTaxa = (fatorLiquido > 0) ? (base / fatorLiquido) : base;
     return {
       modo: 'avista',
       parcelas: 1,
       entrada: 0,
       restante: base,
-      totalFinanciado: base,
-      valorParcela: base,
-      totalFinal: base
+      totalFinanciado: valorFinalComTaxa,
+      valorParcela: valorFinalComTaxa,
+      totalFinal: valorFinalComTaxa,
+      taxaPercentual
     };
   }
 
   const restante = Math.max(0, base - ent);
-  const totalFinanciado = restante * (1 + (PARCELAMENTO_JUROS * p)); // juros simples por parcela
-  const valorParcela = p > 0 ? (totalFinanciado / p) : 0;
-  const totalFinal = ent + totalFinanciado;
 
-  return { modo: 'parcelado', parcelas: p, entrada: ent, restante, totalFinanciado, valorParcela, totalFinal };
+  // 1. Pegar a taxa percentual da parcela
+  const taxaPercentual = obterTaxaPercentual(p);
+  // 2. Converter para decimal
+  const taxaDecimal = taxaPercentual / 100;
+  // 3. Calcular o fator líquido
+  const fatorLiquido = 1 - taxaDecimal;
+  // 4. Calcular o valor final com taxa (protege contra divisão por zero)
+  const valorFinalComTaxa = (fatorLiquido > 0) ? (restante / fatorLiquido) : restante;
+  // 5. Calcular o valor da parcela
+  const valorParcela = p > 0 ? (valorFinalComTaxa / p) : 0;
+
+  const totalFinal = ent + valorFinalComTaxa;
+
+  return { modo: 'parcelado', parcelas: p, entrada: ent, restante, totalFinanciado: valorFinalComTaxa, valorParcela, totalFinal, taxaPercentual };
 }
 
 function formatarLinhaParcelamento(calc, opts = {}) {
@@ -119,7 +157,7 @@ export function abrirSimuladorParcelamento() {
         <div class="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
           <div>
             <h3 class="text-base font-bold text-gray-900">Simular Parcelamento</h3>
-            <p class="text-xs text-gray-500 mt-0.5">Juros: ${(PARCELAMENTO_JUROS * 100).toFixed(2).replace('.', ',')}% por parcela (simples)</p>
+            <p class="text-xs text-gray-500 mt-0.5">Taxa fixa da maquininha por modalidade</p>
           </div>
           <button id="installment-close" class="w-9 h-9 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition text-lg font-bold">✕</button>
         </div>

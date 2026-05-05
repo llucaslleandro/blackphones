@@ -25,10 +25,32 @@ export const CONFIG = {
   whatsappNumber: '5579999662466', // sem +
 
   // Parcelamento (Simulador no carrinho)
+  // Taxas fixas da maquininha por número de parcelas (em %)
   installment: {
-    interestRatePerInstallment: 0.03, // 3% por parcela (juros simples)
     defaultInstallments: 10,
-    maxInstallments: 21
+    taxas: {
+      1:  3.99,
+      2:  5.52,
+      3:  6.26,
+      4:  7.00,
+      5:  7.74,
+      6:  8.48,
+      7:  9.49,
+      8:  10.23,
+      9:  10.97,
+      10: 11.71,
+      11: 12.45,
+      12: 13.19,
+      13: 14.71,
+      14: 15.45,
+      15: 16.19,
+      16: 16.93,
+      17: 17.67,
+      18: 18.41,
+      19: 19.15,
+      20: 19.89,
+      21: 20.63,
+    }
   },
 
   // Dashboard Setup
