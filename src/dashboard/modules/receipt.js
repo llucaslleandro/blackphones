@@ -242,7 +242,7 @@ async function generatePDF() {
   doc.addImage(img, 'PNG', 0, 0, 210, 297);
 
   // Setup font
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('helvetica', 'regular');
   doc.setFontSize(9);
   doc.setTextColor(40, 40, 40);
 
