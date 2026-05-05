@@ -52,7 +52,17 @@ export function setTab(activeBtn, activeTab, allBtns, allTabs) {
 // Formatters
 export const formatText = (val) => val && val.trim() !== '' ? val : 'N/A';
 export const formatMoney = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-export const parseNumber = (val) => { let n = Number(String(val).replace(/[^0-9.-]+/g, "")); return isNaN(n) ? 0 : n; };
+export const parseNumber = (val) => { 
+  if (typeof val === 'number') return val;
+  let s = String(val || '').replace('R$', '').trim();
+  if (s.includes(',') && s.includes('.')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes(',')) {
+    s = s.replace(',', '.');
+  }
+  let n = parseFloat(s.replace(/[^0-9.-]+/g, "")); 
+  return isNaN(n) ? 0 : n; 
+};
 
 export function formatCpfCnpj(val) {
   let v = val.replace(/\D/g, ""); // Remove não dígitos
@@ -287,3 +297,73 @@ export function setupViewToggle(btnListId, btnGridId, storageKey, onToggleCallba
 export function getViewPreference(storageKey, defaultView = 'list') {
   return localStorage.getItem(storageKey) || defaultView;
 }
+
+export function initTooltips() {
+  const tooltipEl = document.createElement('div');
+  tooltipEl.id = 'global-dynamic-tooltip';
+  tooltipEl.className = 'fixed hidden z-[9999] bg-gray-900 text-white text-xs font-medium p-3 rounded-xl shadow-2xl max-w-[280px] leading-relaxed pointer-events-none transition-opacity duration-200 opacity-0 border border-gray-700/50';
+  document.body.appendChild(tooltipEl);
+
+  let activeTrigger = null;
+
+  const showTooltip = (trigger) => {
+    const content = trigger.getAttribute('data-tooltip-content');
+    if (!content) return;
+
+    activeTrigger = trigger;
+    tooltipEl.textContent = content;
+    tooltipEl.classList.remove('hidden');
+    
+    // Positioning
+    const rect = trigger.getBoundingClientRect();
+    let top = rect.top - tooltipEl.offsetHeight - 10;
+    let left = rect.left + (rect.width / 2) - (tooltipEl.offsetWidth / 2);
+
+    // Prevent off-screen
+    if (top < 10) top = rect.bottom + 10; // flip below if not enough space above
+    if (left < 10) left = 10;
+    if (left + tooltipEl.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltipEl.offsetWidth - 10;
+
+    tooltipEl.style.top = `${top}px`;
+    tooltipEl.style.left = `${left}px`;
+    
+    // Fade in
+    requestAnimationFrame(() => {
+      tooltipEl.classList.remove('opacity-0');
+      tooltipEl.classList.add('opacity-100');
+    });
+  };
+
+  const hideTooltip = () => {
+    if (!activeTrigger) return;
+    activeTrigger = null;
+    tooltipEl.classList.remove('opacity-100');
+    tooltipEl.classList.add('opacity-0');
+    setTimeout(() => {
+      if (!activeTrigger) tooltipEl.classList.add('hidden');
+    }, 200);
+  };
+
+  document.addEventListener('mouseover', (e) => {
+    const trigger = e.target.closest('.js-tooltip-trigger');
+    if (trigger) {
+      showTooltip(trigger);
+    } else {
+      hideTooltip();
+    }
+  });
+
+  document.addEventListener('touchstart', (e) => {
+    const trigger = e.target.closest('.js-tooltip-trigger');
+    if (trigger) {
+      if (activeTrigger !== trigger) {
+         showTooltip(trigger);
+      } else {
+         hideTooltip();
+      }
+    } else {
+      hideTooltip();
+    }
+  });
+}
+

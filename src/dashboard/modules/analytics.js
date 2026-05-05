@@ -1,5 +1,5 @@
 import { state } from './store.js';
-import { formatMoney, formatPercent } from './ui.js';
+import { formatMoney, formatPercent, parseNumber } from './ui.js';
 import { gerarAnaliseEstrategica } from './strategy/index.js';
 
 let revenueChart = null;
@@ -22,7 +22,7 @@ export function calcularKPIsEInsights(callbacks = {}) {
           (p.id && String(p.id) === String(o.sku)) ||
           (p.id && String(p.id) === String(o.id))
         );
-        if (produtoRef) fatCusto += (Number(produtoRef.custo || 0) * o.quantidade);
+        if (produtoRef) fatCusto += (parseNumber(produtoRef.custo || 0) * o.quantidade);
       } else if (o.status === 'Cancelado') {
         if (o.id_do_pedido) pdCancelados.add(o.id_do_pedido);
         fatCancelado += (o.final_price || o.total);
@@ -52,7 +52,7 @@ export function calcularKPIsEInsights(callbacks = {}) {
 
   const margemEl = document.getElementById('kpi-margem');
   if (margemEl) {
-    margemEl.textContent = `📊 Margem: ${margem.toFixed(1).replace('.', ',')}%`;
+    margemEl.textContent = `📊 Margem Operacional: ${margem.toFixed(1).replace('.', ',')}%`;
     margemEl.className = margem < 10 && margem > 0
       ? 'text-xs font-bold text-orange-600 mt-1'
       : margem <= 0 ? 'text-xs font-bold text-red-600 mt-1' : 'text-xs font-bold text-emerald-700 mt-1';
@@ -67,7 +67,7 @@ export function calcularKPIsEInsights(callbacks = {}) {
   state.allProducts.forEach(p => {
     const estoqueAtual = Number(p.estoque) || 0;
     if (estoqueAtual > 0) {
-      const custoUnit = Number(p.custo || p.preco_custo) || 0;
+      const custoUnit = parseNumber(p.custo || p.preco_custo) || 0;
       totalCustoEstoque += (custoUnit * estoqueAtual);
       totalEstoqueFisico += estoqueAtual;
     }
@@ -100,6 +100,106 @@ export function calcularKPIsEInsights(callbacks = {}) {
 
   const topGiroEl = document.getElementById('insight-top-giro');
   if (topGiroEl) topGiroEl.textContent = topProd !== '-' ? topProd.replace(/-/g, ' ') : 'Nenhuma Venda';
+
+  // Cálculo de Investimentos (Estoque, Trânsito, Recuperado e Total)
+  let capitalEstoque = totalCustoEstoque;
+  
+  let capitalTransito = 0;
+  const lotesMap = {};
+  if (state.allEncomendas && state.allEncomendas.length > 0) {
+    state.allEncomendas.forEach(e => {
+      const lid = e.lote_id || e.id;
+      if (!lotesMap[lid]) {
+        lotesMap[lid] = {
+          frete: Number(e.custo_frete) || 0,
+          taxas: Number(e.custo_taxas) || 0,
+          adicLote: Number(e.custo_adicional_lote) || 0,
+          items: []
+        };
+      }
+      lotesMap[lid].items.push(e);
+    });
+    Object.values(lotesMap).forEach(lote => {
+      const loteTotalCustosExtra = lote.frete + lote.taxas + lote.adicLote;
+      const rateio = lote.items.length > 0 ? loteTotalCustosExtra / lote.items.length : 0;
+
+      lote.items.forEach(i => {
+        if (i.status === 'encomendado' || i.status === 'pendente') {
+          let custoItemReal = 0;
+          if (i.custo_total !== undefined && i.custo_total !== null && String(i.custo_total) !== '') {
+            custoItemReal = parseNumber(i.custo_total) || 0;
+          } else {
+            custoItemReal = (parseNumber(i.custo_compra) || 0) + rateio;
+          }
+          capitalTransito += custoItemReal;
+        }
+      });
+    });
+  }
+
+  let capitalRecuperado = 0;
+  if (state.allOrders && state.allOrders.length > 0) {
+    state.allOrders.forEach(o => {
+      if (o.status === 'Fechado') {
+        const produtoRef = state.allProducts.find(p =>
+          (p.sku && String(p.sku) === String(o.sku)) ||
+          (p.id && String(p.id) === String(o.sku)) ||
+          (p.id && String(p.id) === String(o.id))
+        );
+        if (produtoRef) capitalRecuperado += (parseNumber(produtoRef.custo || produtoRef.preco_custo || 0) * o.quantidade);
+      }
+    });
+  }
+
+  let globalFaturamento = 0;
+  if (state.allOrders && state.allOrders.length > 0) {
+    state.allOrders.forEach(o => {
+      if (o.status === 'Fechado') {
+        globalFaturamento += (o.final_price || o.total || 0);
+      }
+    });
+  }
+
+  const capitalImobilizado = capitalEstoque + capitalTransito;
+  const resultadoRealAcumulado = globalFaturamento - capitalImobilizado;
+  
+  // % Capital Recuperado
+  const totalInvestidoGeral = (capitalEstoque + capitalTransito + capitalRecuperado);
+  const recuperadoPercent = totalInvestidoGeral > 0 ? (capitalRecuperado / totalInvestidoGeral) * 100 : 0;
+
+  // ROI
+  const roiValue = capitalImobilizado > 0 ? (resultadoRealAcumulado / capitalImobilizado) * 100 : 0;
+
+  const elEstoque = document.getElementById('kpi-invest-estoque');
+  const elTransito = document.getElementById('kpi-invest-transito');
+  const elRecuperado = document.getElementById('kpi-invest-recuperado');
+  const elTotal = document.getElementById('kpi-invest-total');
+  const elReal = document.getElementById('kpi-resultado-real');
+  const elPercentSubtext = document.getElementById('kpi-recuperado-percent-subtext');
+  const elRoi = document.getElementById('kpi-roi');
+
+  if (elEstoque) elEstoque.textContent = formatMoney(capitalEstoque);
+  if (elTransito) elTransito.textContent = formatMoney(capitalTransito);
+  if (elRecuperado) elRecuperado.textContent = formatMoney(capitalRecuperado);
+  if (elTotal) elTotal.textContent = formatMoney(capitalImobilizado);
+  
+  if (elReal) {
+    elReal.textContent = formatMoney(resultadoRealAcumulado);
+    elReal.className = resultadoRealAcumulado >= 0 
+      ? "text-lg sm:text-xl font-black text-emerald-600 truncate mt-1" 
+      : "text-lg sm:text-xl font-black text-red-600 truncate mt-1";
+  }
+
+  if (elPercentSubtext) {
+    elPercentSubtext.textContent = recuperadoPercent.toFixed(1).replace('.', ',') + '% recuperado';
+  }
+
+  if (elRoi) {
+    elRoi.textContent = roiValue.toFixed(1).replace('.', ',') + '%';
+    elRoi.className = roiValue >= 0 
+      ? "text-lg sm:text-xl font-black text-emerald-600 truncate mt-1" 
+      : "text-lg sm:text-xl font-black text-red-600 truncate mt-1";
+  }
 
   gerarAnaliseEstrategica(curr, prev, calcVar, prodCounts);
 }

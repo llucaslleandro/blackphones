@@ -26,6 +26,7 @@ async function init() {
     document.title = `Painel de Vendas - ${CONFIG.storeName}`;
     setupDashboardListeners();
     initReceiptModal();
+    ui.initTooltips();
 
     // Initial Load
     await store.loadDashboardData(RENDER_PIPELINE);

@@ -954,7 +954,8 @@
               <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Fiado</h2>
               <p class="text-sm text-gray-500 mt-1">Controle de vendas a prazo e parcelas</p>
             </div>
-            <button id="btn-nova-divida" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
+            <button id="btn-nova-divida"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
               <i class="fa-solid fa-plus"></i> Nova Dívida
             </button>
           </div>
@@ -988,10 +989,14 @@
             <div class="p-4 border-b border-gray-100 flex items-center justify-between">
               <h3 class="text-base font-bold text-gray-900">Dívidas Ativas</h3>
               <div class="flex bg-gray-100 p-1 rounded-lg">
-                <button id="view-fiado-list" class="px-3 py-1.5 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center bg-white shadow-sm" data-tooltip="Visualização em Linhas">
+                <button id="view-fiado-list"
+                  class="px-3 py-1.5 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center bg-white shadow-sm"
+                  data-tooltip="Visualização em Linhas">
                   <i class="fa-solid fa-list text-sm"></i>
                 </button>
-                <button id="view-fiado-grid" class="px-3 py-1.5 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center" data-tooltip="Visualização em Cards">
+                <button id="view-fiado-grid"
+                  class="px-3 py-1.5 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center"
+                  data-tooltip="Visualização em Cards">
                   <i class="fa-solid fa-border-all text-sm"></i>
                 </button>
               </div>
@@ -1005,77 +1010,104 @@
         <!-- MODAL NOVA DÍVIDA -->
         <div id="modal-nova-divida" class="fixed inset-0 z-[100] hidden">
           <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" id="overlay-nova-divida"></div>
-          <div class="absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300" id="drawer-nova-divida">
+          <div
+            class="absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300"
+            id="drawer-nova-divida">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
               <h3 class="text-lg font-bold text-gray-900">Registrar Venda Fiada</h3>
-              <button id="btn-close-nova-divida" class="text-gray-400 hover:text-gray-600 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+              <button id="btn-close-nova-divida" class="text-gray-400 hover:text-gray-600 p-2"><i
+                  class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50" id="form-nova-divida">
-              
+
               <!-- Bloco 1: Cliente -->
               <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-user text-indigo-500"></i> Dados do Cliente</h4>
+                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i
+                    class="fa-solid fa-user text-indigo-500"></i> Dados do Cliente</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Nome do Cliente *</label>
-                    <input type="text" id="fiado-nome-cliente" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nome completo">
+                    <input type="text" id="fiado-nome-cliente"
+                      class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Nome completo">
                   </div>
                   <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Telefone</label>
-                    <input type="text" id="fiado-telefone" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="(11) 99999-9999">
+                    <input type="text" id="fiado-telefone"
+                      class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="(11) 99999-9999">
                   </div>
                   <div class="md:col-span-2">
                     <label class="block text-xs font-semibold text-gray-600 mb-1">CPF/CNPJ</label>
-                    <input type="text" id="fiado-cpf" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Opcional">
+                    <input type="text" id="fiado-cpf"
+                      class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Opcional">
                   </div>
                 </div>
               </div>
 
               <!-- Bloco 2: Produto -->
               <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-mobile-screen text-indigo-500"></i> Produto Vendido</h4>
+                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i
+                    class="fa-solid fa-mobile-screen text-indigo-500"></i> Produto Vendido</h4>
                 <div>
                   <label class="block text-xs font-semibold text-gray-600 mb-1">Selecionar Produto do Estoque *</label>
-                  <select id="fiado-produto-estoque" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                  <select id="fiado-produto-estoque"
+                    class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Carregando produtos...</option>
                   </select>
                 </div>
-                <div id="fiado-produto-detalhes" class="hidden grid grid-cols-2 gap-3 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <div><span class="text-gray-500 text-xs block">Modelo</span><span id="fp-modelo" class="font-medium">-</span></div>
-                  <div><span class="text-gray-500 text-xs block">Memória</span><span id="fp-memoria" class="font-medium">-</span></div>
-                  <div><span class="text-gray-500 text-xs block">Cor</span><span id="fp-cor" class="font-medium">-</span></div>
-                  <div><span class="text-gray-500 text-xs block">IMEI</span><span id="fp-imei" class="font-medium">-</span></div>
-                  <div><span class="text-gray-500 text-xs block">Custo</span><span id="fp-custo" class="font-medium">-</span></div>
-                  <div><span class="text-gray-500 text-xs block">Preço Sugerido</span><span id="fp-preco" class="font-bold text-green-600">-</span></div>
+                <div id="fiado-produto-detalhes"
+                  class="hidden grid grid-cols-2 gap-3 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <div><span class="text-gray-500 text-xs block">Modelo</span><span id="fp-modelo"
+                      class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">Memória</span><span id="fp-memoria"
+                      class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">Cor</span><span id="fp-cor"
+                      class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">IMEI</span><span id="fp-imei"
+                      class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">Custo</span><span id="fp-custo"
+                      class="font-medium">-</span></div>
+                  <div><span class="text-gray-500 text-xs block">Preço Sugerido</span><span id="fp-preco"
+                      class="font-bold text-green-600">-</span></div>
                 </div>
               </div>
 
               <!-- Bloco 3: Entrada e Aparelho Recebido -->
               <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-indigo-500"></i> Entrada & Pagamento</h4>
+                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i
+                    class="fa-solid fa-money-bill-wave text-indigo-500"></i> Entrada & Pagamento</h4>
                 <div>
                   <label class="block text-xs font-semibold text-gray-600 mb-1">Entrada em Dinheiro (R$)</label>
-                  <input type="number" id="fiado-entrada-dinheiro" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="0.00">
+                  <input type="number" id="fiado-entrada-dinheiro"
+                    class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="0.00">
                 </div>
-                
+
                 <div class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-                  <input type="checkbox" id="fiado-tem-aparelho" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
-                  <label for="fiado-tem-aparelho" class="text-sm font-medium text-gray-700 cursor-pointer">Recebi aparelho como parte do pagamento</label>
+                  <input type="checkbox" id="fiado-tem-aparelho"
+                    class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                  <label for="fiado-tem-aparelho" class="text-sm font-medium text-gray-700 cursor-pointer">Recebi
+                    aparelho como parte do pagamento</label>
                 </div>
 
                 <div id="fiado-aparelho-campos" class="hidden space-y-4 mt-3 pl-6 border-l-2 border-indigo-100">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label class="block text-xs font-semibold text-gray-600 mb-1">Modelo Recebido</label>
-                      <input type="text" id="far-modelo" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                      <input type="text" id="far-modelo"
+                        class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
                       <label class="block text-xs font-semibold text-gray-600 mb-1">Memória</label>
-                      <input type="text" id="far-memoria" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                      <input type="text" id="far-memoria"
+                        class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
                       <label class="block text-xs font-semibold text-gray-600 mb-1">Condição</label>
-                      <select id="far-condicao" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                      <select id="far-condicao"
+                        class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="Usado - Excelente">Usado - Excelente</option>
                         <option value="Usado - Bom">Usado - Bom</option>
                         <option value="Usado - Com marcas">Usado - Com marcas</option>
@@ -1084,29 +1116,38 @@
                     </div>
                     <div>
                       <label class="block text-xs font-semibold text-gray-600 mb-1">Valor Avaliado (R$)</label>
-                      <input type="number" id="far-valor" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-green-50 font-bold" placeholder="0.00">
+                      <input type="number" id="far-valor"
+                        class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-green-50 font-bold"
+                        placeholder="0.00">
                     </div>
                   </div>
 
                   <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                    <input type="checkbox" id="fiado-add-estoque" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
-                    <label for="fiado-add-estoque" class="text-sm font-medium text-gray-700 cursor-pointer">Adicionar aparelho recebido ao estoque</label>
+                    <input type="checkbox" id="fiado-add-estoque"
+                      class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                    <label for="fiado-add-estoque" class="text-sm font-medium text-gray-700 cursor-pointer">Adicionar
+                      aparelho recebido ao estoque</label>
                   </div>
-                  
+
                   <div id="fiado-estoque-campos" class="hidden space-y-4 mt-3 bg-indigo-50 p-4 rounded-xl">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Preço de Venda (R$)</label>
-                        <input type="number" id="far-preco-venda" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="0.00">
+                        <input type="number" id="far-preco-venda"
+                          class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="0.00">
                       </div>
                       <div class="flex items-center gap-2 mt-6">
-                        <input type="checkbox" id="far-vitrine" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                        <input type="checkbox" id="far-vitrine"
+                          class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
                         <label for="far-vitrine" class="text-sm text-gray-700">Publicar na vitrine</label>
                       </div>
                     </div>
                     <div>
                       <label class="block text-xs font-semibold text-gray-600 mb-1">URL Imagem 1 *</label>
-                      <input type="url" id="far-imagem" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://...">
+                      <input type="url" id="far-imagem"
+                        class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="https://...">
                     </div>
                   </div>
                 </div>
@@ -1114,27 +1155,35 @@
 
               <!-- Bloco 4: Parcelamento -->
               <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-calendar-days text-indigo-500"></i> Parcelamento</h4>
+                <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2"><i
+                    class="fa-solid fa-calendar-days text-indigo-500"></i> Parcelamento</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Valor Total da Venda (R$)</label>
-                    <input type="number" id="fiado-valor-venda" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-bold" placeholder="0.00">
+                    <input type="number" id="fiado-valor-venda"
+                      class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-bold"
+                      placeholder="0.00">
                   </div>
                   <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Saldo a Parcelar (R$)</label>
-                    <input type="number" id="fiado-saldo-parcelar" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg bg-gray-100 font-bold" disabled>
+                    <input type="number" id="fiado-saldo-parcelar"
+                      class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg bg-gray-100 font-bold" disabled>
                   </div>
                   <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Quantidade de Parcelas</label>
-                    <input type="number" id="fiado-qtd-parcelas" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value="1" min="1">
+                    <input type="number" id="fiado-qtd-parcelas"
+                      class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      value="1" min="1">
                   </div>
                   <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Vencimento 1ª Parcela</label>
-                    <input type="date" id="fiado-vencimento-1" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="date" id="fiado-vencimento-1"
+                      class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
                   </div>
                   <div class="md:col-span-2">
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Frequência</label>
-                    <select id="fiado-frequencia" class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    <select id="fiado-frequencia"
+                      class="w-full text-sm px-3 py-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
                       <option value="mensal">Mensal</option>
                       <option value="quinzenal">Quinzenal</option>
                       <option value="semanal">Semanal</option>
@@ -1147,17 +1196,26 @@
               <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
                 <h4 class="text-sm font-bold text-indigo-900 mb-3">Resumo da Negociação</h4>
                 <div class="space-y-2 text-sm">
-                  <div class="flex justify-between"><span class="text-indigo-700">Valor da Venda</span><span id="resumo-venda" class="font-medium">R$ 0,00</span></div>
-                  <div class="flex justify-between"><span class="text-indigo-700">Entrada (Dinheiro)</span><span id="resumo-entrada-dinheiro" class="font-medium">- R$ 0,00</span></div>
-                  <div class="flex justify-between"><span class="text-indigo-700">Aparelho Recebido</span><span id="resumo-entrada-aparelho" class="font-medium">- R$ 0,00</span></div>
-                  <div class="flex justify-between pt-2 border-t border-indigo-200"><span class="text-indigo-900 font-bold">Saldo Restante</span><span id="resumo-saldo" class="font-bold text-lg">R$ 0,00</span></div>
-                  <div class="flex justify-between"><span class="text-indigo-700" id="resumo-qtd-parcelas">1x de</span><span id="resumo-valor-parcela" class="font-medium">R$ 0,00</span></div>
+                  <div class="flex justify-between"><span class="text-indigo-700">Valor da Venda</span><span
+                      id="resumo-venda" class="font-medium">R$ 0,00</span></div>
+                  <div class="flex justify-between"><span class="text-indigo-700">Entrada (Dinheiro)</span><span
+                      id="resumo-entrada-dinheiro" class="font-medium">- R$ 0,00</span></div>
+                  <div class="flex justify-between"><span class="text-indigo-700">Aparelho Recebido</span><span
+                      id="resumo-entrada-aparelho" class="font-medium">- R$ 0,00</span></div>
+                  <div class="flex justify-between pt-2 border-t border-indigo-200"><span
+                      class="text-indigo-900 font-bold">Saldo Restante</span><span id="resumo-saldo"
+                      class="font-bold text-lg">R$ 0,00</span></div>
+                  <div class="flex justify-between"><span class="text-indigo-700" id="resumo-qtd-parcelas">1x
+                      de</span><span id="resumo-valor-parcela" class="font-medium">R$ 0,00</span></div>
                 </div>
               </div>
             </div>
             <div class="p-4 border-t border-gray-100 bg-white flex justify-end gap-3 shrink-0">
-              <button id="btn-cancel-nova-divida" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
-              <button id="btn-save-nova-divida" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-sm flex items-center gap-2">Salvar Dívida</button>
+              <button id="btn-cancel-nova-divida"
+                class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+              <button id="btn-save-nova-divida"
+                class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-sm flex items-center gap-2">Salvar
+                Dívida</button>
             </div>
           </div>
         </div>
@@ -1165,10 +1223,13 @@
         <!-- MODAL DETALHES FIADO -->
         <div id="modal-detalhes-fiado" class="fixed inset-0 z-[100] hidden">
           <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" id="overlay-detalhes-fiado"></div>
-          <div class="absolute right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300" id="drawer-detalhes-fiado">
+          <div
+            class="absolute right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300"
+            id="drawer-detalhes-fiado">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
               <h3 class="text-lg font-bold text-gray-900">Detalhes do Fiado</h3>
-              <button id="btn-close-detalhes-fiado" class="text-gray-400 hover:text-gray-600 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+              <button id="btn-close-detalhes-fiado" class="text-gray-400 hover:text-gray-600 p-2"><i
+                  class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-6 space-y-6" id="detalhes-fiado-content">
               <!-- Renderizado via JS -->
@@ -1179,19 +1240,27 @@
         <!-- MODAL CONFIRMAR CANCELAMENTO -->
         <div id="modal-confirmar-cancelamento" class="fixed inset-0 z-[120] hidden flex items-center justify-center">
           <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" id="overlay-confirmar-cancelamento"></div>
-          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="box-confirmar-cancelamento">
+          <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-10 transform transition-all duration-300 scale-95 opacity-0"
+            id="box-confirmar-cancelamento">
             <div class="p-6 text-center space-y-4">
-              <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+              <div
+                class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
                 <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
               </div>
               <div>
                 <h3 class="text-xl font-bold text-gray-900">Cancelar Dívida?</h3>
-                <p class="text-sm text-gray-500 mt-2">Esta ação não pode ser desfeita. O aparelho será devolvido ao estoque disponível.</p>
+                <p class="text-sm text-gray-500 mt-2">Esta ação não pode ser desfeita. O aparelho será devolvido ao
+                  estoque disponível.</p>
               </div>
             </div>
             <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3 rounded-b-2xl">
-              <button id="btn-cancel-cancelar" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-200 transition">Não, voltar</button>
-              <button id="btn-confirm-cancelar" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition shadow-sm">Sim, Cancelar</button>
+              <button id="btn-cancel-cancelar"
+                class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-200 transition">Não,
+                voltar</button>
+              <button id="btn-confirm-cancelar"
+                class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition shadow-sm">Sim,
+                Cancelar</button>
             </div>
           </div>
         </div>
@@ -1322,8 +1391,11 @@
                 <!-- Faturamento -->
                 <div
                   class="glass-card p-6 flex flex-col justify-center rounded-2xl shadow-sm border border-green-200 bg-gradient-to-br from-green-50 to-white relative overflow-hidden">
-                  <p class="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1 opacity-80">Faturamento
-                    Real</p>
+                  <p class="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1 opacity-80">
+                    Faturamento <span class="whitespace-nowrap">Real<i
+                        class="fa-solid fa-circle-question ml-1 text-green-500/50 hover:text-green-600 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Soma de todas as vendas concluídas (fechadas). Não subtrai custos, representa a entrada bruta."></i></span>
+                  </p>
                   <h3 id="kpi-faturamento" class="text-3xl font-black text-green-700 truncate">R$ 0,00</h3>
                   <p class="text-[10px] font-bold mt-2" id="kpi-faturamento-var">-</p>
                   <i
@@ -1332,10 +1404,17 @@
                 <!-- Lucro Líquido -->
                 <div
                   class="glass-card p-6 flex flex-col justify-center rounded-2xl shadow-sm border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white relative overflow-hidden">
-                  <p class="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-1 opacity-80">Lucro
-                    Líquido</p>
+                  <p class="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-1 opacity-80">
+                    Resultado <span class="whitespace-nowrap">Operacional<i
+                        class="fa-solid fa-circle-question ml-1 text-emerald-500/50 hover:text-emerald-600 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Faturamento menos o custo dos produtos vendidos. Mostra o ganho sobre as vendas realizadas, sem considerar capital ainda preso em estoque ou trânsito."></i></span>
+                  </p>
                   <h3 id="kpi-lucro" class="text-3xl font-black text-emerald-700 truncate">R$ 0,00</h3>
-                  <p class="text-xs font-bold mt-2" id="kpi-margem">Margem: 0%</p>
+                  <div class="flex items-center gap-1 mt-2">
+                    <p class="text-xs font-bold" id="kpi-margem">Margem Operacional: 0%</p>
+                    <i class="fa-solid fa-circle-question text-[10px] text-emerald-500/50 hover:text-emerald-600 cursor-pointer js-tooltip-trigger"
+                      data-tooltip-content="Percentual do faturamento que sobrou como resultado operacional (Resultado Operacional ÷ Faturamento)."></i>
+                  </div>
                   <i
                     class="fa-solid fa-chart-line absolute right-[-10px] bottom-[-10px] text-[80px] text-emerald-500 opacity-10"></i>
                 </div>
@@ -1349,7 +1428,11 @@
                     <i class="fa-solid fa-bullseye"></i>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-[10px] font-black uppercase tracking-wider text-gray-500">Ticket Médio</p>
+                    <p class="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                      Ticket <span class="whitespace-nowrap">Médio<i
+                          class="fa-solid fa-circle-question ml-1 text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                          data-tooltip-content="Valor médio gasto por cliente em vendas concluídas."></i></span>
+                    </p>
                     <h4 id="kpi-ticket-medio" class="text-xl font-bold text-gray-800 truncate">R$ 0,00</h4>
                   </div>
                 </div>
@@ -1364,8 +1447,10 @@
                 <div
                   class="glass-card p-4 rounded-xl shadow-sm border border-gray-200 bg-gray-50/80 flex items-center justify-between">
                   <div>
-                    <p class="text-[10px] font-black uppercase tracking-wider text-gray-500 mb-0.5">Patrimônio em
-                      Estoque
+                    <p class="text-[10px] font-black uppercase tracking-wider text-gray-500 mb-0.5">
+                      Patrimônio em <span class="whitespace-nowrap">Estoque<i
+                          class="fa-solid fa-circle-question ml-1 text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                          data-tooltip-content="Soma do custo real dos produtos atualmente disponíveis no estoque."></i></span>
                     </p>
                     <h4 id="kpi-estoque-dinheiro" class="text-xl font-bold text-gray-700 truncate">R$ 0,00</h4>
                   </div>
@@ -1375,11 +1460,90 @@
                   class="glass-card p-4 rounded-xl shadow-sm border border-blue-100 bg-blue-50/50 flex items-center justify-between">
                   <div>
                     <p class="text-[10px] font-black uppercase tracking-wider text-blue-600 mb-0.5 opacity-80">
-                      Quantidade
-                      de Aparelhos</p>
+                      Quantidade de <span class="whitespace-nowrap">Aparelhos<i
+                          class="fa-solid fa-circle-question ml-1 text-blue-400 hover:text-blue-600 cursor-pointer js-tooltip-trigger"
+                          data-tooltip-content="Número total de unidades físicas atualmente em estoque."></i></span>
+                    </p>
                     <h4 id="kpi-estoque-qtd" class="text-xl font-bold text-blue-800 truncate">0</h4>
                   </div>
                   <i class="fa-solid fa-mobile-screen-button text-blue-200 text-2xl shrink-0"></i>
+                </div>
+              </div>
+            </section>
+
+            <!-- Grupo D: Análise de Investimentos -->
+            <section>
+              <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 pl-1">💰 Análise de
+                Investimentos
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Capital em Estoque -->
+                <div
+                  class="glass-card p-4 rounded-xl shadow-sm border border-indigo-100 bg-indigo-50/30 flex flex-col justify-center">
+                  <p class="text-[9px] font-black uppercase tracking-wider text-indigo-600 mb-0.5 opacity-80">
+                    <i class="fa-solid fa-boxes-stacked mr-1"></i> Em <span class="whitespace-nowrap">Estoque<i
+                        class="fa-solid fa-circle-question ml-0.5 text-indigo-400 hover:text-indigo-600 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Valor investido nos produtos disponíveis atualmente no estoque."></i></span>
+                  </p>
+                  <h4 id="kpi-invest-estoque" class="text-lg sm:text-xl font-bold text-indigo-900 truncate mt-1">R$ 0,00
+                  </h4>
+                </div>
+                <!-- Capital em Trânsito -->
+                <div
+                  class="glass-card p-4 rounded-xl shadow-sm border border-blue-100 bg-blue-50/30 flex flex-col justify-center">
+                  <p class="text-[9px] font-black uppercase tracking-wider text-blue-600 mb-0.5 opacity-80">
+                    <i class="fa-solid fa-truck-fast mr-1"></i> Em <span class="whitespace-nowrap">Trânsito<i
+                        class="fa-solid fa-circle-question ml-0.5 text-blue-400 hover:text-blue-600 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Valor investido em produtos comprados/encomendados que ainda não chegaram. Não conta como estoque disponível."></i></span>
+                  </p>
+                  <h4 id="kpi-invest-transito" class="text-lg sm:text-xl font-bold text-blue-900 truncate mt-1">R$ 0,00
+                  </h4>
+                </div>
+                <!-- Capital Recuperado -->
+                <div
+                  class="glass-card p-4 rounded-xl shadow-sm border border-emerald-100 bg-emerald-50/30 flex flex-col justify-center">
+                  <p class="text-[9px] font-black uppercase tracking-wider text-emerald-600 mb-0.5 opacity-80">
+                    <i class="fa-solid fa-hand-holding-dollar mr-1"></i> <span class="whitespace-nowrap">Investimento
+                      Recuperado<i
+                        class="fa-solid fa-circle-question ml-0.5 text-emerald-400 hover:text-emerald-600 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Custo dos produtos já vendidos. Representa capital que já girou, não faturamento."></i></span>
+                  </p>
+                  <h4 id="kpi-invest-recuperado" class="text-lg sm:text-xl font-bold text-emerald-900 truncate mt-1">R$
+                    0,00</h4>
+                  <p id="kpi-recuperado-percent-subtext" class="text-[10px] font-bold text-emerald-600 mt-1">0% recuperado</p>
+                </div>
+                <!-- Capital Imobilizado -->
+                <div
+                  class="glass-card p-4 rounded-xl shadow-sm border border-gray-200 bg-white flex flex-col justify-center">
+                  <p class="text-[9px] font-black uppercase tracking-wider text-gray-500 mb-0.5">
+                    <i class="fa-solid fa-lock mr-1"></i> Capital <span class="whitespace-nowrap">Imobilizado<i
+                        class="fa-solid fa-circle-question ml-0.5 text-gray-400 hover:text-gray-600 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Valor do capital atualmente preso em estoque e produtos em trânsito."></i></span>
+                  </p>
+                  <h4 id="kpi-invest-total" class="text-lg sm:text-xl font-black text-gray-800 truncate mt-1">R$ 0,00
+                  </h4>
+                </div>
+                <!-- Resultado Real Acumulado -->
+                <div id="card-resultado-real"
+                  class="glass-card p-4 rounded-xl shadow-sm border border-gray-200 bg-white flex flex-col justify-center">
+                  <p class="text-[9px] font-black uppercase tracking-wider text-gray-500 mb-0.5">
+                    <i class="fa-solid fa-scale-balanced mr-1"></i> Resultado <span class="whitespace-nowrap">Real<i
+                        class="fa-solid fa-circle-question ml-0.5 text-gray-400 hover:text-gray-600 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Resultado financeiro considerando todo o capital ainda imobilizado no negócio. Mostra se o negócio já recuperou o investimento aplicado."></i></span>
+                  </p>
+                  <h4 id="kpi-resultado-real" class="text-lg sm:text-xl font-black text-gray-800 truncate mt-1">R$ 0,00
+                  </h4>
+                </div>
+                <!-- ROI -->
+                <div
+                  class="glass-card p-4 rounded-xl shadow-sm border border-gray-200 bg-white flex flex-col justify-center">
+                  <p class="text-[9px] font-black uppercase tracking-wider text-gray-500 mb-0.5">
+                    <i class="fa-solid fa-chart-line mr-1"></i> ROI<i
+                        class="fa-solid fa-circle-question ml-0.5 text-gray-400 hover:text-gray-600 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Retorno sobre o capital atualmente investido no negócio."></i>
+                  </p>
+                  <h4 id="kpi-roi" class="text-lg sm:text-xl font-black text-gray-800 truncate mt-1">0,0%
+                  </h4>
                 </div>
               </div>
             </section>
@@ -1392,7 +1556,10 @@
                 <div
                   class="glass-card p-4 rounded-xl shadow-sm border border-red-200 bg-red-50 flex items-center justify-between">
                   <div>
-                    <p class="text-[10px] font-black uppercase tracking-wider text-red-500 mb-0.5">Cancelados (Perda)
+                    <p class="text-[10px] font-black uppercase tracking-wider text-red-500 mb-0.5">
+                      Cancelados <span class="whitespace-nowrap">(Perda)<i
+                          class="fa-solid fa-circle-question ml-1 text-red-300 hover:text-red-500 cursor-pointer js-tooltip-trigger"
+                          data-tooltip-content="Soma do valor final dos pedidos que foram cancelados. Representa o faturamento que deixou de entrar."></i></span>
                     </p>
                     <h4 id="kpi-perdida" class="text-xl font-bold text-red-700 truncate">R$ 0,00</h4>
                     <p class="text-[10px] text-red-500 font-bold mt-1" id="kpi-cancelados-qtd">0 perdas</p>
@@ -1402,8 +1569,10 @@
                 <div
                   class="glass-card p-4 rounded-xl shadow-sm border border-yellow-200 bg-yellow-50 flex items-center justify-between">
                   <div>
-                    <p class="text-[10px] font-black uppercase tracking-wider text-yellow-600 mb-0.5">Pendentes
-                      (Pausados)
+                    <p class="text-[10px] font-black uppercase tracking-wider text-yellow-600 mb-0.5">
+                      Pendentes <span class="whitespace-nowrap">(Pausados)<i
+                          class="fa-solid fa-circle-question ml-1 text-yellow-400 hover:text-yellow-600 cursor-pointer js-tooltip-trigger"
+                          data-tooltip-content="Pedidos aguardando pagamento ou negociação. Não contabilizam como venda fechada até mudarem de status."></i></span>
                     </p>
                     <h4 id="kpi-pendentes-valor" class="text-xl font-bold text-yellow-700 truncate">R$ 0,00</h4>
                     <p class="text-[10px] text-yellow-600 font-bold mt-1"><span id="kpi-pendentes">0</span> em espera
@@ -1561,10 +1730,14 @@
                   <option value="parados">Faltam Vender (15 dias+)</option>
                 </select>
                 <div class="flex bg-gray-100 p-1 rounded-lg shrink-0">
-                  <button id="view-estoque-list" class="px-3 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center bg-white shadow-sm" data-tooltip="Visualização em Linhas">
+                  <button id="view-estoque-list"
+                    class="px-3 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center bg-white shadow-sm"
+                    data-tooltip="Visualização em Linhas">
                     <i class="fa-solid fa-list text-sm"></i>
                   </button>
-                  <button id="view-estoque-grid" class="px-3 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center" data-tooltip="Visualização em Cards">
+                  <button id="view-estoque-grid"
+                    class="px-3 rounded text-gray-500 hover:text-gray-900 transition flex items-center justify-center"
+                    data-tooltip="Visualização em Cards">
                     <i class="fa-solid fa-border-all text-sm"></i>
                   </button>
                 </div>
@@ -1580,70 +1753,98 @@
             </div>
 
             <!-- Cards Alertas (Estoque) -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-3 sm:gap-4 mb-6">
               <!-- Patrimônio -->
               <div
-                class="col-span-2 sm:col-span-2 lg:col-span-2 bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]">
-                <div class="flex items-center gap-3 w-full">
+                class="col-span-2 lg:col-span-1 bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[76px] sm:min-h-[86px]">
+                <div class="flex items-center gap-2 sm:gap-3 w-full">
                   <div
-                    class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 shrink-0">
-                    <i class="fa-solid fa-sack-dollar text-sm"></i>
+                    class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 shrink-0">
+                    <i class="fa-solid fa-sack-dollar text-xs sm:text-sm"></i>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Patrimônio Estimado</p>
+                    <p
+                      class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-snug mb-0.5 flex items-center gap-1">
+                      Patrimônio Estimado
+                      <i class="fa-solid fa-circle-question text-[10px] text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Soma do custo real dos produtos atualmente disponíveis no estoque."></i>
+                    </p>
                     <h4 id="alert-patrimonio" class="text-lg font-black text-gray-800 leading-tight">R$ 0</h4>
                   </div>
                 </div>
               </div>
               <!-- Total Aparelhos -->
-              <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]">
-                <div class="flex items-center gap-3 w-full">
+              <div
+                class="col-span-1 bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[76px] sm:min-h-[86px]">
+                <div class="flex items-center gap-2 sm:gap-3 w-full">
                   <div
-                    class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 shrink-0">
-                    <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+                    class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 shrink-0">
+                    <i class="fa-solid fa-mobile-screen-button text-xs sm:text-sm"></i>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Produtos Totais</p>
+                    <p
+                      class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-snug mb-0.5 flex items-center gap-1">
+                      Produtos Totais
+                      <i class="fa-solid fa-circle-question text-[10px] text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Número total de produtos cadastrados no sistema (incluindo esgotados)."></i>
+                    </p>
                     <h4 id="alert-total-qtd" class="text-lg font-black text-blue-700 leading-tight">0</h4>
                   </div>
                 </div>
               </div>
               <!-- Esgotados -->
-              <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]">
-                <div class="flex items-center gap-3 w-full">
-                  <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-500 shrink-0">
-                    <i class="fa-solid fa-ban text-sm"></i>
+              <div
+                class="col-span-1 bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[76px] sm:min-h-[86px]">
+                <div class="flex items-center gap-2 sm:gap-3 w-full">
+                  <div
+                    class="w-8 h-8 sm:w-10 sm:h-10 bg-red-50 rounded-full flex items-center justify-center text-red-500 shrink-0">
+                    <i class="fa-solid fa-ban text-xs sm:text-sm"></i>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Esgotados</p>
+                    <p
+                      class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-snug mb-0.5 flex items-center gap-1">
+                      Esgotados
+                      <i class="fa-solid fa-circle-question text-[10px] text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Produtos com estoque zero."></i>
+                    </p>
                     <h4 id="alert-esgotados" class="text-lg font-black text-red-600 leading-tight">0</h4>
                   </div>
                 </div>
               </div>
               <!-- Poucas -->
-              <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]"
-                title="Produtos abaixo do estoque mínimo configurado">
-                <div class="flex items-center gap-3 w-full">
+              <div
+                class="col-span-1 bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[76px] sm:min-h-[86px]">
+                <div class="flex items-center gap-2 sm:gap-3 w-full">
                   <div
-                    class="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-500 shrink-0">
-                    <i class="fa-solid fa-exclamation text-sm"></i>
+                    class="w-8 h-8 sm:w-10 sm:h-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-500 shrink-0">
+                    <i class="fa-solid fa-exclamation text-xs sm:text-sm"></i>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Baixo estoque</p>
+                    <p
+                      class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-snug mb-0.5 flex items-center gap-1">
+                      Baixo estoque
+                      <i class="fa-solid fa-circle-question text-[10px] text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Produtos com menos de 3 unidades disponíveis em estoque."></i>
+                    </p>
                     <h4 id="alert-poucas" class="text-lg font-black text-orange-600 leading-tight">0</h4>
                   </div>
                 </div>
               </div>
               <!-- Disponíveis -->
-              <div class="bg-white border border-gray-200 rounded-xl px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[86px]"
-                title="Produtos com pelo menos 1 unidade em estoque">
-                <div class="flex items-center gap-3 w-full">
+              <div
+                class="col-span-1 bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-3 sm:py-4 shadow-sm flex items-center min-h-[76px] sm:min-h-[86px]">
+                <div class="flex items-center gap-2 sm:gap-3 w-full">
                   <div
-                    class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center text-green-500 shrink-0">
-                    <i class="fa-solid fa-check-double text-sm"></i>
+                    class="w-8 h-8 sm:w-10 sm:h-10 bg-green-50 rounded-full flex items-center justify-center text-green-500 shrink-0">
+                    <i class="fa-solid fa-check-double text-xs sm:text-sm"></i>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Disponíveis</p>
+                    <p
+                      class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-snug mb-0.5 flex items-center gap-1">
+                      Disponíveis
+                      <i class="fa-solid fa-circle-question text-[10px] text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                        data-tooltip-content="Produtos com pelo menos 1 unidade em estoque."></i>
+                    </p>
                     <h4 id="alert-estoque" class="text-lg font-black text-green-600 leading-tight">0</h4>
                   </div>
                 </div>
