@@ -248,14 +248,18 @@ export function renderRankings() {
     // Normalizing Model key - Resolve to human name immediately to group effectively
     let modelLabel = o.group_id && String(o.group_id).trim() !== '' ? String(o.group_id).trim() : o.produto;
 
-    if (modelLabel.toUpperCase().startsWith('GRP')) {
-      const gId = modelLabel.toLowerCase();
-      const prod = state.allProducts.find(p => String(p.grupo_id || '').toLowerCase() === gId);
+    if (modelLabel.toUpperCase().startsWith('GRP') || modelLabel.toUpperCase().startsWith('PROD')) {
+      const searchId = modelLabel.toLowerCase();
+      const prod = state.allProducts.find(p => 
+        String(p.grupo_id || '').toLowerCase() === searchId ||
+        String(p.id || '').toLowerCase() === searchId ||
+        String(p.sku || '').toLowerCase() === searchId
+      );
       if (prod) {
         modelLabel = prod.categoria ? `${prod.categoria} ${prod.nome}` : prod.nome;
       } else {
-        // If ID lookup fails, fallback to product name to avoid showing "GRP-..."
-        modelLabel = o.produto || modelLabel;
+        // Se a busca pelo ID falhar, tenta usar o nome que está no pedido como fallback
+        modelLabel = o.produto && !o.produto.toUpperCase().startsWith('PROD') && !o.produto.toUpperCase().startsWith('GRP') ? o.produto : modelLabel;
       }
     }
 
