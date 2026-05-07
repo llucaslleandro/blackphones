@@ -1510,7 +1510,8 @@
                   </p>
                   <h4 id="kpi-invest-recuperado" class="text-lg sm:text-xl font-bold text-emerald-900 truncate mt-1">R$
                     0,00</h4>
-                  <p id="kpi-recuperado-percent-subtext" class="text-[10px] font-bold text-emerald-600 mt-1">0% recuperado</p>
+                  <p id="kpi-recuperado-percent-subtext" class="text-[10px] font-bold text-emerald-600 mt-1">0%
+                    recuperado</p>
                 </div>
                 <!-- Capital Imobilizado -->
                 <div
@@ -1539,8 +1540,8 @@
                   class="glass-card p-4 rounded-xl shadow-sm border border-gray-200 bg-white flex flex-col justify-center">
                   <p class="text-[9px] font-black uppercase tracking-wider text-gray-500 mb-0.5">
                     <i class="fa-solid fa-chart-line mr-1"></i> ROI<i
-                        class="fa-solid fa-circle-question ml-0.5 text-gray-400 hover:text-gray-600 cursor-pointer js-tooltip-trigger"
-                        data-tooltip-content="Retorno sobre o capital atualmente investido no negócio."></i>
+                      class="fa-solid fa-circle-question ml-0.5 text-gray-400 hover:text-gray-600 cursor-pointer js-tooltip-trigger"
+                      data-tooltip-content="Retorno sobre o capital atualmente investido no negócio."></i>
                   </p>
                   <h4 id="kpi-roi" class="text-lg sm:text-xl font-black text-gray-800 truncate mt-1">0,0%
                   </h4>
@@ -1986,6 +1987,10 @@
                   <h4 class="text-xs font-bold text-gray-700 mb-3 mt-6 uppercase tracking-wide"><i
                       class="fa-solid fa-fire text-orange-500 mr-1.5"></i>WhatsApp por Produto</h4>
                   <ul id="met-top-whatsapp" class="space-y-2"></ul>
+
+                  <h4 class="text-xs font-bold text-gray-700 mb-3 mt-6 uppercase tracking-wide"><i
+                      class="fa-solid fa-user-tie text-purple-500 mr-1.5"></i>WhatsApp por Atendente</h4>
+                  <ul id="met-top-atendentes" class="space-y-2"></ul>
                 </div>
               </div>
             </section>
@@ -2523,11 +2528,11 @@
 
   <!-- Notification Stack -->
   <div id="notification-container"
-    class="fixed top-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none w-80 max-w-[calc(100vw-3rem)]"></div>
+    class="fixed top-6 right-6 z-[2000] flex flex-col gap-3 pointer-events-none w-80 max-w-[calc(100vw-3rem)]"></div>
 
   <!-- Toast Notification (Legacy/System) -->
   <div id="toast"
-    class="fixed bottom-4 right-4 bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
+    class="fixed bottom-4 right-4 bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl translate-y-20 opacity-0 transition-all duration-300 z-[2000] flex items-center gap-3">
     <i id="toast-icon" class="fa-solid fa-circle-check text-green-400"></i>
     <span id="toast-msg" class="text-sm font-medium">Operação realizada com sucesso!</span>
   </div>
@@ -2538,7 +2543,7 @@
   <script type="module" src="main.js"></script>
   <!-- MODAL: NOVO PEDIDO MANUAL -->
   <div id="modal-novo-pedido"
-    class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[1000] hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-[scaleIn_0.3s_ease-out]">
       <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
         <h3 class="text-xl font-black text-gray-900 flex items-center gap-3">
@@ -2595,7 +2600,7 @@
 
   <!-- MODAL: CONFIRMAR EXCLUSÃO -->
   <div id="modal-excluir-pedido"
-    class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[1100] hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-[scaleIn_0.3s_ease-out]">
       <div class="p-8 text-center">
         <div

@@ -79,6 +79,14 @@ export function trackWhatsAppClick(itens) {
   trackEvent('clique_whatsapp', { produto: nomes });
 }
 
+/** Called when user clicks a WhatsApp button in the Hero section */
+export function trackHeroWhatsAppClick(contactName) {
+  trackEvent('clique_whatsapp', { 
+    produto: `Contato Hero: ${contactName}`,
+    metadata: { section: 'hero' }
+  });
+}
+
 /** Called right after WhatsApp message window opens */
 export function trackMessageSent(itens) {
   const nomes = (itens || []).map(i => i.nome || '').join(', ');

@@ -37,6 +37,7 @@ function computeMetrics(events) {
   const productViews = {};   // produto -> count
   const productClicks = {};  // produto -> count
   const productWhatsApp = {}; // produto -> count
+  const attendantWhatsApp = {}; // atendente -> count
   const heartbeatSessions = {}; // session_id -> last timestamp
 
   const now = new Date();
@@ -57,7 +58,12 @@ function computeMetrics(events) {
       productClicks[produto] = (productClicks[produto] || 0) + 1;
     }
     if (tipo === 'clique_whatsapp' && produto) {
-      productWhatsApp[produto] = (productWhatsApp[produto] || 0) + 1;
+      if (produto.startsWith('Contato Hero:')) {
+        const atendente = produto.replace('Contato Hero:', '').trim();
+        attendantWhatsApp[atendente] = (attendantWhatsApp[atendente] || 0) + 1;
+      } else {
+        productWhatsApp[produto] = (productWhatsApp[produto] || 0) + 1;
+      }
     }
 
     if (tipo === 'heartbeat' && sessionId) {
@@ -89,6 +95,7 @@ function computeMetrics(events) {
   const topVistos = sortDesc(productViews);
   const topClicados = sortDesc(productClicks);
   const topWhatsApp = sortDesc(productWhatsApp);
+  const topAtendentes = sortDesc(attendantWhatsApp);
 
   return {
     visitas,
@@ -102,6 +109,7 @@ function computeMetrics(events) {
     topVistos,
     topClicados,
     topWhatsApp,
+    topAtendentes,
     recentEvents: events
       .filter(e => e.tipo !== 'heartbeat')
       .slice(-20)
@@ -141,11 +149,11 @@ function renderRankingList(containerId, items, color = 'gray') {
 }
 
 const EVENT_ICONS = {
-  visita_vitrine:   { icon: 'fa-eye',          color: 'purple' },
-  visita_produto:   { icon: 'fa-mobile-screen', color: 'blue' },
-  clique_produto:   { icon: 'fa-hand-pointer',  color: 'indigo' },
-  clique_whatsapp:  { icon: 'fa-brands fa-whatsapp', color: 'green' },
-  mensagem_enviada: { icon: 'fa-paper-plane',   color: 'emerald' }
+  visita_vitrine: { icon: 'fa-eye', color: 'purple' },
+  visita_produto: { icon: 'fa-mobile-screen', color: 'blue' },
+  clique_produto: { icon: 'fa-hand-pointer', color: 'indigo' },
+  clique_whatsapp: { icon: 'fa-brands fa-whatsapp', color: 'green' },
+  mensagem_enviada: { icon: 'fa-paper-plane', color: 'emerald' }
 };
 
 function renderActivityLog(events) {
@@ -217,6 +225,7 @@ function renderMetricsData(metrics) {
   renderRankingList('met-top-vistos', metrics.topVistos, 'purple');
   renderRankingList('met-top-clicados', metrics.topClicados, 'indigo');
   renderRankingList('met-top-whatsapp', metrics.topWhatsApp, 'green');
+  renderRankingList('met-top-atendentes', metrics.topAtendentes, 'purple');
 
   // Activity log
   renderActivityLog(metrics.recentEvents);

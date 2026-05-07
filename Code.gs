@@ -283,11 +283,14 @@ function getProdutos() {
   rows = sheet.getDataRange().getValues();
   var headers = rows[0].map(String);
   var dataRows = rows.slice(1);
+  var normalizedHeaders = headers.map(function(h) {
+    return h.trim().toLowerCase().replace(/[ _]/g, '_');
+  });
 
   var itens = dataRows.map(function(r) {
     var obj = {};
-    headers.forEach(function(h, idx) {
-      obj[h.trim().toLowerCase()] = r[idx];
+    normalizedHeaders.forEach(function(h, idx) {
+      obj[h] = r[idx];
     });
 
     var cameraFrontal = String(obj['camera_frontal'] || obj['câmera_frontal'] || obj['camera frontal'] || obj['câmera frontal'] || '');
@@ -297,7 +300,7 @@ function getProdutos() {
       sku: String(obj['sku'] || obj['id'] || ''),
       estoque: obj['estoque'] !== undefined && obj['estoque'] !== '' ? Number(obj['estoque']) : 0,
       estoque_minimo: obj['estoque_minimo'] !== undefined && obj['estoque_minimo'] !== '' ? Number(obj['estoque_minimo']) : 2,
-      grupo_id: String(obj['grupo_id'] || obj['id'] || ''),
+      grupo_id: String(obj['grupo_id'] || obj['sku'] || obj['id'] || ''),
       cor: String(obj['cor'] || ''),
       nome: String(obj['nome'] || ''),
       descricao: String(obj['descrição'] || obj['descricao'] || ''),
@@ -749,6 +752,7 @@ function salvarNovoProduto(produtos) {
   // Reload headers after ensuring columns
   rows = sheet.getDataRange().getValues();
   var headers = rows[0].map(function(h) { return String(h || '').trim().toLowerCase(); });
+  var normalizedHeaders = headers.map(function(h) { return h.replace(/[ _]/g, '_'); });
 
   // Ensure id, sku, grupo_id, ativo columns exist
   var requiredCols = [
@@ -776,6 +780,7 @@ function salvarNovoProduto(produtos) {
   if (addedCols) {
     rows = sheet.getDataRange().getValues();
     headers = rows[0].map(function(h) { return String(h || '').trim().toLowerCase(); });
+    normalizedHeaders = headers.map(function(h) { return h.replace(/[ _]/g, '_'); });
   }
 
   var fieldMap = {
@@ -811,9 +816,9 @@ function salvarNovoProduto(produtos) {
 
     for (var key in prod) {
       if (!prod.hasOwnProperty(key)) continue;
-      var sheetHeader = fieldMap[key] || key;
-      var colIdx = headers.indexOf(sheetHeader.toLowerCase());
-      if (colIdx === -1) colIdx = headers.indexOf(key.toLowerCase());
+      var sheetHeader = (fieldMap[key] || key).toLowerCase().replace(/[ _]/g, '_');
+      var colIdx = normalizedHeaders.indexOf(sheetHeader);
+      if (colIdx === -1) colIdx = normalizedHeaders.indexOf(key.toLowerCase().replace(/[ _]/g, '_'));
       if (colIdx !== -1) rowData[colIdx] = prod[key];
     }
 
@@ -1282,8 +1287,13 @@ function marcarChegou(payload) {
     imagem_2: payload.imagem_2 || '',
     imagem_3: payload.imagem_3 || '',
     imagem_4: payload.imagem_4 || '',
-    imagem_5: payload.imagem_5 || ''
+    imagem_5: payload.imagem_5 || '',
+    // Garantir ID, SKU e Grupo_ID
+    id: 'PROD-' + new Date().getTime() + '-' + Math.floor(Math.random() * 1000),
+    sku: '', // será preenchido pelo salvarNovoProduto se vazio
+    grupo_id: encomendadoData.lote_id || encomendadoData.id || ''
   };
+  produtoPayload.sku = produtoPayload.id;
 
   // Salva no Produtos principal
   salvarNovoProduto([produtoPayload]);

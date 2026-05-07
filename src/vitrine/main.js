@@ -6,7 +6,7 @@ import { carregarCacheProdutos, cacheValido, salvarCacheProdutos } from '../shar
 import { fetchProdutosApi, fetchPedidosApi } from '../shared/modules/api.js';
 import { store } from '../shared/modules/store.js';
 import { initOnboarding, iniciarPopupsSociais, showElement, hideElement, setError } from './modules/ui.js';
-import './modules/tracker.js'; // Auto-starts visit tracking + heartbeat
+import { trackHeroWhatsAppClick } from './modules/tracker.js'; // Auto-starts visit tracking + heartbeat
 
 function aplicarEventos() {
   elements.searchInput.addEventListener('input', filtrarProdutos);
@@ -381,6 +381,10 @@ function initHeroWhatsApp() {
     };
     avatarWrap.appendChild(img);
     a.appendChild(avatarWrap);
+
+    a.addEventListener('click', () => {
+      trackHeroWhatsAppClick(contact.name);
+    });
 
     // Text + small WhatsApp icon
     const textSpan = document.createElement('span');
