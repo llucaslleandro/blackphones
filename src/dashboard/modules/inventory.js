@@ -22,7 +22,7 @@ export function renderEstoque(callbacks = {}) {
     // Usando a mesma lógica da tabela para consistência (padrão 2 se não definido)
     const min = pending.estoque_minimo !== undefined ? pending.estoque_minimo : (Number(p.estoque_minimo) || 2);
     const custo = parseNumber(p.custo ?? p.preco_custo ?? 0);
-    
+
     if (est <= 0) {
       esgotados++;
     } else {
@@ -54,14 +54,25 @@ export function renderEstoque(callbacks = {}) {
   state.allOrders.forEach(o => {
     if (o.status === 'Fechado') {
       const sku = String(o.sku || '').trim().toLowerCase();
+      const oId = String(o.id || o.item_id || '').trim().toLowerCase();
       let combinedName = String(o.produto || '');
       const storage = String(o.armazenamento || '');
       const color = String(o.cor || '');
       if (storage && !combinedName.includes(storage)) combinedName += ' ' + storage;
       if (color && !combinedName.includes(color)) combinedName += ' ' + color;
       const pNameNormalized = normalizeText(combinedName);
-      if (sku) { if (!lastSaleMap[sku] || o.parsedDate > lastSaleMap[sku]) lastSaleMap[sku] = o.parsedDate; }
-      if (pNameNormalized) { if (!lastSaleMap[pNameNormalized] || o.parsedDate > lastSaleMap[pNameNormalized]) lastSaleMap[pNameNormalized] = o.parsedDate; }
+      if (sku) {
+        const key = `sku:${sku}`;
+        if (!lastSaleMap[key] || o.parsedDate > lastSaleMap[key]) lastSaleMap[key] = o.parsedDate;
+      }
+      if (oId) {
+        const key = `id:${oId}`;
+        if (!lastSaleMap[key] || o.parsedDate > lastSaleMap[key]) lastSaleMap[key] = o.parsedDate;
+      }
+      if (pNameNormalized) {
+        const key = `name:${pNameNormalized}`;
+        if (!lastSaleMap[key] || o.parsedDate > lastSaleMap[key]) lastSaleMap[key] = o.parsedDate;
+      }
     }
   });
 
@@ -84,15 +95,22 @@ export function renderEstoque(callbacks = {}) {
       if (filterEstoque === 'esgotados') return est <= 0;
       if (filterEstoque === 'baixo-estoque') return est === 1;
 
-      if (filterEstoque === 'parados') {
-        if (est <= 0) return false;
+      if (filterEstoque === 'parados' || filterEstoque === 'vendidos') {
         const sku = String(p.sku || '').trim().toLowerCase();
+        const pId = String(p.id || '').trim().toLowerCase();
         let combinedName = String(p.nome || '');
         if (p.armazenamento && !combinedName.includes(p.armazenamento)) combinedName += ' ' + p.armazenamento;
         if (p.cor && !combinedName.includes(p.cor)) combinedName += ' ' + p.cor;
         const fullNomeNormalized = normalizeText(combinedName);
 
-        let lastDate = sku && lastSaleMap[sku] ? lastSaleMap[sku] : (fullNomeNormalized && lastSaleMap[fullNomeNormalized] ? lastSaleMap[fullNomeNormalized] : null);
+        let lastDate = (sku && lastSaleMap[`sku:${sku}`]) ? lastSaleMap[`sku:${sku}`] :
+          ((pId && lastSaleMap[`id:${pId}`]) ? lastSaleMap[`id:${pId}`] :
+            ((fullNomeNormalized && lastSaleMap[`name:${fullNomeNormalized}`]) ? lastSaleMap[`name:${fullNomeNormalized}`] : null));
+
+        if (filterEstoque === 'vendidos') return lastDate !== null;
+
+        const est = Number(p.estoque) || 0;
+        if (est <= 0) return false;
         const days = lastDate ? Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24)) : 999;
         return days >= 15;
       }
@@ -148,12 +166,12 @@ export function renderEstoque(callbacks = {}) {
 
     let statusColor = 'text-green-600';
     let statusText = 'Em Estoque';
-    if (estVal <= 0) { 
-      statusColor = 'text-red-600'; 
-      statusText = 'Esgotado'; 
-    } else if (estVal <= minVal) { 
-      statusColor = 'text-orange-600'; 
-      statusText = estVal === 1 ? 'Última Unidade' : 'Abaixo do Mínimo'; 
+    if (estVal <= 0) {
+      statusColor = 'text-red-600';
+      statusText = 'Esgotado';
+    } else if (estVal <= minVal) {
+      statusColor = 'text-orange-600';
+      statusText = estVal === 1 ? 'Última Unidade' : 'Abaixo do Mínimo';
     }
 
     const varList = [p.armazenamento, p.cor, p.condicao].filter(v => v && v.trim() !== '');
@@ -161,12 +179,15 @@ export function renderEstoque(callbacks = {}) {
     const rowOpacity = isActive ? '' : 'opacity-60 bg-gray-50';
 
     const skuKey = String(p.sku || '').trim().toLowerCase();
+    const pIdKey = String(p.id || '').trim().toLowerCase();
     let combinedName = String(p.nome || '');
     if (p.armazenamento && !combinedName.includes(p.armazenamento)) combinedName += ' ' + p.armazenamento;
     if (p.cor && !combinedName.includes(p.cor)) combinedName += ' ' + p.cor;
     const fullNomeNormalized = normalizeText(combinedName);
 
-    const lastDate = skuKey && lastSaleMap[skuKey] ? lastSaleMap[skuKey] : (fullNomeNormalized && lastSaleMap[fullNomeNormalized] ? lastSaleMap[fullNomeNormalized] : null);
+    const lastDate = (skuKey && lastSaleMap[`sku:${skuKey}`]) ? lastSaleMap[`sku:${skuKey}`] :
+      ((pIdKey && lastSaleMap[`id:${pIdKey}`]) ? lastSaleMap[`id:${pIdKey}`] :
+        ((fullNomeNormalized && lastSaleMap[`name:${fullNomeNormalized}`]) ? lastSaleMap[`name:${fullNomeNormalized}`] : null));
     const giroStr = lastDate ? (Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24)) === 0 ? 'Hoje' : `${Math.floor(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24))} dias`) : '-';
 
     const precoVenda = parseNumber(p.preco ?? 0);
@@ -247,8 +268,8 @@ export function renderEstoque(callbacks = {}) {
                 <span class="text-xs font-black ${lucroRealTotal >= 0 ? 'text-green-600' : 'text-red-600'} font-mono">
                   ${formatMoney(lucroRealTotal).replace('R$ ', 'R$')}
                 </span>
-                <span class="text-[9px] font-bold text-gray-500 opacity-80 mt-0.5">${margemRealAcumulada.toFixed(1).replace('.', ',')}% real</span>
-                <span class="text-[8px] font-medium text-gray-400 mt-0.5">${qtdVendasConcluidas} ${qtdVendasConcluidas === 1 ? 'venda' : 'vendas'}</span>
+                <span class="text-[10px] font-bold text-gray-500 opacity-80 mt-0.5">${margemRealAcumulada.toFixed(1).replace('.', ',')}% real</span>
+                <span class="text-[10px] font-medium text-gray-400 mt-0.5">${qtdVendasConcluidas} ${qtdVendasConcluidas === 1 ? 'venda' : 'vendas'}</span>
               ` : `
                 <span class="text-gray-300 text-xs font-bold">—</span>
                 <span class="text-[9px] text-gray-400 italic">Sem vendas</span>
@@ -289,7 +310,7 @@ export function renderEstoque(callbacks = {}) {
       const imageUrl = (p.images && p.images[0]) || p.imagem1 || p.imagem || '../../assets/images/placeholder.png';
       const margin = precoVenda > 0 ? Math.round((lucro / precoVenda) * 100) : 0;
       let badgeCondicao = p.condicao ? p.condicao.toUpperCase() : 'NOVO';
-      
+
       htmlCards += `
         <div class="bg-white border ${estVal > 0 ? 'border-green-200' : 'border-gray-200'} rounded-xl p-4 shadow-sm relative group flex flex-col transition hover:shadow-md ${rowOpacity}">
           
