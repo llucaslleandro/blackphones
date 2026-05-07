@@ -131,7 +131,7 @@ export function renderEstoque(callbacks = {}) {
     if (viewMode === 'grid') {
       container.innerHTML = `<div class="p-8 text-center text-gray-500 text-sm italic w-full border border-gray-100 rounded-xl bg-white">Nenhum produto em estoque.</div>`;
     } else {
-      container.innerHTML = `<table class="estoque-table w-full text-left border-collapse"><thead><tr class="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold tracking-[0.1em] border-b border-gray-100"><th class="px-6 py-4">Produto / Variação</th><th class="px-6 py-4 text-center">Custo Unit</th><th class="px-6 py-4 text-center">Preço Venda</th><th class="px-6 py-4 text-center">Giro</th><th class="px-6 py-4 text-center">Estoque (Atual/Mín)</th><th class="px-6 py-4 text-center">Ações</th></tr></thead><tbody class="divide-y divide-gray-100 bg-white border-b border-gray-100"><tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 text-sm italic">Nenhum produto em estoque.</td></tr></tbody></table>`;
+      container.innerHTML = `<table class="estoque-table w-full text-left border-collapse"><thead><tr class="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold tracking-[0.1em] border-b border-gray-100"><th class="px-6 py-4">Produto / Variação</th><th class="px-6 py-4 text-center">Custo Unit</th><th class="px-6 py-4 text-center">Preço Venda</th><th class="px-6 py-4 text-center">Resultado</th><th class="px-6 py-4 text-center">Giro</th><th class="px-6 py-4 text-center">Estoque (Atual/Mín)</th><th class="px-6 py-4 text-center">Ações</th></tr></thead><tbody class="divide-y divide-gray-100 bg-white border-b border-gray-100"><tr><td colspan="7" class="px-6 py-8 text-center text-gray-500 text-sm italic">Nenhum produto em estoque.</td></tr></tbody></table>`;
     }
     return;
   }
@@ -173,6 +173,31 @@ export function renderEstoque(callbacks = {}) {
     const custoUnid = parseNumber(p.custo ?? p.preco_custo ?? 0);
     const lucro = precoVenda - custoUnid;
 
+    // Cálculo de métricas reais acumuladas (vendas concluídas)
+    const pSku = String(p.sku || '').trim().toLowerCase();
+    const pId = String(p.id || '').trim().toLowerCase();
+    const ordersConcluidas = state.allOrders.filter(o => {
+      if (o.status !== 'Fechado') return false;
+      const oSku = String(o.sku || '').trim().toLowerCase();
+      const oId = String(o.id || '').trim().toLowerCase();
+      return (pSku && pSku === oSku) || (pId && pId === oSku) || (pId && pId === oId);
+    });
+
+    let fatRealTotal = 0;
+    let lucroRealTotal = 0;
+    let qtdVendasConcluidas = 0;
+
+    ordersConcluidas.forEach(o => {
+      const valorVenda = o.final_price || o.total || 0;
+      const lucroVenda = valorVenda - (custoUnid * o.quantidade);
+      fatRealTotal += valorVenda;
+      lucroRealTotal += lucroVenda;
+      qtdVendasConcluidas += o.quantidade;
+    });
+
+    const margemRealAcumulada = fatRealTotal > 0 ? (lucroRealTotal / fatRealTotal) * 100 : 0;
+    const hasVendas = qtdVendasConcluidas > 0;
+
     if (viewMode === 'list') {
       htmlListRows += `
         <tr class="hover:bg-gray-50/50 transition border-b border-gray-100 last:border-0 ${rowOpacity}">
@@ -212,7 +237,22 @@ export function renderEstoque(callbacks = {}) {
                 <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Venda:</span>
                 <span class="text-xs font-bold text-indigo-600 font-mono">${formatMoney(precoVenda).replace('R$ ', 'R$')}</span>
               </div>
-              <span class="text-[9px] font-bold text-emerald-600 mt-0.5">+ ${formatMoney(lucro).replace('R$ ', 'R$')} lucro</span>
+              <span class="text-[9px] font-bold text-emerald-600 mt-0.5">+ ${formatMoney(lucro).replace('R$ ', 'R$')} lucro estimado</span>
+            </div>
+          </td>
+          <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
+            <div class="flex flex-col sm:items-center min-w-[80px]">
+              <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mr-1">Resultado:</span>
+              ${hasVendas ? `
+                <span class="text-xs font-black ${lucroRealTotal >= 0 ? 'text-green-600' : 'text-red-600'} font-mono">
+                  ${formatMoney(lucroRealTotal).replace('R$ ', 'R$')}
+                </span>
+                <span class="text-[9px] font-bold text-gray-500 opacity-80 mt-0.5">${margemRealAcumulada.toFixed(1).replace('.', ',')}% real</span>
+                <span class="text-[8px] font-medium text-gray-400 mt-0.5">${qtdVendasConcluidas} ${qtdVendasConcluidas === 1 ? 'venda' : 'vendas'}</span>
+              ` : `
+                <span class="text-gray-300 text-xs font-bold">—</span>
+                <span class="text-[9px] text-gray-400 italic">Sem vendas</span>
+              `}
             </div>
           </td>
           <td class="px-4 sm:px-6 py-1 sm:py-4 text-center">
@@ -309,9 +349,19 @@ export function renderEstoque(callbacks = {}) {
               <span class="text-[10px] font-bold text-emerald-700 flex items-center gap-1"><i class="fa-solid fa-dollar-sign text-[8px]"></i> Lucro Estimado</span>
               <span class="text-[10px] font-bold text-emerald-800">${margin}%</span>
             </div>
-            <div class="text-base font-black text-emerald-700 mb-2 border-b border-emerald-200/50 pb-2">
+            <div class="text-base font-black text-emerald-700 mb-1 border-b border-emerald-200/50 pb-1">
               + ${formatMoney(lucro)}
             </div>
+            ${hasVendas ? `
+              <div class="py-1.5 border-b border-emerald-200/30 mb-1">
+                <p class="text-[8px] text-emerald-600/80 uppercase font-black tracking-widest mb-1">Resultado Realizado</p>
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-bold ${lucroRealTotal >= 0 ? 'text-emerald-800' : 'text-red-600'}">${formatMoney(lucroRealTotal)}</span>
+                  <span class="text-[10px] font-bold ${lucroRealTotal >= 0 ? 'text-emerald-800' : 'text-red-600'}">${margemRealAcumulada.toFixed(1).replace('.', ',')}% real</span>
+                </div>
+                <p class="text-[8px] text-emerald-600 mt-0.5">Baseado em ${qtdVendasConcluidas} ${qtdVendasConcluidas === 1 ? 'venda concluída' : 'vendas concluídas'}</p>
+              </div>
+            ` : ''}
             <div class="flex justify-between items-center pt-1">
               <span class="text-[9px] text-emerald-600 font-medium">Giro de Estoque:</span>
               <span class="text-[9px] font-bold text-emerald-700">${giroStr}</span>
@@ -343,6 +393,7 @@ export function renderEstoque(callbacks = {}) {
             <th class="px-6 py-4">Produto / Variação</th>
             <th class="px-6 py-4 text-center">Custo Unit</th>
             <th class="px-6 py-4 text-center">Preço Venda</th>
+            <th class="px-6 py-4 text-center">Resultado</th>
             <th class="px-6 py-4 text-center">Giro</th>
             <th class="px-6 py-4 text-center">Estoque (Atual/Mín)</th>
             <th class="hidden sm:table-cell px-6 py-4 text-center">Ações</th>
