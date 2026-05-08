@@ -292,18 +292,19 @@ function setupDashboardListeners() {
     if (el) el.addEventListener('input', ui.applyDateMask);
   });
 
-  // Helper for hidden native date pickers
-  document.querySelectorAll('.js-date-picker-helper').forEach(picker => {
-    picker.addEventListener('change', (e) => {
+  // Helper for hidden native date pickers (Delegated to handle dynamic modals)
+  document.body.addEventListener('change', (e) => {
+    if (e.target.classList.contains('js-date-picker-helper')) {
       const targetId = e.target.dataset.target;
       const targetInput = document.getElementById(targetId);
       if (targetInput && e.target.value) {
         const [y, m, d] = e.target.value.split('-');
         targetInput.value = `${d}/${m}/${y}`;
-        // Trigger the original input's change event to refresh dashboard
-        targetInput.dispatchEvent(new Event('change'));
+        // Trigger the original input's change event to refresh any bound logic
+        targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+        targetInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
-    });
+    }
   });
 
   const handleCustomDateChange = async (val, otherId) => {
