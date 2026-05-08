@@ -10,6 +10,8 @@ export const state = {
   tableBrandFilter: "all",
   tableStatusFilter: "all",
   tablePeriodFilter: "all",
+  currentPeriodStart: null,
+  currentPeriodEnd: null,
   allFiados: [],
   allEncomendas: []
 };

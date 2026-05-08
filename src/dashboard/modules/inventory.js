@@ -1,6 +1,6 @@
 import { CONFIG } from '../../shared/config.js';
 import { state, loadDashboardData, uploadImageToDrive } from './store.js';
-import { formatMoney, formatText, showToast, compressImage, parseNumber, getViewPreference } from './ui.js';
+import { formatMoney, formatText, showToast, compressImage, parseNumber, getViewPreference, applyDateMask, parseDateBr, formatDateBr } from './ui.js';
 
 let pendingEstoqueUpdates = {};
 let pendingDeleteSku = null;
@@ -584,6 +584,15 @@ export function abrirModalCadastro() {
   const estMinInput = document.getElementById('cad-estoque-min');
   if (estMinInput) estMinInput.value = '2';
 
+  // Reset data entrada
+  const dataEntradaWrap = document.getElementById('cad-data-entrada-wrap');
+  const dataEntradaInput = document.getElementById('cad-data-entrada');
+  if (dataEntradaWrap) dataEntradaWrap.classList.remove('hidden'); // Show for insertion
+  if (dataEntradaInput) {
+    dataEntradaInput.value = '';
+    delete dataEntradaInput.dataset.raw;
+  }
+
   // Reset all 5 images
   for (let i = 1; i <= 5; i++) {
     const imgInput = document.getElementById(`cad-imagem-${i}`);
@@ -660,6 +669,22 @@ export function abrirModalEdicao(sku) {
   fill('cad-categoria', prod.categoria);
   fill('cad-estoque', prod.estoque);
   fill('cad-estoque-min', prod.estoque_minimo);
+
+  // Fill data entrada
+  const dataEntradaWrap = document.getElementById('cad-data-entrada-wrap');
+  if (dataEntradaWrap) {
+    dataEntradaWrap.classList.remove('hidden');
+    const el = document.getElementById('cad-data-entrada');
+    if (prod.data_entrada_estoque) {
+      const d = new Date(prod.data_entrada_estoque);
+      const dateStr = isNaN(d.getTime()) ? prod.data_entrada_estoque : formatDateBr(d);
+      fill('cad-data-entrada', dateStr);
+      if (el) el.dataset.raw = prod.data_entrada_estoque;
+    } else {
+      fill('cad-data-entrada', '');
+      if (el) delete el.dataset.raw;
+    }
+  }
 
   // Fill Images
   for (let i = 1; i <= 5; i++) {
@@ -908,6 +933,11 @@ export function setupCategoriaHandler() {
       catCustom.value = '';
     }
   });
+
+  const dataEntradaInput = document.getElementById('cad-data-entrada');
+  if (dataEntradaInput) {
+    dataEntradaInput.addEventListener('input', applyDateMask);
+  }
 }
 
 // ===== HELPERS =====
@@ -1064,6 +1094,20 @@ export async function salvarNovoProduto(callbacks = {}) {
     condicao: cadastroTipo,
     ativo: publicar ? 'true' : 'false',
   };
+
+  const dataEntradaInput = document.getElementById('cad-data-entrada');
+  if (dataEntradaInput && dataEntradaInput.value) {
+    const parsed = parseDateBr(dataEntradaInput.value);
+    if (parsed) {
+      // Se já temos um raw ISO e o dia é o mesmo, mantém o raw para preservar hora
+      const raw = dataEntradaInput.dataset.raw;
+      if (raw && raw.startsWith(parsed)) {
+        baseProduct.data_entrada_estoque = raw;
+      } else {
+        baseProduct.data_entrada_estoque = parsed + 'T12:00:00Z';
+      }
+    }
+  }
 
   if (cadastroTipo === 'Seminovo') {
     baseProduct.imei1 = val('cad-imei1');

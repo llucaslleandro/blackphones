@@ -66,7 +66,13 @@ export function calcularKPIsEInsights(callbacks = {}) {
   let totalEstoqueFisico = 0;
   state.allProducts.forEach(p => {
     const estoqueAtual = Number(p.estoque) || 0;
-    if (estoqueAtual > 0) {
+    
+    // Validar se o produto já existia no estoque ao final do período selecionado
+    const entDateStr = p.data_entrada_estoque || '';
+    const entDate = entDateStr ? new Date(entDateStr) : null;
+    const existsInPeriod = !entDate || !state.currentPeriodEnd || entDate <= state.currentPeriodEnd;
+
+    if (estoqueAtual > 0 && existsInPeriod) {
       const custoUnit = parseNumber(p.custo || p.preco_custo) || 0;
       totalCustoEstoque += (custoUnit * estoqueAtual);
       totalEstoqueFisico += estoqueAtual;
@@ -140,7 +146,10 @@ export function calcularKPIsEInsights(callbacks = {}) {
   let capitalRecuperado = 0;
   if (state.allOrders && state.allOrders.length > 0) {
     state.allOrders.forEach(o => {
-      if (o.status === 'Fechado') {
+      // Recuperado e Faturamento acumulados até o FIM do período selecionado
+      const isBeforePeriodEnd = !state.currentPeriodEnd || o.parsedDate <= state.currentPeriodEnd;
+      
+      if (o.status === 'Fechado' && isBeforePeriodEnd) {
         const produtoRef = state.allProducts.find(p =>
           (p.sku && String(p.sku) === String(o.sku)) ||
           (p.id && String(p.id) === String(o.sku)) ||
@@ -154,7 +163,8 @@ export function calcularKPIsEInsights(callbacks = {}) {
   let globalFaturamento = 0;
   if (state.allOrders && state.allOrders.length > 0) {
     state.allOrders.forEach(o => {
-      if (o.status === 'Fechado') {
+      const isBeforePeriodEnd = !state.currentPeriodEnd || o.parsedDate <= state.currentPeriodEnd;
+      if (o.status === 'Fechado' && isBeforePeriodEnd) {
         globalFaturamento += (o.final_price || o.total || 0);
       }
     });

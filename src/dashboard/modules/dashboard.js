@@ -61,9 +61,13 @@ export function aplicarFiltroPeriodo(callbacks = {}) {
   if (mode === 'all') {
     state.filteredOrders = [...state.allOrders];
     state.previousOrders = [];
+    state.currentPeriodStart = new Date(0);
+    state.currentPeriodEnd = new Date(); // Até agora
   } else {
     state.filteredOrders = state.allOrders.filter(o => o.parsedDate >= startDate && o.parsedDate <= endDate);
     state.previousOrders = state.allOrders.filter(o => o.parsedDate >= prevStartDate && o.parsedDate <= prevEndDate);
+    state.currentPeriodStart = startDate;
+    state.currentPeriodEnd = endDate;
   }
 
   if (callbacks.onRender) callbacks.onRender();

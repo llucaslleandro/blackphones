@@ -352,7 +352,8 @@ function getProdutos() {
       imei2: String(obj['imei2'] || ''),
       codigo_serie: String(obj['codigo_serie'] || ''),
       origem: String(obj['origem'] || ''),
-      saude_bateria: String(obj['saude_bateria'] || '')
+      saude_bateria: String(obj['saude_bateria'] || ''),
+      data_entrada_estoque: String(obj['data_entrada_estoque'] || '')
     };
   });
   return itens;
@@ -376,7 +377,8 @@ function ensureProdutosColumns_(sheet, headerRow) {
     { key: 'saude_bateria', label: 'saude_bateria' },
     { key: 'ram', label: 'ram' },
     { key: 'bateria', label: 'bateria' },
-    { key: 'tela', label: 'tela' }
+    { key: 'tela', label: 'tela' },
+    { key: 'data_entrada_estoque', label: 'data_entrada_estoque' }
   ];
 
   var added = false;
@@ -789,7 +791,8 @@ function salvarNovoProduto(produtos) {
     { key: 'imagem_2', label: 'imagem_2' },
     { key: 'imagem_3', label: 'imagem_3' },
     { key: 'imagem_4', label: 'imagem_4' },
-    { key: 'imagem_5', label: 'imagem_5' }
+    { key: 'imagem_5', label: 'imagem_5' },
+    { key: 'data_entrada_estoque', label: 'data_entrada_estoque' }
   ];
   var addedCols = false;
   requiredCols.forEach(function(r) {
@@ -817,7 +820,7 @@ function salvarNovoProduto(produtos) {
     'clicks': 'clicks', 'imei1': 'imei1', 'imei2': 'imei2',
     'codigo_serie': 'codigo_serie', 'origem': 'origem', 'saude_bateria': 'saude_bateria',
     'imagem_1': 'imagem_1', 'imagem_2': 'imagem_2', 'imagem_3': 'imagem_3',
-    'imagem_4': 'imagem_4', 'imagem_5': 'imagem_5'
+    'imagem_4': 'imagem_4', 'imagem_5': 'imagem_5', 'data_entrada_estoque': 'data_entrada_estoque'
   };
 
   var count = 0;
@@ -834,16 +837,25 @@ function salvarNovoProduto(produtos) {
     // Default estoque
     if (prod.estoque === undefined || prod.estoque === '') prod.estoque = 0;
 
+    // Default data_entrada_estoque
+    if (!prod.data_entrada_estoque) {
+      prod.data_entrada_estoque = new Date().toISOString();
+    }
+
     var rowData = new Array(headers.length);
     for (var i = 0; i < headers.length; i++) rowData[i] = '';
 
     for (var key in prod) {
       if (!prod.hasOwnProperty(key)) continue;
-      var sheetHeader = normalizeKey_(fieldMap[key] || key);
       var val = prod[key];
       
+      // Mapeamento robusto: tenta match pelo fieldMap ou pelo nome da chave normalizado
+      var mappedKey = fieldMap[key] || key;
+      var normalizedSearch = normalizeKey_(mappedKey);
+      var normalizedRawKey = normalizeKey_(key);
+      
       for (var c = 0; c < normalizedHeaders.length; c++) {
-        if (normalizedHeaders[c] === sheetHeader || normalizedHeaders[c] === normalizeKey_(key)) {
+        if (normalizedHeaders[c] === normalizedSearch || normalizedHeaders[c] === normalizedRawKey) {
           rowData[c] = val;
         }
       }
@@ -883,7 +895,7 @@ function editarProduto_(payload) {
     'imei1': 'imei1', 'imei2': 'imei2',
     'codigo_serie': 'codigo_serie', 'origem': 'origem', 'saude_bateria': 'saude_bateria',
     'imagem_1': 'imagem_1', 'imagem_2': 'imagem_2', 'imagem_3': 'imagem_3',
-    'imagem_4': 'imagem_4', 'imagem_5': 'imagem_5'
+    'imagem_4': 'imagem_4', 'imagem_5': 'imagem_5', 'data_entrada_estoque': 'data_entrada_estoque'
   };
 
   var targetSku = String(payload.sku);
@@ -1335,6 +1347,7 @@ function marcarChegou(payload) {
     imagem_3: payload.imagem_3 || '',
     imagem_4: payload.imagem_4 || '',
     imagem_5: payload.imagem_5 || '',
+    data_entrada_estoque: new Date().toISOString(),
     id: friendlySku,
     sku: friendlySku, 
     grupo_id: slugBase || friendlySku
