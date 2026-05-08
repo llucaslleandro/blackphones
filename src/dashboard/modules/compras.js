@@ -1,5 +1,5 @@
 import { CONFIG } from '../../shared/config.js';
-import { formatMoney, showToast, compressImage } from './ui.js';
+import { formatMoney, showToast, compressImage, formatDateBr, parseDateBr, formatDateForInput, applyDateMask } from './ui.js';
 import { uploadImageToDrive, loadDashboardData } from './store.js';
 
 let comprasData = [];
@@ -132,13 +132,6 @@ export async function initAndRender() {
   });
   renderModals();
   
-  // Date Mask Logic
-  const applyDateMask = (e) => {
-    let v = e.target.value.replace(/\D/g, '').slice(0, 8);
-    if (v.length >= 5) v = v.replace(/(\d{2})(\d{2})(\d{1,4})/, '$1/$2/$3');
-    else if (v.length >= 3) v = v.replace(/(\d{2})(\d{1,2})/, '$1/$2');
-    e.target.value = v;
-  };
   document.getElementById('lote-data-compra').addEventListener('input', applyDateMask);
   document.getElementById('lote-previsao').addEventListener('input', applyDateMask);
 
@@ -257,13 +250,7 @@ function renderMetrics() {
   `;
 }
 
-function formatDateBr(isoString) {
-  if (!isoString) return '-';
-  const d = new Date(isoString);
-  if (isNaN(d.getTime())) return isoString;
-  d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
-  return d.toLocaleDateString('pt-BR');
-}
+
 
 function getRelativeDateBadge(dateString, isFullyReceived) {
   if (!dateString || isFullyReceived) return '';
@@ -712,13 +699,25 @@ function renderModals() {
                 <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Fornecedor *</label>
                 <input type="text" id="lote-fornecedor" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Nome do Fornecedor">
               </div>
-               <div>
+               <div class="relative group">
                 <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Data Compra *</label>
-                <input type="text" id="lote-data-compra" class="w-full px-3 py-2 border rounded-lg text-sm outline-none text-gray-700" placeholder="DD/MM/YYYY" maxlength="10">
+                <div class="relative">
+                  <input type="text" id="lote-data-compra" class="w-full pl-3 pr-8 py-2 border rounded-lg text-sm outline-none text-gray-700" placeholder="DD/MM/YYYY" maxlength="10">
+                  <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center">
+                    <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="lote-data-compra">
+                    <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+                  </div>
+                </div>
               </div>
-              <div>
+              <div class="relative group">
                 <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Previsão Chegada *</label>
-                <input type="text" id="lote-previsao" class="w-full px-3 py-2 border rounded-lg text-sm outline-none text-gray-700" placeholder="DD/MM/YYYY" maxlength="10">
+                <div class="relative">
+                  <input type="text" id="lote-previsao" class="w-full pl-3 pr-8 py-2 border rounded-lg text-sm outline-none text-gray-700" placeholder="DD/MM/YYYY" maxlength="10">
+                  <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center">
+                    <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="lote-previsao">
+                    <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
@@ -979,7 +978,10 @@ function renderModals() {
   ['lote-fornecedor', 'lote-data-compra', 'lote-previsao'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener('input', () => {
+      el.addEventListener('input', (e) => {
+        if (e.target.id.includes('data') || e.target.id.includes('previsao')) {
+          applyDateMask(e);
+        }
         el.classList.remove('border-red-500', 'ring-1', 'ring-red-200');
       });
     }
@@ -1205,11 +1207,7 @@ function abrirModalCadastroCompra() {
   document.getElementById('lote-adic').value = '';
   document.getElementById('lote-obs').value = '';
 
-  const hojeObj = new Date();
-  const dia = String(hojeObj.getDate()).padStart(2, '0');
-  const mes = String(hojeObj.getMonth() + 1).padStart(2, '0');
-  const ano = hojeObj.getFullYear();
-  document.getElementById('lote-data-compra').value = `${dia}/${mes}/${ano}`;
+  document.getElementById('lote-data-compra').value = formatDateForInput(new Date());
 
   document.getElementById('lote-items-container').innerHTML = '';
   itemCounter = 0;
@@ -1239,18 +1237,9 @@ window.abrirModalEdicaoLote = function (loteId, highlightItemId = null) {
 
   // Preenche dados do lote
   document.getElementById('lote-fornecedor').value = loteGroup.fornecedor || '';
-  
-  const formatDateForInput = (iso) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    const dia = String(d.getUTCDate()).padStart(2, '0');
-    const mes = String(d.getUTCMonth() + 1).padStart(2, '0');
-    return `${dia}/${mes}/${d.getUTCFullYear()}`;
-  };
 
-  document.getElementById('lote-data-compra').value = formatDateForInput(loteGroup.data_compra);
-  document.getElementById('lote-previsao').value = formatDateForInput(loteGroup.previsao_chegada);
+  document.getElementById('lote-data-compra').value = formatDateBr(loteGroup.data_compra);
+  document.getElementById('lote-previsao').value = formatDateBr(loteGroup.previsao_chegada);
   document.getElementById('lote-frete').value = loteGroup.custo_frete || '';
   document.getElementById('lote-taxas').value = loteGroup.custo_taxas || '';
   document.getElementById('lote-adic').value = loteGroup.custo_adicional_lote || '';
@@ -1281,14 +1270,8 @@ async function salvarLoteEncomenda() {
   const elPrevisao = document.getElementById('lote-previsao');
 
   const fornecedor = elFornecedor.value.trim();
-  const parseInputDate = (str) => {
-    if (!str || !/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return null;
-    const [d, m, y] = str.split('/');
-    return `${y}-${m}-${d}`; // ISO para backend
-  };
-
-  const dataCompra = parseInputDate(elDataCompra.value);
-  const previsao = parseInputDate(elPrevisao.value);
+  const dataCompra = parseDateBr(elDataCompra.value);
+  const previsao = parseDateBr(elPrevisao.value);
 
   let hasError = false;
   if (!fornecedor) { elFornecedor.classList.add('border-red-500', 'ring-1', 'ring-red-200'); hasError = true; }

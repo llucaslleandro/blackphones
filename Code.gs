@@ -1072,7 +1072,15 @@ function getMetricas_(periodo) {
       cutoff = new Date(0); // epoch
       break;
     default:
-      cutoff.setHours(0, 0, 0, 0); // default = hoje
+      if (periodo.indexOf('month:') === 0) {
+        var parts = periodo.split(':')[1].split('-');
+        var year = parseInt(parts[0]);
+        var month = parseInt(parts[1]);
+        cutoff = new Date(year, month - 1, 1, 0, 0, 0);
+        var upperBound = new Date(year, month, 0, 23, 59, 59);
+      } else {
+        cutoff.setHours(0, 0, 0, 0); // default = hoje
+      }
   }
 
   var result = [];
@@ -1088,7 +1096,7 @@ function getMetricas_(periodo) {
 
     // Apply period filter
     if (rowDate < cutoff) continue;
-    if (periodo === 'ontem' && upperBound && rowDate >= upperBound) continue;
+    if ((periodo === 'ontem' || periodo.indexOf('month:') === 0) && upperBound && rowDate >= upperBound) continue;
 
     var obj = {};
     headers.forEach(function(h, idx) {

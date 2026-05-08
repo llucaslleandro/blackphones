@@ -861,10 +861,22 @@
               </div>
             </div>
             <div id="custom-date-wrap" class="hidden items-center gap-2">
-              <input type="date" id="date-start"
-                class="w-32 px-2 py-2 text-[10px] bg-gray-50 border border-gray-200 rounded-xl">
-              <input type="date" id="date-end"
-                class="w-32 px-2 py-2 text-[10px] bg-gray-50 border border-gray-200 rounded-xl">
+              <div class="relative group">
+                <input type="text" id="date-start"
+                  class="w-32 pl-2 pr-8 py-2 text-[10px] bg-gray-50 border border-gray-200 rounded-xl" placeholder="DD/MM/YYYY" maxlength="10">
+                <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center">
+                  <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="date-start">
+                  <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+                </div>
+              </div>
+              <div class="relative group">
+                <input type="text" id="date-end"
+                  class="w-32 pl-2 pr-8 py-2 text-[10px] bg-gray-50 border border-gray-200 rounded-xl" placeholder="DD/MM/YYYY" maxlength="10">
+                <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center">
+                  <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="date-end">
+                  <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+                </div>
+              </div>
             </div>
             <button id="btn-refresh"
               class="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 shadow-sm transition shrink-0"
@@ -902,10 +914,22 @@
             </div>
           </div>
           <div id="custom-date-wrap-mobile" class="hidden items-center gap-2 flex-1">
-            <input type="date" id="date-start-mobile"
-              class="flex-1 px-2 py-2.5 text-[10px] bg-gray-50 border border-gray-200 rounded-xl">
-            <input type="date" id="date-end-mobile"
-              class="flex-1 px-2 py-2.5 text-[10px] bg-gray-50 border border-gray-200 rounded-xl">
+            <div class="relative flex-1">
+              <input type="text" id="date-start-mobile"
+                class="w-full pl-3 pr-8 py-2.5 text-[10px] bg-gray-50 border border-gray-200 rounded-xl" placeholder="Início" maxlength="10">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="date-start-mobile">
+                <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+              </div>
+            </div>
+            <div class="relative flex-1">
+              <input type="text" id="date-end-mobile"
+                class="w-full pl-3 pr-8 py-2.5 text-[10px] bg-gray-50 border border-gray-200 rounded-xl" placeholder="Fim" maxlength="10">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="date-end-mobile">
+                <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1675,8 +1699,14 @@
                   <option value="7">Últimos 7 dias</option>
                   <option value="custom">Data Específica</option>
                 </select>
-                <div id="table-custom-wrap" class="hidden items-center gap-1">
-                  <input type="date" id="table-date-start" class="px-2 py-2 text-sm border border-gray-200 rounded-lg">
+                <div id="table-custom-wrap" class="hidden items-center gap-2">
+                  <div class="relative">
+                    <input type="text" id="table-date-start" class="pl-3 pr-9 py-2 text-sm border border-gray-200 rounded-lg w-40" placeholder="DD/MM/YYYY" maxlength="10">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                      <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="table-date-start">
+                      <i class="fa-solid fa-calendar-days text-gray-400 text-xs pointer-events-none"></i>
+                    </div>
+                  </div>
                 </div>
                 <select id="table-status"
                   class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400">

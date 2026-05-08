@@ -1,6 +1,6 @@
 import { CONFIG } from '../../shared/config.js';
 import { state, loadDashboardData } from './store.js';
-import { formatMoney, formatText, showToast } from './ui.js';
+import { formatMoney, formatText, showToast, parseDateBr, formatDateBr, formatDateForInput } from './ui.js';
 
 export function aplicarFiltroPeriodo(callbacks = {}) {
   const periodFilter = document.getElementById('period-filter');
@@ -33,16 +33,27 @@ export function aplicarFiltroPeriodo(callbacks = {}) {
     prevEndDate.setDate(endDate.getDate() - days);
   } else if (mode === 'custom') {
     if (dateStart?.value && dateEnd?.value) {
-      startDate = new Date(dateStart.value + 'T00:00:00');
-      endDate = new Date(dateEnd.value + 'T23:59:59');
-      const diffDays = Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24));
-      prevEndDate = new Date(startDate);
-      prevEndDate.setDate(prevEndDate.getDate() - 1);
-      prevStartDate = new Date(prevEndDate);
-      prevStartDate.setDate(prevStartDate.getDate() - diffDays);
-    } else {
-      return;
+      const isoStart = parseDateBr(dateStart.value);
+      const isoEnd = parseDateBr(dateEnd.value);
+      if (isoStart && isoEnd) {
+        startDate = new Date(isoStart + 'T00:00:00');
+        endDate = new Date(isoEnd + 'T23:59:59');
+        const diffDays = Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24));
+        prevEndDate = new Date(startDate);
+        prevEndDate.setDate(prevEndDate.getDate() - 1);
+        prevStartDate = new Date(prevEndDate);
+        prevStartDate.setDate(prevStartDate.getDate() - diffDays);
+      }
     }
+  } else if (mode.startsWith('month:')) {
+    const val = mode.split(':')[1];
+    const [year, month] = val.split('-').map(n => parseInt(n, 10));
+    startDate = new Date(year, month - 1, 1, 0, 0, 0);
+    endDate = new Date(year, month, 0, 23, 59, 59);
+    
+    // Previous period is the previous month
+    prevStartDate = new Date(year, month - 2, 1, 0, 0, 0);
+    prevEndDate = new Date(year, month - 1, 0, 23, 59, 59);
   } else {
     startDate = new Date(0); // all
   }
@@ -93,12 +104,18 @@ export function renderTable(callbacks = {}) {
       tCut.setDate(tCut.getDate() - 7);
     } else if (state.tablePeriodFilter === 'custom') {
       const tableDateStart = document.getElementById('table-date-start');
-      if (tableDateStart?.value) {
-        tCut = new Date(tableDateStart.value + 'T00:00:00');
-        tEnd = new Date(tableDateStart.value + 'T23:59:59');
+      const isoStart = parseDateBr(tableDateStart?.value);
+      if (isoStart) {
+        tCut = new Date(isoStart + 'T00:00:00');
+        tEnd = new Date(isoStart + 'T23:59:59');
       } else {
         tCut = new Date(0);
       }
+    } else if (state.tablePeriodFilter.startsWith('month:')) {
+      const val = state.tablePeriodFilter.split(':')[1];
+      const [year, month] = val.split('-').map(n => parseInt(n, 10));
+      tCut = new Date(year, month - 1, 1, 0, 0, 0);
+      tEnd = new Date(year, month, 0, 23, 59, 59);
     }
     displayOrders = displayOrders.filter(o => o.parsedDate >= tCut && o.parsedDate <= tEnd);
   }
@@ -120,7 +137,7 @@ export function renderTable(callbacks = {}) {
   };
 
   displayOrders.forEach(o => {
-    const dataFormatada = o.parsedDate.getTime() === 0 ? o.data : o.parsedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const dataFormatada = o.parsedDate.getTime() === 0 ? o.data : formatDateBr(o.parsedDate) + ' ' + o.parsedDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const badgeVariacao = (o.armazenamento || o.cor || o.condicao) ? `
       <div class="flex flex-wrap gap-1 mt-1">
         ${o.condicao ? `<span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] uppercase font-semibold tracking-wider">${o.condicao}</span>` : ''}
@@ -471,4 +488,95 @@ async function excluirPedidoAPI(itemId, callbacks) {
     console.error(err);
     showToast('Erro ao excluir pedido.', 'red', 'fa-xmark');
   }
+}
+
+let isInternalSync = false;
+
+export function syncPeriodFilterOptions() {
+  if (isInternalSync) return;
+  isInternalSync = true;
+  const selects = ['period-filter', 'period-filter-mobile', 'table-period', 'metricas-period'];
+  const months = getMonthOptions();
+
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const currentVal = el.value;
+    const isMainFilter = id.includes('period-filter');
+    const isMetricas = id === 'metricas-period';
+    
+    // Keep standard options
+    let html = isMainFilter ? `
+      <option value="today">Hoje</option>
+      <option value="yesterday">Ontem</option>
+      <option value="7">Últimos 7 dias</option>
+      <option value="14">Últimos 14 dias</option>
+      <option value="30">Últimos 30 dias</option>
+      <option value="all">Máximo</option>
+      <option value="custom">Personalizado</option>
+    ` : isMetricas ? `
+      <option value="hoje">Hoje</option>
+      <option value="ontem">Ontem</option>
+      <option value="7d">Últimos 7 dias</option>
+      <option value="14d">Últimos 14 dias</option>
+      <option value="30d">Últimos 30 dias</option>
+      <option value="max">Máximo</option>
+    ` : `
+      <option value="all">Todos os Pedidos</option>
+      <option value="today">Hoje</option>
+      <option value="yesterday">Ontem</option>
+      <option value="7">Últimos 7 dias</option>
+      <option value="custom">Data Específica</option>
+    `;
+
+    // Insert months before "Personalizado" or "Máximo" or at the end
+    const monthHtml = months.map(m => `<option value="month:${m.value}">${m.label}</option>`).join('');
+    
+    if (html.includes('<option value="custom">')) {
+      html = html.replace('<option value="custom">', `${monthHtml}<option value="custom">`);
+    } else if (html.includes('<option value="max">')) {
+      html = html.replace('<option value="max">', `${monthHtml}<option value="max">`);
+    } else {
+      html += monthHtml;
+    }
+
+    el.innerHTML = html;
+    
+    // Restore selection if it still exists
+    if ([...el.options].some(opt => opt.value === currentVal)) {
+      el.value = currentVal;
+    } else if (isMainFilter && currentVal === '') {
+       el.value = 'all';
+    }
+  });
+  isInternalSync = false;
+}
+
+function getMonthOptions() {
+  const months = new Set();
+  const now = new Date();
+  
+  // Always include current month
+  months.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+
+  // Include months from orders
+  state.allOrders.forEach(o => {
+    if (o.parsedDate && o.parsedDate.getTime() > 0) {
+      months.add(`${o.parsedDate.getFullYear()}-${String(o.parsedDate.getMonth() + 1).padStart(2, '0')}`);
+    }
+  });
+
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  
+  return Array.from(months)
+    .sort((a, b) => b.localeCompare(a)) // Most recent first
+    .map(val => {
+      const [year, monthStr] = val.split('-');
+      const mIdx = parseInt(monthStr, 10) - 1;
+      return {
+        value: val,
+        label: `${monthNames[mIdx]}/${year}`
+      };
+    });
 }

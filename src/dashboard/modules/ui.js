@@ -110,6 +110,56 @@ export const formatPercent = (val) => {
   return `<span class="${color} flex items-center gap-1"><i class="fa-solid ${icon}"></i> ${sign}${val.toFixed(1).replace('.', ',')}%</span>`;
 };
 
+/**
+ * Formats an ISO date string or Date object to DD/MM/YYYY.
+ */
+export function formatDateBr(val) {
+  if (!val) return '-';
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return val;
+  // Adjust for timezone if it's a pure date string (YYYY-MM-DD)
+  if (typeof val === 'string' && val.length === 10) {
+    d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+  }
+  return d.toLocaleDateString('pt-BR');
+}
+
+/**
+ * Parses a date string (DD/MM/YYYY or YYYY-MM-DD) to YYYY-MM-DD ISO format.
+ */
+export function parseDateBr(str) {
+  if (!str) return null;
+  // If already ISO
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  // If BR format
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+    const [d, m, y] = str.split('/');
+    return `${y}-${m}-${d}`;
+  }
+  return null;
+}
+
+/**
+ * Formats a Date object to DD/MM/YYYY for input fields.
+ */
+export function formatDateForInput(date) {
+  if (!date || isNaN(date.getTime())) return '';
+  const dia = String(date.getDate()).padStart(2, '0');
+  const mes = String(date.getMonth() + 1).padStart(2, '0');
+  const ano = date.getFullYear();
+  return `${dia}/${mes}/${ano}`;
+}
+
+/**
+ * Event handler to apply DD/MM/YYYY mask on input.
+ */
+export function applyDateMask(e) {
+  let v = e.target.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length >= 5) v = v.replace(/(\d{2})(\d{2})(\d{1,4})/, '$1/$2/$3');
+  else if (v.length >= 3) v = v.replace(/(\d{2})(\d{1,2})/, '$1/$2');
+  e.target.value = v;
+}
+
 export async function compressImage(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

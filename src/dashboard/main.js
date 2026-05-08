@@ -13,6 +13,7 @@ import { initReceiptModal } from './modules/receipt.js';
 
 // ---- INITIALIZATION ----
 const IS_LOGIN_PAGE = window.location.pathname.includes('login.html');
+let isAppInitializing = false;
 
 async function init() {
   ui.checkAuth(IS_LOGIN_PAGE);
@@ -55,7 +56,20 @@ const RENDER_PIPELINE = {
     if (!IS_LOGIN_PAGE) {
       notifications.checkNewOrders(store.state.allOrders);
     }
+    isAppInitializing = true;
+    dashboard.syncPeriodFilterOptions();
+
+    // Restore last period from localStorage if available
+    const lastPeriod = localStorage.getItem('vendly_last_period');
+    if (lastPeriod) {
+      const pFilter = document.getElementById('period-filter');
+      const pFilterMob = document.getElementById('period-filter-mobile');
+      if (pFilter) pFilter.value = lastPeriod;
+      if (pFilterMob) pFilterMob.value = lastPeriod;
+    }
+
     dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
+    isAppInitializing = false;
   },
   onBrandsLoaded: (brands) => {
     const brandSelect = document.getElementById('table-brand');
@@ -110,7 +124,7 @@ function setupDashboardListeners() {
   const btnTabMetricas = document.getElementById('tab-btn-metricas');
   const btnTabEncomendados = document.getElementById('tab-btn-encomendados');
   const btnTabFiado = document.getElementById('tab-btn-fiado');
-  
+
   const tabGeral = document.getElementById('tab-geral');
   const tabEstrategia = document.getElementById('tab-estrategia');
   const tabEstoque = document.getElementById('tab-estoque');
@@ -197,7 +211,7 @@ function setupDashboardListeners() {
     if (window.innerWidth >= 1024 && mainWrapper) {
       mainWrapper.style.marginLeft = collapsed ? 'var(--sidebar-collapsed-w)' : '';
     }
-    
+
     if (toggleBtn) {
       const ico = toggleBtn.querySelector('i');
       if (ico) ico.style.transform = collapsed ? 'rotate(180deg)' : '';
@@ -246,11 +260,16 @@ function setupDashboardListeners() {
   // Period Filter (with auto-refresh) - Desktop
   const periodFilter = document.getElementById('period-filter');
   const periodFilterMobile = document.getElementById('period-filter-mobile');
+  let isSyncingFilters = false;
 
   // Sync helper: when one filter changes, mirror to the other and trigger refresh
   const handlePeriodChange = async (sourceFilter, otherFilter) => {
+    if (isSyncingFilters || isAppInitializing) return;
+    isSyncingFilters = true;
+
     const val = sourceFilter.value;
     if (otherFilter) otherFilter.value = val;
+    localStorage.setItem('vendly_last_period', val);
 
     // Toggle custom date wraps
     document.getElementById('custom-date-wrap')?.classList.toggle('hidden', val !== 'custom');
@@ -261,41 +280,48 @@ function setupDashboardListeners() {
       await store.loadDashboardData(RENDER_PIPELINE, true);
     }
     dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
+    isSyncingFilters = false;
   };
 
   periodFilter?.addEventListener('change', () => handlePeriodChange(periodFilter, periodFilterMobile));
   periodFilterMobile?.addEventListener('change', () => handlePeriodChange(periodFilterMobile, periodFilter));
-
   // Custom date inputs - Desktop
-  document.getElementById('date-start')?.addEventListener('change', async () => {
-    const val = document.getElementById('date-start').value;
-    const mob = document.getElementById('date-start-mobile');
-    if (mob) mob.value = val;
-    await store.loadDashboardData(RENDER_PIPELINE, true);
-    dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
-  });
-  document.getElementById('date-end')?.addEventListener('change', async () => {
-    const val = document.getElementById('date-end').value;
-    const mob = document.getElementById('date-end-mobile');
-    if (mob) mob.value = val;
-    await store.loadDashboardData(RENDER_PIPELINE, true);
-    dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
+  const dateInputs = ['date-start', 'date-end', 'date-start-mobile', 'date-end-mobile', 'table-date-start'];
+  dateInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', ui.applyDateMask);
   });
 
-  // Custom date inputs - Mobile
-  document.getElementById('date-start-mobile')?.addEventListener('change', async () => {
-    const val = document.getElementById('date-start-mobile').value;
-    const desk = document.getElementById('date-start');
-    if (desk) desk.value = val;
-    await store.loadDashboardData(RENDER_PIPELINE, true);
-    dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
+  // Helper for hidden native date pickers
+  document.querySelectorAll('.js-date-picker-helper').forEach(picker => {
+    picker.addEventListener('change', (e) => {
+      const targetId = e.target.dataset.target;
+      const targetInput = document.getElementById(targetId);
+      if (targetInput && e.target.value) {
+        const [y, m, d] = e.target.value.split('-');
+        targetInput.value = `${d}/${m}/${y}`;
+        // Trigger the original input's change event to refresh dashboard
+        targetInput.dispatchEvent(new Event('change'));
+      }
+    });
   });
-  document.getElementById('date-end-mobile')?.addEventListener('change', async () => {
-    const val = document.getElementById('date-end-mobile').value;
-    const desk = document.getElementById('date-end');
-    if (desk) desk.value = val;
-    await store.loadDashboardData(RENDER_PIPELINE, true);
-    dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
+
+  const handleCustomDateChange = async (val, otherId) => {
+    const other = document.getElementById(otherId);
+    if (other) other.value = val;
+    if (val.length === 10) {
+      await store.loadDashboardData(RENDER_PIPELINE, true);
+      dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
+    }
+  };
+
+  document.getElementById('date-start')?.addEventListener('change', (e) => handleCustomDateChange(e.target.value, 'date-start-mobile'));
+  document.getElementById('date-end')?.addEventListener('change', (e) => handleCustomDateChange(e.target.value, 'date-end-mobile'));
+  document.getElementById('date-start-mobile')?.addEventListener('change', (e) => handleCustomDateChange(e.target.value, 'date-start'));
+  document.getElementById('date-end-mobile')?.addEventListener('change', (e) => handleCustomDateChange(e.target.value, 'date-end'));
+
+  document.getElementById('table-date-start')?.addEventListener('change', () => {
+    dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
   });
 
   // Novo Pedido Manual
@@ -356,7 +382,7 @@ function setupDashboardListeners() {
   document.getElementById('cadastro-cancel')?.addEventListener('click', inventory.fecharModalCadastro);
   document.getElementById('cadastro-submit')?.addEventListener('click', () => inventory.salvarNovoProduto({ dataCallbacks: RENDER_PIPELINE, onEdit: inventory.abrirModalEdicao }));
   inventory.setupCategoriaHandler();
-  
+
   // Unit Toggles (GB/TB)
   ['cad-armaz-unit', 'cad-ram-unit'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', (e) => {
