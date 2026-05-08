@@ -14,6 +14,7 @@ import { initReceiptModal } from './modules/receipt.js';
 // ---- INITIALIZATION ----
 const IS_LOGIN_PAGE = window.location.pathname.includes('login.html');
 let isAppInitializing = false;
+let isFirstLoad = true;
 
 async function init() {
   ui.checkAuth(IS_LOGIN_PAGE);
@@ -59,13 +60,22 @@ const RENDER_PIPELINE = {
     isAppInitializing = true;
     dashboard.syncPeriodFilterOptions();
 
-    // Restore last period from localStorage if available
-    const lastPeriod = localStorage.getItem('vendly_last_period');
-    if (lastPeriod) {
+    // Set period to 'all' only on the very first load
+    if (isFirstLoad) {
       const pFilter = document.getElementById('period-filter');
       const pFilterMob = document.getElementById('period-filter-mobile');
-      if (pFilter) pFilter.value = lastPeriod;
-      if (pFilterMob) pFilterMob.value = lastPeriod;
+      if (pFilter) pFilter.value = 'all';
+      if (pFilterMob) pFilterMob.value = 'all';
+      isFirstLoad = false;
+    } else {
+      // For subsequent loads (refreshes), keep the current user choice
+      const lastPeriod = localStorage.getItem('vendly_last_period');
+      if (lastPeriod) {
+        const pFilter = document.getElementById('period-filter');
+        const pFilterMob = document.getElementById('period-filter-mobile');
+        if (pFilter) pFilter.value = lastPeriod;
+        if (pFilterMob) pFilterMob.value = lastPeriod;
+      }
     }
 
     dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
