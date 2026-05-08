@@ -1,3 +1,26 @@
+// Helper para normalização robusta (para chaves de objetos e headers)
+function normalizeKey_(text) {
+  if (!text) return '';
+  return String(text)
+    .trim()
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+// Helper para geração de Slugs (para IDs e URLs)
+function gerarSlug_(text) {
+  if (!text) return '';
+  return String(text)
+    .trim()
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 function doGet(e) {
   var action = (e.parameter.action || '').toLowerCase();
   var result = {
@@ -284,7 +307,7 @@ function getProdutos() {
   var headers = rows[0].map(String);
   var dataRows = rows.slice(1);
   var normalizedHeaders = headers.map(function(h) {
-    return h.trim().toLowerCase().replace(/[ _]/g, '_');
+    return normalizeKey_(h);
   });
 
   var itens = dataRows.map(function(r) {
@@ -751,8 +774,8 @@ function salvarNovoProduto(produtos) {
 
   // Reload headers after ensuring columns
   rows = sheet.getDataRange().getValues();
-  var headers = rows[0].map(function(h) { return String(h || '').trim().toLowerCase(); });
-  var normalizedHeaders = headers.map(function(h) { return h.replace(/[ _]/g, '_'); });
+  var headers = rows[0].map(function(h) { return String(h || '').trim(); });
+  var normalizedHeaders = headers.map(function(h) { return normalizeKey_(h); });
 
   // Ensure id, sku, grupo_id, ativo columns exist
   var requiredCols = [
@@ -779,8 +802,8 @@ function salvarNovoProduto(produtos) {
   });
   if (addedCols) {
     rows = sheet.getDataRange().getValues();
-    headers = rows[0].map(function(h) { return String(h || '').trim().toLowerCase(); });
-    normalizedHeaders = headers.map(function(h) { return h.replace(/[ _]/g, '_'); });
+    headers = rows[0].map(function(h) { return String(h || '').trim(); });
+    normalizedHeaders = headers.map(function(h) { return normalizeKey_(h); });
   }
 
   var fieldMap = {
@@ -816,10 +839,14 @@ function salvarNovoProduto(produtos) {
 
     for (var key in prod) {
       if (!prod.hasOwnProperty(key)) continue;
-      var sheetHeader = (fieldMap[key] || key).toLowerCase().replace(/[ _]/g, '_');
-      var colIdx = normalizedHeaders.indexOf(sheetHeader);
-      if (colIdx === -1) colIdx = normalizedHeaders.indexOf(key.toLowerCase().replace(/[ _]/g, '_'));
-      if (colIdx !== -1) rowData[colIdx] = prod[key];
+      var sheetHeader = normalizeKey_(fieldMap[key] || key);
+      var val = prod[key];
+      
+      for (var c = 0; c < normalizedHeaders.length; c++) {
+        if (normalizedHeaders[c] === sheetHeader || normalizedHeaders[c] === normalizeKey_(key)) {
+          rowData[c] = val;
+        }
+      }
     }
 
     sheet.appendRow(rowData);
@@ -846,6 +873,7 @@ function editarProduto_(payload) {
   if (skuCol === -1 && idCol === -1) throw new Error('Colunas SKU/ID não encontradas.');
 
   var fieldMap = {
+    'id': 'id', 'sku': 'sku', 'grupo_id': 'grupo_id',
     'nome': 'nome', 'descricao': 'descrição', 'categoria': 'categoria',
     'preco': 'preço', 'custo': 'custo', 'imagem': 'imagem', 'cor': 'cor',
     'armazenamento': 'armazenamento', 'ram': 'ram',
@@ -867,12 +895,15 @@ function editarProduto_(payload) {
     if (rowSku === targetSku || rowId === targetSku) {
       // Update each field that was sent
       for (var key in payload) {
-        if (key === 'sku') continue;
-        var sheetHeader = fieldMap[key] || key;
-        var colIdx = headers.indexOf(sheetHeader.toLowerCase());
-        if (colIdx === -1) colIdx = headers.indexOf(key.toLowerCase());
-        if (colIdx !== -1) {
-          sheet.getRange(i + 1, colIdx + 1).setValue(payload[key]);
+        if (key === 'sku' && !payload.force_update_sku) continue;
+        var sheetHeader = normalizeKey_(fieldMap[key] || key);
+        var val = payload[key];
+
+        for (var c = 0; c < headers.length; c++) {
+          var normH = normalizeKey_(headers[c]);
+          if (normH === sheetHeader || normH === normalizeKey_(key)) {
+            sheet.getRange(i + 1, c + 1).setValue(val);
+          }
         }
       }
       found = true;
@@ -1089,7 +1120,7 @@ function getEncomendados() {
   return dataRows.map(function(r) {
     var obj = {};
     headers.forEach(function(h, idx) {
-      obj[h.replace(/ /g, '_')] = r[idx];
+      obj[normalizeKey_(h)] = r[idx];
     });
     return obj;
   });
@@ -1105,7 +1136,7 @@ function salvarEncomendado(payload) {
   }
 
   var rows = sheet.getDataRange().getValues();
-  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var headers = rows[0].map(function(h) { return normalizeKey_(h); });
 
   var itemId = payload.id || ('ENC-' + new Date().getTime());
   payload.status = payload.status || 'encomendado';
@@ -1156,7 +1187,7 @@ function salvarLoteEncomendado(payload) {
 
   // Ensure dynamic headers exist
   var rows = sheet.getDataRange().getValues();
-  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/[ _]/g, '_'); });
   
   var loteData = payload.lote || {};
   var itens = payload.itens || [];
@@ -1245,7 +1276,7 @@ function marcarChegou(payload) {
   if (!encomendadosSheet) throw new Error('Aba Produtos_Encomendados não encontrada.');
 
   var rows = encomendadosSheet.getDataRange().getValues();
-  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var headers = rows[0].map(function(h) { return normalizeKey_(h); });
   var idColIdx = headers.indexOf('id');
   
   if (idColIdx === -1) throw new Error('Coluna ID não encontrada em Produtos_Encomendados.');
@@ -1267,6 +1298,14 @@ function marcarChegou(payload) {
   if (!encomendadoData) throw new Error('Produto encomendado não encontrado.');
 
   // Cria payload para salvar em Produtos
+  var generatedId = 'prod-' + new Date().getTime() + '-' + Math.floor(Math.random() * 1000);
+  
+  // Tenta gerar um ID/SKU amigável (Slug) igual ao inventory.js
+  var slugBase = gerarSlug_(encomendadoData.modelo || '');
+  var variation = [encomendadoData.memoria, encomendadoData.cor, encomendadoData.condicao].filter(Boolean).map(gerarSlug_).join('-');
+  var friendlySku = variation ? (slugBase + '-' + variation) : slugBase;
+  if (!friendlySku) friendlySku = generatedId;
+
   var produtoPayload = {
     nome: encomendadoData.modelo || '',
     categoria: encomendadoData.categoria || '',
@@ -1288,12 +1327,15 @@ function marcarChegou(payload) {
     imagem_3: payload.imagem_3 || '',
     imagem_4: payload.imagem_4 || '',
     imagem_5: payload.imagem_5 || '',
-    // Garantir ID, SKU e Grupo_ID
-    id: 'PROD-' + new Date().getTime() + '-' + Math.floor(Math.random() * 1000),
-    sku: '', // será preenchido pelo salvarNovoProduto se vazio
-    grupo_id: encomendadoData.lote_id || encomendadoData.id || ''
+    id: friendlySku,
+    sku: friendlySku, 
+    grupo_id: slugBase || friendlySku
   };
-  produtoPayload.sku = produtoPayload.id;
+  
+  // Garantir que temos ID e SKU válidos
+  if (!produtoPayload.id) produtoPayload.id = generatedId;
+  if (!produtoPayload.sku) produtoPayload.sku = produtoPayload.id;
+  if (!produtoPayload.grupo_id) produtoPayload.grupo_id = produtoPayload.id;
 
   // Salva no Produtos principal
   salvarNovoProduto([produtoPayload]);
