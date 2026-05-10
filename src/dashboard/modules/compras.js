@@ -35,107 +35,125 @@ function getCustoItemReal(item, loteGroup) {
   return custoBase + rateio;
 }
 
+export function isModalOpen() {
+  const modals = ['modal-add-enc', 'modal-chegou', 'modal-confirm-delete'];
+  return modals.some(id => {
+    const el = document.getElementById(id);
+    return el && !el.classList.contains('hidden');
+  });
+}
+
 export async function initAndRender() {
   const container = document.getElementById('tab-encomendados');
   if (!container) return;
 
-  // Renderiza esqueleto inicial
-  container.innerHTML = `
-      <div id="encomendados-header" class="flex flex-col gap-4 mb-6">
-        <div class="flex items-center justify-between w-full">
-          <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-truck-fast text-indigo-500 mr-2"></i> Lotes & Encomendas</h2>
-          <button id="btn-add-encomendado-mobile" class="md:hidden px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs hover:bg-indigo-700 transition shrink-0 flex items-center gap-1">
-            <i class="fa-solid fa-plus"></i> Novo Lote
-          </button>
+  // Render shell only if it doesn't exist
+  if (!document.getElementById('enc-table')) {
+    container.innerHTML = `
+        <div id="encomendados-header" class="flex flex-col gap-4 mb-6">
+          <div class="flex items-center justify-between w-full">
+            <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-truck-fast text-indigo-500 mr-2"></i> Lotes & Encomendas</h2>
+            <button id="btn-add-encomendado-mobile" class="md:hidden px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs hover:bg-indigo-700 transition shrink-0 flex items-center gap-1">
+              <i class="fa-solid fa-plus"></i> Novo Lote
+            </button>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row items-center gap-3 w-full">
+            <div class="relative w-full sm:flex-1 md:w-64">
+              <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+              <input type="text" id="enc-search-input" class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Buscar modelo ou fornecedor...">
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <select id="enc-status-filter" class="flex-1 sm:w-40 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                <option value="todos">Status: Todos</option>
+                <option value="pendentes" selected>Pendentes</option>
+                <option value="atrasados">Atrasados</option>
+              </select>
+              <select id="enc-prazo-filter" class="flex-1 sm:w-40 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                <option value="todos" selected>Prazo: Todos</option>
+                <option value="hoje">Hoje</option>
+                <option value="dias3">Próximos 3 dias</option>
+                <option value="dias7">Próximos 7 dias</option>
+                <option value="dias15">Próximos 15 dias</option>
+                <option value="atrasados">Atrasados</option>
+              </select>
+            </div>
+            <button id="btn-add-encomendado" class="hidden md:flex px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition shrink-0 items-center gap-1">
+              <i class="fa-solid fa-plus mr-1"></i> Novo Lote
+            </button>
+          </div>
         </div>
         
-        <div class="flex flex-col sm:flex-row items-center gap-3 w-full">
-          <div class="relative w-full sm:flex-1 md:w-64">
-            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-            <input type="text" id="enc-search-input" class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Buscar modelo ou fornecedor...">
-          </div>
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <select id="enc-status-filter" class="flex-1 sm:w-40 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-              <option value="todos">Status: Todos</option>
-              <option value="pendentes" selected>Pendentes</option>
-              <option value="atrasados">Atrasados</option>
-            </select>
-            <select id="enc-prazo-filter" class="flex-1 sm:w-40 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-              <option value="todos" selected>Prazo: Todos</option>
-              <option value="hoje">Hoje</option>
-              <option value="dias3">Próximos 3 dias</option>
-              <option value="dias7">Próximos 7 dias</option>
-              <option value="dias15">Próximos 15 dias</option>
-              <option value="atrasados">Atrasados</option>
-            </select>
-          </div>
-          <button id="btn-add-encomendado" class="hidden md:flex px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition shrink-0 items-center gap-1">
-            <i class="fa-solid fa-plus mr-1"></i> Novo Lote
-          </button>
+        <!-- Active Filter Indicator -->
+        <div id="enc-active-filter-indicator" class="hidden mb-4 flex flex-wrap items-center justify-between bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-xl text-xs font-medium border border-indigo-100">
+          <div class="flex items-center gap-2"><i class="fa-solid fa-filter"></i> <span id="enc-active-filter-text"></span></div>
+          <button id="btn-clear-prazo-filter" class="font-bold hover:underline text-indigo-800">Limpar filtro</button>
         </div>
-      </div>
-      
-      <!-- Active Filter Indicator -->
-      <div id="enc-active-filter-indicator" class="hidden mb-4 flex flex-wrap items-center justify-between bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-xl text-xs font-medium border border-indigo-100">
-        <div class="flex items-center gap-2"><i class="fa-solid fa-filter"></i> <span id="enc-active-filter-text"></span></div>
-        <button id="btn-clear-prazo-filter" class="font-bold hover:underline text-indigo-800">Limpar filtro</button>
-      </div>
-      
-      <!-- Metrics Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6" id="enc-metrics">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
-      </div>
-
-      <!-- Arrival Summary -->
-      <div id="enc-arrival-summary" class="mb-6 hidden"></div>
-
-      <!-- Table -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse" id="enc-table">
-            <thead class="hidden md:table-header-group">
-              <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                <th class="p-4">Lote / Fornecedor</th>
-                <th class="p-4">Datas</th>
-                <th class="p-4">Itens Totais</th>
-                <th class="p-4">Valor do lote</th>
-                <th class="p-4">Status do Lote</th>
-                <th class="p-4 text-center">Ações</th>
-              </tr>
-            </thead>
-            <tbody class="text-sm divide-y divide-gray-100" id="enc-tbody">
-              <tr><td colspan="6" class="p-8 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Carregando encomendas...</td></tr>
-            </tbody>
-          </table>
+        
+        <!-- Metrics Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6" id="enc-metrics">
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse h-24"></div>
         </div>
-      </div>
-    `;
-
-  const btnAdd = document.getElementById('btn-add-encomendado');
-  const btnAddMob = document.getElementById('btn-add-encomendado-mobile');
-  if (btnAdd) btnAdd.addEventListener('click', abrirModalCadastroCompra);
-  if (btnAddMob) btnAddMob.addEventListener('click', abrirModalCadastroCompra);
-  document.getElementById('enc-search-input').addEventListener('input', renderTable);
-  document.getElementById('enc-status-filter').addEventListener('change', renderTable);
-  document.getElementById('enc-prazo-filter').addEventListener('change', () => {
-    renderMetrics();
-    renderTable();
-  });
-  document.getElementById('btn-clear-prazo-filter').addEventListener('click', () => {
-    document.getElementById('enc-prazo-filter').value = 'todos';
-    renderMetrics();
-    renderTable();
-  });
-  renderModals();
   
-  document.getElementById('lote-data-compra').addEventListener('input', applyDateMask);
-  document.getElementById('lote-previsao').addEventListener('input', applyDateMask);
+        <!-- Arrival Summary -->
+        <div id="enc-arrival-summary" class="mb-6 hidden"></div>
+  
+        <!-- Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse" id="enc-table">
+              <thead class="hidden md:table-header-group">
+                <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <th class="p-4">Lote / Fornecedor</th>
+                  <th class="p-4">Datas</th>
+                  <th class="p-4">Itens Totais</th>
+                  <th class="p-4">Valor do lote</th>
+                  <th class="p-4">Status do Lote</th>
+                  <th class="p-4 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm divide-y divide-gray-100" id="enc-tbody">
+                <tr><td colspan="6" class="p-8 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Carregando encomendas...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
 
-  await fetchData();
+    const btnAdd = document.getElementById('btn-add-encomendado');
+    const btnAddMob = document.getElementById('btn-add-encomendado-mobile');
+    if (btnAdd) btnAdd.addEventListener('click', abrirModalCadastroCompra);
+    if (btnAddMob) btnAddMob.addEventListener('click', abrirModalCadastroCompra);
+    document.getElementById('enc-search-input').addEventListener('input', renderTable);
+    document.getElementById('enc-status-filter').addEventListener('change', renderTable);
+    document.getElementById('enc-prazo-filter').addEventListener('change', () => {
+      renderMetrics();
+      renderTable();
+    });
+    document.getElementById('btn-clear-prazo-filter').addEventListener('click', () => {
+      document.getElementById('enc-prazo-filter').value = 'todos';
+      renderMetrics();
+      renderTable();
+    });
+    renderModals();
+
+    document.getElementById('lote-data-compra').addEventListener('input', applyDateMask);
+    document.getElementById('lote-previsao').addEventListener('input', applyDateMask);
+  }
+
+  // Use global store data if available, otherwise fetch
+  const { state } = await import('./store.js');
+  if (state.allEncomendas && state.allEncomendas.length > 0) {
+    comprasData = state.allEncomendas;
+    renderMetrics();
+    renderTable();
+  } else {
+    await fetchData();
+  }
 }
 
 async function fetchData() {

@@ -38,8 +38,11 @@ async function init() {
 
     // Auto-refresh every 45s
     setInterval(() => {
-      // Don't refresh if there are pending stock changes
-      if (Object.keys(inventory.pendingEstoqueUpdates || {}).length === 0) {
+      // Don't refresh if there are pending stock changes OR if a Compras modal is open
+      const isInventoryPending = Object.keys(inventory.pendingEstoqueUpdates || {}).length > 0;
+      const isComprasModalOpen = compras.isModalOpen && compras.isModalOpen();
+      
+      if (!isInventoryPending && !isComprasModalOpen) {
         store.loadDashboardData(RENDER_PIPELINE, true);
       }
     }, 45000);
