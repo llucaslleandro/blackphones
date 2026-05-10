@@ -642,6 +642,129 @@
       }
     }
 
+    /* ===== Premium Toolbar Styles ===== */
+    .premium-toolbar {
+      background: #ffffff;
+      border: 1px solid #f1f3f5;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+      transition: all 0.3s ease;
+    }
+
+    .quick-filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .quick-filter-chip.inactive {
+      background: #f8f9fa;
+      color: #6c757d;
+      border-color: #f1f3f5;
+    }
+
+    .quick-filter-chip.inactive:hover {
+      background: #f1f3f5;
+      color: #495057;
+      border-color: #dee2e6;
+    }
+
+    .quick-filter-chip.active {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
+    }
+
+    /* Active States: Stronger Contrast */
+    .quick-filter-chip.active[data-value="Fechado"] {
+      background: #10b981;
+      color: white;
+      border-color: #059669;
+    }
+
+    .quick-filter-chip.active[data-value="Pendente"] {
+      background: #f59e0b;
+      color: white;
+      border-color: #d97706;
+    }
+
+    .quick-filter-chip.active[data-value="Cancelado"] {
+      background: #f43f5e;
+      color: white;
+      border-color: #e11d48;
+    }
+
+    .quick-filter-chip.active[data-filter="period"] {
+      background: #4f46e5;
+      color: white;
+      border-color: #4338ca;
+    }
+
+    .quick-filter-chip.active[data-filter="finance"] {
+      background: #7c3aed;
+      color: white;
+      border-color: #6d28d9;
+    }
+
+    .quick-filter-chip.active[data-filter="finance"][data-value="loss"] {
+      background: #ef4444;
+      color: white;
+      border-color: #dc2626;
+    }
+
+    .quick-filter-chip.active[data-filter="finance"][data-value="high_margin"] {
+      background: #059669;
+      color: white;
+      border-color: #047857;
+    }
+
+    .active-filter-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      background: #f3f4f6;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #4b5563;
+      transition: all 0.2s;
+      border: 1px solid #e5e7eb;
+    }
+
+    .active-filter-tag:hover {
+      background: #e5e7eb;
+    }
+
+    .active-filter-tag i {
+      font-size: 8px;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+
+    .active-filter-tag i:hover {
+      color: #ef4444;
+    }
+
+    .btn-view-mode.active {
+      background: white !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+      color: #4f46e5 !important;
+      border: 1px solid #e5e7eb !important;
+    }
+
+    .btn-view-mode:not(.active) {
+      color: #9ca3af !important;
+    }
+
     @keyframes onb-scaleIn {
       from {
         opacity: 0;
@@ -704,8 +827,253 @@
       }
     }
 
-    .row-highlight {
-      animation: pulse-highlight 2s ease-in-out 3;
+    /* ===== Sidebar Submenu (Fixed with Grid Trick) ===== */
+    .sidebar-submenu {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+      opacity: 0;
+      overflow: hidden;
+      margin-left: 14px;
+      padding-left: 12px;
+      border-left: 1px solid #f3f4f6;
+    }
+
+    .sidebar-submenu.expanded {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-submenu>div {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sidebar-nav-item.has-submenu .chevron {
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-nav-item.has-submenu.expanded .chevron {
+      transform: rotate(180deg);
+    }
+
+    #app-sidebar.collapsed .sidebar-submenu {
+      display: none;
+    }
+
+    #app-sidebar.collapsed .sidebar-nav-item.has-submenu .chevron {
+      display: none;
+    }
+
+    /* Progress Bar */
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #f3f4f6;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #4f46e5;
+      border-radius: 10px;
+      transition: width 0.5s ease;
+    }
+
+    /* Highlight Negotiation */
+    .negotiation-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 6px;
+      border: 1px solid #fde68a;
+    }
+
+    .value-original {
+      text-decoration: line-through;
+      color: #9ca3af;
+      font-size: 0.85em;
+    }
+
+    .value-negotiated {
+      color: #059669;
+      font-weight: 700;
+    }
+
+    /* ===== Skeleton Loading ===== */
+    @keyframes skeleton-shimmer {
+      0% {
+        background-position: -200% 0;
+      }
+
+      100% {
+        background-position: 200% 0;
+      }
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, #f9fafb 25%, #f3f4f6 50%, #f9fafb 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 2s infinite linear;
+    }
+
+    .skeleton-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .5;
+      }
+    }
+
+    /* ===== Filter Drawer & Chips ===== */
+    .quick-filter-chip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      border: 1px solid transparent;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .quick-filter-chip.inactive {
+      background-color: #ffffff;
+      border-color: #f3f4f6;
+      color: #9ca3af;
+    }
+
+    .quick-filter-chip.inactive:hover {
+      border-color: #e0e7ff;
+      color: #4f46e5;
+      background-color: #f5f7ff;
+    }
+
+    .quick-filter-chip.active {
+      background-color: #4f46e5;
+      border-color: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+
+    .filter-chip {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .filter-chip.inactive {
+      background-color: #f9fafb;
+      border-color: #f3f4f6;
+      color: #9ca3af;
+    }
+
+    .filter-chip.inactive:hover {
+      border-color: #e5e7eb;
+      background-color: #f3f4f6;
+    }
+
+    .filter-chip.active {
+      background-color: #4f46e5;
+      border-color: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.2);
+    }
+
+    #filter-drawer {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -10px 0 50px rgba(0, 0, 0, 0.1);
+    }
+
+    #filter-drawer.closed {
+      transform: translateX(110%);
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Active Filter Tag */
+    #active-filters-list>div {
+      box-shadow: 0 2px 4px rgba(79, 70, 229, 0.05);
+    }
+
+    #filter-drawer-overlay {
+      backdrop-filter: blur(2px);
+      transition: all 0.3s ease;
+    }
+
+    /* Custom Scrollbar for Drawer */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+      border-radius: 10px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #cbd5e1;
     }
   </style>
   <!-- Driver.js for Onboarding -->
@@ -725,83 +1093,114 @@
       <i class="fa-solid fa-chevron-left"></i>
     </button>
 
-    <div class="flex flex-col h-full overflow-y-auto overflow-x-hidden">
-
-      <!-- Brand -->
-      <div class="flex items-center gap-3 px-5 py-5 border-b border-gray-100 shrink-0">
-        <div
-          class="w-9 h-9 rounded-xl bg-gray-900 text-white flex items-center justify-center text-sm font-black shrink-0 shadow-sm">
-          B</div>
-        <div class="sidebar-brand-text min-w-0">
-          <h1 id="store-name" class="text-sm font-extrabold text-gray-900 leading-tight truncate">Black Phones</h1>
-          <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Painel</span>
-        </div>
+    <!-- Brand (FIXO NO TOPO) -->
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-gray-100 shrink-0 bg-white">
+      <div
+        class="w-9 h-9 rounded-xl bg-gray-900 text-white flex items-center justify-center text-sm font-black shrink-0 shadow-sm">
+        B</div>
+      <div class="sidebar-brand-text min-w-0">
+        <h1 id="store-name" class="text-sm font-extrabold text-gray-900 leading-tight truncate">Black Phones</h1>
+        <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Painel</span>
       </div>
+    </div>
 
+    <!-- Container Rolável (NAV APENAS) -->
+    <div class="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
       <!-- Navigation -->
-      <nav class="flex-1 py-3 px-2.5 space-y-1">
-        <span
-          class="sidebar-label text-[9px] font-black text-gray-400 uppercase tracking-widest px-3 pb-1 pt-2 block">Menu</span>
+      <nav class="py-3 px-2.5 space-y-4">
 
-        <button id="tab-btn-geral" data-tooltip="Painel Geral"
-          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-gray-900 bg-gray-100">
-          <i class="fa-solid fa-chart-pie sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
-          <span class="sidebar-label">Painel Geral</span>
-        </button>
-
-        <button id="tab-btn-estrategia" data-tooltip="Análise Estratégica"
-          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
-          <i class="fa-solid fa-brain sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
-          <span class="sidebar-label">Estratégia</span>
+        <!-- Grupo: GESTÃO -->
+        <div>
           <span
-            class="sidebar-badge ml-auto bg-blue-100 text-blue-700 text-[9px] py-0.5 px-1.5 rounded font-bold">IA</span>
-        </button>
+            class="sidebar-label text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] px-3 pb-2 block opacity-70">Gestão</span>
+          <div class="space-y-1">
+            <button id="tab-btn-geral" data-tooltip="Painel Geral"
+              class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-gray-900 bg-gray-100">
+              <i class="fa-solid fa-chart-pie sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+              <span class="sidebar-label">Painel Geral</span>
+            </button>
 
-        <button id="tab-btn-estoque" data-tooltip="Gerenciar Estoque"
-          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
-          <i class="fa-solid fa-boxes-stacked sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
-          <span class="sidebar-label">Estoque</span>
-        </button>
+            <button id="tab-btn-estrategia" data-tooltip="Análise Estratégica"
+              class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
+              <i class="fa-solid fa-brain sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+              <span class="sidebar-label">Estratégia</span>
+              <span
+                class="sidebar-badge ml-auto bg-blue-100 text-blue-700 text-[9px] py-0.5 px-1.5 rounded font-bold">IA</span>
+            </button>
 
-        <button id="tab-btn-metricas" data-tooltip="Métricas"
-          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
-          <i class="fa-solid fa-chart-bar sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
-          <span class="sidebar-label">Métricas</span>
+            <button id="tab-btn-metricas" data-tooltip="Métricas"
+              class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
+              <i class="fa-solid fa-chart-bar sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+              <span class="sidebar-label">Métricas</span>
+              <span
+                class="sidebar-badge ml-auto bg-purple-100 text-purple-700 text-[9px] py-0.5 px-1.5 rounded font-bold">LIVE</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Grupo: OPERAÇÃO -->
+        <div>
           <span
-            class="sidebar-badge ml-auto bg-purple-100 text-purple-700 text-[9px] py-0.5 px-1.5 rounded font-bold">LIVE</span>
-        </button>
+            class="sidebar-label text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] px-3 pb-2 block opacity-70">Operação</span>
+          <div class="space-y-1">
+            <!-- Vendas (Expandable) -->
+            <div>
+              <button id="btn-vendas-parent"
+                class="sidebar-nav-item has-submenu w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
+                <i class="fa-solid fa-tag sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+                <span class="sidebar-label">Vendas</span>
+                <i class="fa-solid fa-chevron-down chevron ml-auto text-[10px] opacity-50"></i>
+              </button>
 
-        <button id="tab-btn-encomendados" data-tooltip="Compras"
-          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
-          <i class="fa-solid fa-truck-fast sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
-          <span class="sidebar-label">Compras</span>
-        </button>
+              <div id="submenu-vendas" class="sidebar-submenu">
+                <div>
+                  <button id="tab-btn-vendas-historico"
+                    class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 text-gray-500 hover:text-indigo-600">
+                    <i class="fa-solid fa-clock-rotate-left text-[11px] w-4 text-center"></i>
+                    <span class="sidebar-label">Histórico</span>
+                  </button>
+                  <button id="tab-btn-fiado"
+                    class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 text-gray-500 hover:text-indigo-600">
+                    <i class="fa-solid fa-hand-holding-dollar text-[11px] w-4 text-center"></i>
+                    <span class="sidebar-label">Fiado</span>
+                  </button>
+                </div>
+              </div>
+            </div>
 
-        <button id="tab-btn-fiado" data-tooltip="Fiado"
-          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
-          <i class="fa-solid fa-hand-holding-dollar sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
-          <span class="sidebar-label">Fiado</span>
-        </button>
+            <button id="tab-btn-estoque" data-tooltip="Controle de Estoque"
+              class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
+              <i class="fa-solid fa-boxes-stacked sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+              <span class="sidebar-label">Estoque</span>
+            </button>
+
+            <button id="tab-btn-encomendados" data-tooltip="Gestão de Compras"
+              class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
+              <i class="fa-solid fa-truck-fast sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+              <span class="sidebar-label">Compras</span>
+            </button>
+          </div>
+        </div>
       </nav>
+    </div>
 
-      <!-- Sidebar Footer -->
-      <div class="border-t border-gray-100 px-2.5 py-3 space-y-1 shrink-0">
-        <a href="../../index.html" target="_blank" data-tooltip="Ver Vitrine"
-          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-all duration-150">
-          <i class="fa-solid fa-store sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
-          <span class="sidebar-label">Ver Vitrine</span>
-        </a>
-        <button id="btn-tutorial" data-tooltip="Tutorial"
-          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all duration-150">
-          <i class="fa-solid fa-circle-question sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
-          <span class="sidebar-label">Ver tutorial</span>
-        </button>
-        <button id="btn-logout" data-tooltip="Sair"
-          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-red-500 hover:bg-red-50 transition-all duration-150">
-          <i class="fa-solid fa-arrow-right-from-bracket sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
-          <span class="sidebar-label">Sair</span>
-        </button>
-      </div>
+    <!-- Sidebar Footer (FIXO NO RODAPÉ) -->
+    <div class="border-t border-gray-100 px-2.5 py-3 space-y-1 shrink-0 bg-white">
+      <a href="../../index.html" target="_blank" data-tooltip="Ver Vitrine"
+        class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-all duration-150">
+        <i class="fa-solid fa-store sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+        <span class="sidebar-label">Ver Vitrine</span>
+      </a>
+      <button id="btn-tutorial" data-tooltip="Tutorial"
+        class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all duration-150">
+        <i class="fa-solid fa-circle-question sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+        <span class="sidebar-label">Ver tutorial</span>
+      </button>
+      <button id="btn-logout" data-tooltip="Sair"
+        class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-red-500 hover:bg-red-50 transition-all duration-150">
+        <i class="fa-solid fa-arrow-right-from-bracket sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+        <span class="sidebar-label">Sair</span>
+      </button>
     </div><!-- /scroll-wrapper -->
   </aside>
 
@@ -863,17 +1262,21 @@
             <div id="custom-date-wrap" class="hidden items-center gap-2">
               <div class="relative group">
                 <input type="text" id="date-start"
-                  class="w-32 pl-2 pr-8 py-2 text-[10px] bg-gray-50 border border-gray-200 rounded-xl" placeholder="DD/MM/YYYY" maxlength="10">
+                  class="w-32 pl-2 pr-8 py-2 text-[10px] bg-gray-50 border border-gray-200 rounded-xl"
+                  placeholder="DD/MM/YYYY" maxlength="10">
                 <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center">
-                  <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="date-start">
+                  <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper"
+                    data-target="date-start">
                   <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
                 </div>
               </div>
               <div class="relative group">
                 <input type="text" id="date-end"
-                  class="w-32 pl-2 pr-8 py-2 text-[10px] bg-gray-50 border border-gray-200 rounded-xl" placeholder="DD/MM/YYYY" maxlength="10">
+                  class="w-32 pl-2 pr-8 py-2 text-[10px] bg-gray-50 border border-gray-200 rounded-xl"
+                  placeholder="DD/MM/YYYY" maxlength="10">
                 <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center">
-                  <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="date-end">
+                  <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper"
+                    data-target="date-end">
                   <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
                 </div>
               </div>
@@ -916,17 +1319,21 @@
           <div id="custom-date-wrap-mobile" class="hidden items-center gap-2 flex-1">
             <div class="relative flex-1">
               <input type="text" id="date-start-mobile"
-                class="w-full pl-3 pr-8 py-2.5 text-[10px] bg-gray-50 border border-gray-200 rounded-xl" placeholder="Início" maxlength="10">
+                class="w-full pl-3 pr-8 py-2.5 text-[10px] bg-gray-50 border border-gray-200 rounded-xl"
+                placeholder="Início" maxlength="10">
               <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="date-start-mobile">
+                <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper"
+                  data-target="date-start-mobile">
                 <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
               </div>
             </div>
             <div class="relative flex-1">
               <input type="text" id="date-end-mobile"
-                class="w-full pl-3 pr-8 py-2.5 text-[10px] bg-gray-50 border border-gray-200 rounded-xl" placeholder="Fim" maxlength="10">
+                class="w-full pl-3 pr-8 py-2.5 text-[10px] bg-gray-50 border border-gray-200 rounded-xl"
+                placeholder="Fim" maxlength="10">
               <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="date-end-mobile">
+                <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper"
+                  data-target="date-end-mobile">
                 <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
               </div>
             </div>
@@ -966,13 +1373,271 @@
       <!-- Dashboard Content (Hidden initially) -->
       <div id="dashboard-content" class="hidden animate-[fadeIn_0.5s_ease-out]">
 
+        <!-- CONTEÚDO: VENDAS > HISTÓRICO -->
+        <div id="tab-vendas-historico" class="tab-content hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Vendas</h2>
+              <p class="text-sm text-gray-500 mt-1">Central operacional de vendas e negociações.</p>
+            </div>
+            <div class="flex items-center gap-3">
+
+
+              <button id="btn-novo-pedido-vendas"
+                class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i> Novo Pedido
+              </button>
+            </div>
+          </div>
+
+          <!-- KPIs OPERACIONAIS -->
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                Vendas <i
+                  class="fa-solid fa-circle-question ml-0.5 text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                  data-tooltip-content="Quantidade total de pedidos fechados no período selecionado."></i>
+              </p>
+              <p id="op-kpi-vendas-count" class="text-lg font-bold text-gray-900">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                Faturamento <i
+                  class="fa-solid fa-circle-question ml-0.5 text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                  data-tooltip-content="Valor total bruto arrecadado com as vendas fechadas no período."></i>
+              </p>
+              <p id="op-kpi-faturamento" class="text-lg font-bold text-green-600">R$ 0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                Ticket Médio <i
+                  class="fa-solid fa-circle-question ml-0.5 text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                  data-tooltip-content="Valor médio de venda por cada pedido fechado (Faturamento / Nº de Pedidos)."></i>
+              </p>
+              <p id="op-kpi-ticket" class="text-lg font-bold text-gray-900">R$ 0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                Margem Op. <i
+                  class="fa-solid fa-circle-question ml-0.5 text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                  data-tooltip-content="Porcentagem de lucro sobre o faturamento, após descontar o custo de aquisição dos produtos."></i>
+              </p>
+              <p id="op-kpi-margem" class="text-lg font-bold text-indigo-600">0%</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                Negociações <i
+                  class="fa-solid fa-circle-question ml-0.5 text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                  data-tooltip-content="Quantidade de itens onde o preço final foi negociado (diferente do preço original)."></i>
+              </p>
+              <p id="op-kpi-negociacoes" class="text-lg font-bold text-orange-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                Desconto Médio <i
+                  class="fa-solid fa-circle-question ml-0.5 text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                  data-tooltip-content="Valor médio de desconto concedido nas vendas que passaram por negociação."></i>
+              </p>
+              <p id="op-kpi-desconto" class="text-lg font-bold text-red-600">R$ 0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                Lucro Médio <i
+                  class="fa-solid fa-circle-question ml-0.5 text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger"
+                  data-tooltip-content="Média de lucro bruto por cada item vendido (Lucro Total / Qtd de Itens)."></i>
+              </p>
+              <p id="op-kpi-lucro-medio" class="text-lg font-bold text-emerald-600">R$ 0</p>
+            </div>
+          </div>
+
+          <!-- Tabela de Pedidos -->
+          <div id="section-historico-pedidos"
+            class="glass-card rounded-2xl shadow-sm overflow-hidden border border-gray-200">
+
+            <div class="p-4 sm:p-5 bg-white space-y-4">
+              <!-- Row 1: Search & Main Actions -->
+              <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                <div class="relative flex-1 w-full">
+                  <i
+                    class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                  <input type="text" id="table-search" placeholder="Buscar por cliente, produto, ID, IMEI..."
+                    class="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all font-medium placeholder:text-gray-400">
+                </div>
+
+                <div class="flex flex-col items-end gap-2 w-full md:w-auto">
+                  <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+                    <button id="btn-toggle-filters" type="button"
+                      class="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-100 rounded-2xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all active:scale-95 shadow-sm">
+                      <i class="fa-solid fa-sliders text-indigo-500"></i>
+                      <span>Filtros</span>
+                      <span id="filter-badge"
+                        class="hidden px-1.5 py-0.5 bg-indigo-600 text-white text-[9px] rounded-md font-black">0</span>
+                    </button>
+
+                    <div class="flex items-center gap-1 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-100">
+                      <button
+                        class="btn-view-mode w-8 h-8 rounded-xl flex items-center justify-center transition-all active"
+                        data-mode="grid" id="btn-view-grid">
+                        <i class="fa-solid fa-border-all text-sm"></i>
+                      </button>
+                      <button class="btn-view-mode w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                        data-mode="list" id="btn-view-list">
+                        <i class="fa-solid fa-list-ul text-sm"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Results Count moved to demarcated region -->
+                  <div class="flex items-center gap-1.5 px-2">
+                    <span id="results-count" class="text-[11px] font-black text-gray-900 leading-none">0</span>
+                    <span
+                      class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">pedidos</span>
+                    <div id="filter-sync-status" class="hidden ml-1">
+                      <i class="fa-solid fa-rotate text-[8px] text-amber-500 animate-spin"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 2: Premium Quick Filters Panel -->
+              <div class="premium-toolbar p-3 sm:p-4">
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-4" id="quick-filters-chips">
+
+                  <!-- Group: Period -->
+                  <div class="flex items-center gap-2.5 shrink-0">
+                    <span
+                      class="text-[8px] font-black text-gray-400 uppercase tracking-widest opacity-60">Período</span>
+                    <div class="flex items-center gap-1.5">
+                      <button class="quick-filter-chip inactive" data-filter="period" data-value="today">Hoje</button>
+                      <button class="quick-filter-chip inactive" data-filter="period" data-value="7">Semana</button>
+                      <button class="quick-filter-chip inactive" data-filter="period" data-value="30">Mês</button>
+                      <div class="relative flex items-center">
+                        <button class="quick-filter-chip inactive" data-filter="period" data-value="custom"
+                          title="Personalizado">
+                          <i class="fa-solid fa-calendar-day text-[10px]"></i>
+                        </button>
+                        <div id="quick-date-range-container"
+                          class="hidden flex items-center gap-1.5 ml-2 animate-[fadeIn_0.2s_ease-out]">
+                          <div class="relative group">
+                            <input type="text" id="table-date-start-quick"
+                              class="w-20 pl-2 pr-6 py-1.5 text-[9px] bg-white border border-gray-200 rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
+                              placeholder="Início">
+                            <div class="absolute inset-y-0 right-0 pr-1.5 flex items-center">
+                              <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper"
+                                data-target="table-date-start-quick">
+                              <i class="fa-solid fa-calendar text-[8px] text-gray-300 pointer-events-none"></i>
+                            </div>
+                          </div>
+                          <div class="relative group">
+                            <input type="text" id="table-date-end-quick"
+                              class="w-20 pl-2 pr-6 py-1.5 text-[9px] bg-white border border-gray-200 rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
+                              placeholder="Fim">
+                            <div class="absolute inset-y-0 right-0 pr-1.5 flex items-center">
+                              <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper"
+                                data-target="table-date-end-quick">
+                              <i class="fa-solid fa-calendar text-[8px] text-gray-300 pointer-events-none"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="w-px h-4 bg-gray-100 shrink-0"></div>
+
+                  <!-- Group: Status -->
+                  <div class="flex items-center gap-2.5 shrink-0">
+                    <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest opacity-60">Status</span>
+                    <div class="flex items-center gap-1.5">
+                      <button class="quick-filter-chip inactive" data-filter="status"
+                        data-value="Fechado">Fechados</button>
+                      <button class="quick-filter-chip inactive" data-filter="status"
+                        data-value="Pendente">Pendentes</button>
+                      <button class="quick-filter-chip inactive" data-filter="status"
+                        data-value="Cancelado">Cancelados</button>
+                    </div>
+                  </div>
+
+                  <div class="w-px h-4 bg-gray-100 shrink-0"></div>
+
+                  <!-- Group: Financeiro -->
+                  <div class="flex items-center gap-2.5 shrink-0">
+                    <span
+                      class="text-[8px] font-black text-gray-400 uppercase tracking-widest opacity-60">Financeiro</span>
+                    <div class="flex items-center gap-1.5">
+                      <button class="quick-filter-chip inactive flex items-center gap-1.5" data-filter="finance"
+                        data-value="negotiated">
+                        <i class="fa-solid fa-handshake"></i> Negociados
+                      </button>
+                      <button class="quick-filter-chip inactive flex items-center gap-1.5" data-filter="finance"
+                        data-value="loss">
+                        <i class="fa-solid fa-arrow-trend-down"></i> Prejuízo
+                      </button>
+                      <button class="quick-filter-chip inactive flex items-center gap-1.5" data-filter="finance"
+                        data-value="high_margin">
+                        <i class="fa-solid fa-arrow-trend-up"></i> Margem Alta
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="w-px h-4 bg-gray-100 shrink-0"></div>
+
+                  <!-- Group: Pagamento -->
+                  <div class="flex items-center gap-2.5 shrink-0">
+                    <span
+                      class="text-[8px] font-black text-gray-400 uppercase tracking-widest opacity-60">Pagamento</span>
+                    <div class="flex items-center gap-1.5">
+                      <button class="quick-filter-chip inactive" data-filter="finance" data-value="pix">Pix</button>
+                      <button class="quick-filter-chip inactive" data-filter="finance" data-value="card">Cartão</button>
+                      <button class="quick-filter-chip inactive" data-filter="finance"
+                        data-value="cash">Dinheiro</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 3: Active Filters (Bottom Line) -->
+              <div id="active-filters-bar" class="hidden flex flex-wrap items-center gap-3 pt-1 px-1">
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Filtros:</span>
+                <div id="active-filters-list" class="flex flex-wrap gap-2"></div>
+                <button id="btn-clear-all-filters"
+                  class="text-[9px] font-bold text-gray-400 hover:text-rose-500 transition-colors uppercase tracking-widest ml-2">
+                  Limpar tudo
+                </button>
+              </div>
+              <div class="overflow-x-auto sm:overflow-visible bg-white">
+                <table class="order-table w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-gray-50/50 text-gray-500 text-[10px] uppercase font-bold tracking-widest border-b border-gray-100">
+                      <th class="px-6 py-5">Pedido / Data</th>
+                      <th class="px-6 py-5">Produto</th>
+                      <th class="px-6 py-5">Cliente</th>
+                      <th class="px-6 py-5 text-right">Financeiro</th>
+                      <th class="px-6 py-5 text-center">Status</th>
+                      <th class="px-6 py-5 text-center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="orders-table-body" class="divide-y divide-gray-100">
+                    <!-- Render via JS -->
+                  </tbody>
+                </table>
+              </div>
+              <!-- Card View -->
+              <div id="orders-cards-container"
+                class="hidden p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 bg-gray-50/30">
+                <!-- Render via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- CONTEÚDO: ENCOMENDADOS -->
-        <div id="tab-encomendados" class="hidden space-y-6">
+        <div id="tab-encomendados" class="tab-content hidden space-y-6">
           <!-- Renderizado via JS para manter a modularidade -->
         </div>
 
         <!-- CONTEÚDO: FIADO -->
-        <div id="tab-fiado" class="hidden space-y-6">
+        <div id="tab-fiado" class="tab-content hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
               <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Fiado</h2>
@@ -987,24 +1652,24 @@
           <!-- Métricas Fiado -->
           <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Clientes Pendentes</p>
-              <p id="metric-clientes-pendentes" class="text-xl md:text-2xl font-bold text-gray-900">-</p>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Total Pendente</p>
+              <p id="metric-fiado-pendente-valor" class="text-xl md:text-2xl font-bold text-red-600">R$ 0,00</p>
             </div>
             <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">A Receber</p>
-              <p id="metric-a-receber" class="text-xl md:text-2xl font-bold text-indigo-600">-</p>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Recebido (Mês)</p>
+              <p id="metric-fiado-recebido-mes" class="text-xl md:text-2xl font-bold text-green-600">R$ 0,00</p>
             </div>
             <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Recebido</p>
-              <p id="metric-recebido" class="text-xl md:text-2xl font-bold text-green-600">-</p>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Clientes Devedores</p>
+              <p id="metric-fiado-clientes-count" class="text-xl md:text-2xl font-bold text-gray-900">0</p>
             </div>
             <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Total Vendido</p>
-              <p id="metric-total-fiado" class="text-xl md:text-2xl font-bold text-gray-900">-</p>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Valor em Atraso</p>
+              <p id="metric-fiado-atrasado-valor" class="text-xl md:text-2xl font-bold text-red-700">R$ 0,00</p>
             </div>
             <div class="bg-white rounded-2xl p-4 md:p-5 border border-gray-200 shadow-sm">
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Parcelas Vencidas</p>
-              <p id="metric-parcelas-vencidas" class="text-xl md:text-2xl font-bold text-red-600">-</p>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Total Recebido</p>
+              <p id="metric-fiado-recebido-total" class="text-xl md:text-2xl font-bold text-gray-900">R$ 0,00</p>
             </div>
           </div>
 
@@ -1088,7 +1753,8 @@
                   <div><span class="text-gray-500 text-xs block">Memória</span><span id="fp-memoria"
                       class="font-medium">-</span></div>
                   <div><span class="text-gray-500 text-xs block">Cor</span><span id="fp-cor"
-                      class="font-medium">-</span></div>
+                      class="font-medium">-</span>
+                  </div>
                   <div><span class="text-gray-500 text-xs block">IMEI</span><span id="fp-imei"
                       class="font-medium">-</span></div>
                   <div><span class="text-gray-500 text-xs block">Custo</span><span id="fp-custo"
@@ -1291,7 +1957,7 @@
 
 
         <!-- CONTEÚDO: ANÁLISE ESTRATÉGICA -->
-        <div id="tab-estrategia" class="hidden space-y-6">
+        <div id="tab-estrategia" class="tab-content hidden space-y-6">
 
           <div
             class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-md flex justify-between items-center">
@@ -1394,7 +2060,7 @@
         <!-- FIM CONTEÚDO: ANÁLISE ESTRATÉGICA -->
 
         <!-- CONTEÚDO: PAINEL GERAL -->
-        <div id="tab-geral" class="space-y-6">
+        <div id="tab-geral" class="tab-content space-y-6">
 
           <!-- NOVA ESTRUTURA GERAL (Refatoração UX) -->
           <div class="space-y-8 mb-8 mt-2">
@@ -1669,77 +2335,11 @@
                 <ul id="rank-idle" class="space-y-3"></ul>
               </div>
             </div>
-
           </div>
-
-          <!-- Tabela de Últimos Pedidos -->
-          <div id="section-historico-pedidos" class="glass-card rounded-2xl shadow-sm overflow-hidden">
-            <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col gap-4">
-              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h3 class="text-lg font-bold text-gray-900 flex-shrink-0">Histórico de Pedidos <span
-                    id="label-table-count" class="text-sm font-medium text-gray-500 font-normal ml-2">0 itens</span>
-                </h3>
-                <button id="btn-novo-pedido"
-                  class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition flex items-center gap-2">
-                  <i class="fa-solid fa-plus"></i> Novo Pedido
-                </button>
-              </div>
-              <div class="order-filters-mobile">
-                <input type="text" id="table-search" placeholder="Buscar pedido..."
-                  class="w-full sm:w-64 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400">
-                <select id="table-brand"
-                  class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400">
-                  <option value="all">Todas Categorias</option>
-                </select>
-                <select id="table-period"
-                  class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400">
-                  <option value="all">Todos os Pedidos</option>
-                  <option value="today">Hoje</option>
-                  <option value="yesterday">Ontem</option>
-                  <option value="7">Últimos 7 dias</option>
-                  <option value="custom">Data Específica</option>
-                </select>
-                <div id="table-custom-wrap" class="hidden items-center gap-2">
-                  <div class="relative">
-                    <input type="text" id="table-date-start" class="pl-3 pr-9 py-2 text-sm border border-gray-200 rounded-lg w-40" placeholder="DD/MM/YYYY" maxlength="10">
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="table-date-start">
-                      <i class="fa-solid fa-calendar-days text-gray-400 text-xs pointer-events-none"></i>
-                    </div>
-                  </div>
-                </div>
-                <select id="table-status"
-                  class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400">
-                  <option value="all">Todos Status</option>
-                  <option value="Pendente">Pendentes</option>
-                  <option value="Fechado">Fechados</option>
-                  <option value="Cancelado">Cancelados</option>
-                </select>
-              </div>
-            </div>
-            <div class="overflow-x-auto sm:overflow-visible">
-              <table class="order-table w-full text-left border-collapse">
-                <thead>
-                  <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                    <th class="px-6 py-4 font-semibold">Cód / Data</th>
-                    <th class="px-6 py-4 font-semibold">Produto / Variação</th>
-                    <th class="px-6 py-4 font-semibold text-center">Qtd</th>
-                    <th class="px-6 py-4 font-semibold text-right">Valor Total</th>
-                    <th class="px-6 py-4 font-semibold text-center">Status</th>
-                    <th class="px-6 py-4 font-semibold text-center">Ação</th>
-                  </tr>
-                </thead>
-                <tbody id="orders-table-body" class="divide-y divide-gray-100 bg-white">
-                  <!-- Render via JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
         </div>
 
         <!-- CONTEÚDO: GERENCIAR ESTOQUE -->
-        <div id="tab-estoque" class="hidden space-y-6">
+        <div id="tab-estoque" class="tab-content hidden space-y-6">
           <div class="glass-card p-6 rounded-2xl shadow-sm border border-gray-100">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
@@ -1905,7 +2505,7 @@
         </div>
 
         <!-- CONTEÚDO: MÉTRICAS -->
-        <div id="tab-metricas" class="hidden space-y-6">
+        <div id="tab-metricas" class="tab-content hidden space-y-8 pb-10">
 
           <!-- Header + Period Filter -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -2418,7 +3018,8 @@
               <input id="cad-data-entrada" type="text" placeholder="DD/MM/AAAA"
                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
               <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-                <input type="date" class="js-date-picker-helper absolute inset-0 opacity-0 cursor-pointer w-full" data-target="cad-data-entrada">
+                <input type="date" class="js-date-picker-helper absolute inset-0 opacity-0 cursor-pointer w-full"
+                  data-target="cad-data-entrada">
                 <i class="fa-solid fa-calendar-days text-gray-400 pointer-events-none"></i>
               </div>
             </div>
@@ -2491,51 +3092,116 @@
   <div id="modal-negociacao" class="fixed inset-0 z-[1100] hidden"
     style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);">
     <div class="flex items-center justify-center min-h-screen p-4">
-      <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-          <h3 class="font-bold text-gray-900 flex items-center gap-2">
-            <i class="fa-solid fa-handshake text-indigo-500"></i> Negociação de Venda
-          </h3>
-          <button id="negociacao-close" class="text-gray-400 hover:text-gray-600 transition">✕</button>
-        </div>
-        <div class="p-6 space-y-6">
-          <p class="text-sm text-gray-600 leading-relaxed">
-            Você está fechando este pedido. Houve alguma <span class="font-bold text-gray-900">negociação no preço
-              final</span>?
-          </p>
-
-          <div class="flex gap-4">
-            <button id="btn-negoc-nao"
-              class="flex-1 py-3 px-4 rounded-xl border-2 border-gray-200 font-bold text-gray-700 hover:bg-gray-50 transition flex flex-col items-center">
-              <span class="text-xs opacity-60 uppercase mb-1">Não</span>
-              <span>Preço Original</span>
-            </button>
-            <button id="btn-negoc-sim"
-              class="flex-1 py-3 px-4 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100 transition flex flex-col items-center">
-              <span class="text-xs opacity-60 uppercase mb-1">Sim</span>
-              <span>Novo Preço</span>
-            </button>
-          </div>
-
-          <div id="input-negoc-wrap" class="hidden animate-[fadeIn_0.2s_ease-out]">
-            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Valor Negociado
-              (R$)</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">R$</span>
-              <input type="number" id="input-final-price" step="0.01" min="0"
-                class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-lg"
-                placeholder="0,00">
+      <div
+        class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shadow-sm">
+              <i class="fa-solid fa-check-double text-base"></i>
             </div>
-            <p class="text-[10px] text-gray-400 mt-2 italic">Este valor será usado para calcular seu lucro e faturamento
-              real.</p>
+            <div>
+              <h3 class="font-black text-gray-900 tracking-tight text-sm">Fechar Venda</h3>
+              <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Finalização de Pedido</p>
+            </div>
+          </div>
+          <button id="negociacao-close"
+            class="w-7 h-7 rounded-full bg-gray-50 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition flex items-center justify-center text-xs">✕</button>
+        </div>
+
+        <div class="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+          <!-- Seção Cliente -->
+          <div class="space-y-3">
+            <p class="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] border-b border-gray-50 pb-2">
+              Informações do Cliente</p>
+            <div class="grid grid-cols-1 gap-3">
+              <div class="relative group">
+                <label
+                  class="absolute left-4 top-2 text-[8px] font-black text-gray-400 uppercase tracking-widest transition-all group-focus-within:text-indigo-500">Nome
+                  Completo</label>
+                <input type="text" id="input-negoc-cliente"
+                  class="w-full pl-4 pr-4 pt-5 pb-2 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-xs transition-all"
+                  placeholder="Ex: João da Silva">
+              </div>
+              <div class="relative group">
+                <label
+                  class="absolute left-4 top-2 text-[8px] font-black text-gray-400 uppercase tracking-widest transition-all group-focus-within:text-indigo-500">WhatsApp
+                  / Telefone</label>
+                <input type="text" id="input-negoc-telefone"
+                  class="w-full pl-4 pr-4 pt-5 pb-2 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-xs transition-all"
+                  placeholder="(00) 00000-0000">
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção Negociação (Vem antes do Pagamento) -->
+          <div class="space-y-3">
+            <p class="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] border-b border-gray-50 pb-2">
+              Negociação</p>
+            <div class="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100/50">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-[11px] font-bold text-indigo-900">Houve negociação no preço?</span>
+                <div class="flex bg-white p-1 rounded-xl border border-indigo-100 shadow-sm">
+                  <button id="btn-negoc-nao"
+                    class="px-3 py-1 text-[9px] font-black uppercase rounded-lg transition-all bg-indigo-600 text-white shadow-sm">Não</button>
+                  <button id="btn-negoc-sim"
+                    class="px-3 py-1 text-[9px] font-black uppercase rounded-lg transition-all text-indigo-400 hover:bg-gray-50">Sim</button>
+                </div>
+              </div>
+
+              <div id="input-negoc-wrap" class="hidden animate-[fadeIn_0.2s_ease-out]">
+                <div class="relative group">
+                  <label
+                    class="absolute left-4 top-2 text-[8px] font-black text-indigo-400 uppercase tracking-widest">Novo
+                    Valor Final (R$)</label>
+                  <span class="absolute left-4 bottom-2 text-indigo-600 font-black text-sm">R$</span>
+                  <input type="number" id="input-final-price" step="0.01" min="0"
+                    class="w-full pl-10 pr-4 pt-5 pb-2 bg-white border border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-black text-base text-indigo-600"
+                    placeholder="0,00">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção Pagamento -->
+          <div class="space-y-3 pb-2">
+            <div class="flex items-center justify-between border-b border-gray-50 pb-2">
+              <p class="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">Pagamento</p>
+              <button type="button" id="btn-add-pagamento"
+                class="text-[10px] font-bold text-indigo-500 hover:text-indigo-700 transition-all flex items-center gap-1">
+                <i class="fa-solid fa-plus-circle"></i> Adicionar Método
+              </button>
+            </div>
+
+            <div id="payment-methods-container" class="space-y-2">
+              <!-- Linhas de pagamento inseridas via JS -->
+            </div>
+
+            <div id="payment-summary"
+              class="bg-gray-50/50 rounded-xl p-3 border border-gray-100/50 flex justify-between items-center hidden transition-all animate-[fadeIn_0.3s_ease-out]">
+              <div class="flex flex-col">
+                <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Saldo Restante</span>
+                <span id="payment-remaining-label" class="text-[9px] font-bold text-rose-400">Pendente de
+                  preenchimento</span>
+              </div>
+              <span id="payment-remaining-value" class="text-sm font-black text-rose-500">R$ 0,00</span>
+            </div>
           </div>
         </div>
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end items-center gap-4 pr-6">
+
+        <div id="negoc-errors" class="hidden mx-6 mb-2 p-3 bg-rose-50 border border-rose-100 rounded-xl animate-[fadeIn_0.2s_ease-out]">
+          <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="negoc-errors-msg">Erro na validação</span>
+          </p>
+        </div>
+
+        <div class="px-6 py-4 bg-gray-50 flex items-center justify-between gap-4 border-t border-gray-100 shrink-0">
           <button id="btn-negoc-cancel"
-            class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition mr-12">Cancelar</button>
+            class="text-[10px] font-bold text-gray-400 hover:text-gray-600 uppercase tracking-widest transition-all">Cancelar</button>
           <button id="btn-negoc-confirm"
-            class="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-green-600 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">Confirmar
-            Fechamento</button>
+            class="px-8 py-3 bg-gray-900 text-white text-[10px] font-black rounded-2xl hover:bg-emerald-600 transition-all shadow-xl shadow-gray-200 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase tracking-widest">
+            Confirmar e Fechar
+          </button>
         </div>
       </div>
     </div>
@@ -2847,6 +3513,333 @@
       </div>
     </div>
   </div>
+
+
+  <!-- Filter Drawer (Right Side) -->
+  <div id="filter-drawer-overlay" class="hidden fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[99998]"></div>
+  <div id="filter-drawer"
+    class="closed fixed top-0 right-0 h-full w-full max-w-[340px] bg-white z-[99999] flex flex-col shadow-2xl">
+    <div class="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+      <div>
+        <h3 class="text-base font-black text-gray-900 leading-tight">Filtrar vendas</h3>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Encontre rapidamente vendas
+          específicas.</p>
+      </div>
+      <button id="btn-close-filter-drawer"
+        class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+      <!-- Seção: Venda -->
+      <div class="space-y-4">
+        <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center gap-2">
+          <i class="fa-solid fa-shopping-cart text-[8px]"></i> Detalhes da Venda
+        </h4>
+
+        <div class="space-y-3">
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Status do Pedido</label>
+            <div class="flex flex-wrap gap-2" id="filter-group-status">
+              <button class="filter-chip inactive" data-value="Pendente">Pendente</button>
+              <button class="filter-chip inactive" data-value="Fechado">Fechado</button>
+              <button class="filter-chip inactive" data-value="Cancelado">Cancelado</button>
+            </div>
+          </div>
+
+          <div class="space-y-1.5 pt-2">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Pagamento</label>
+            <select id="table-payment"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none">
+              <option value="all">Todas Formas</option>
+              <option value="Pix">Pix</option>
+              <option value="Cartão">Cartão</option>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="Fiado">Fiado</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5 pt-2">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Período</label>
+            <select id="table-period"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none">
+              <option value="all">Todo o tempo</option>
+              <option value="today">Hoje</option>
+              <option value="yesterday">Ontem</option>
+              <option value="7">Últimos 7 dias</option>
+              <option value="14">Últimos 14 dias</option>
+              <option value="30">Últimos 30 dias</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </div>
+
+          <div id="table-custom-wrap" class="hidden space-y-3 pt-1">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Início</label>
+                <div class="relative">
+                  <input type="text" id="table-date-start" placeholder="DD/MM/YYYY" maxlength="10"
+                    class="w-full pl-3 pr-8 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl">
+                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper"
+                      data-target="table-date-start">
+                    <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Fim</label>
+                <div class="relative">
+                  <input type="text" id="table-date-end" placeholder="DD/MM/YYYY" maxlength="10"
+                    class="w-full pl-3 pr-8 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl">
+                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper"
+                      data-target="table-date-end">
+                    <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção: Produto -->
+      <div class="space-y-4">
+        <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center gap-2">
+          <i class="fa-solid fa-box text-[8px]"></i> Detalhes do Produto
+        </h4>
+
+        <div class="space-y-4">
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Categoria/Marca</label>
+            <select id="table-brand"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none">
+              <option value="all">Todas</option>
+              <option value="Apple">Apple</option>
+              <option value="Xiaomi">Xiaomi</option>
+              <option value="Samsung">Samsung</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Condição</label>
+            <div class="flex flex-wrap gap-2" id="filter-group-condition">
+              <button class="filter-chip inactive" data-value="Novo">Novo</button>
+              <button class="filter-chip inactive" data-value="Seminovo">Seminovo</button>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Armazenamento</label>
+            <select id="table-storage"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none">
+              <option value="all">Todos</option>
+              <option value="64GB">64GB</option>
+              <option value="128GB">128GB</option>
+              <option value="256GB">256GB</option>
+              <option value="512GB">512GB</option>
+              <option value="1TB">1TB</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção: Financeiro -->
+      <div class="space-y-4 pb-4">
+        <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center gap-2">
+          <i class="fa-solid fa-hand-holding-dollar text-[8px]"></i> Análise Financeira
+        </h4>
+
+        <div class="space-y-4">
+          <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl">
+            <label class="text-[10px] font-black text-gray-600 uppercase tracking-wider">Apenas Negociados</label>
+            <input type="checkbox" id="filter-negotiated"
+              class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 transition-all">
+          </div>
+          <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl">
+            <label class="text-[10px] font-black text-gray-600 uppercase tracking-wider">Apenas Prejuízo</label>
+            <input type="checkbox" id="filter-loss"
+              class="w-4 h-4 text-rose-600 border-gray-300 rounded focus:ring-rose-500 transition-all">
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Performance de Margem</label>
+            <select id="table-margin-filter"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none">
+              <option value="all">Todas Margens</option>
+              <option value="high">Alta (> 20%)</option>
+              <option value="normal">Normal (10-20%)</option>
+              <option value="low">Baixa (< 10%)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 border-t border-gray-100 bg-gray-50 flex gap-3 sticky bottom-0 z-10">
+      <button id="btn-reset-drawer-filters"
+        class="flex-1 py-3.5 rounded-xl border border-gray-200 text-gray-500 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all">Limpar</button>
+      <button id="btn-apply-drawer-filters"
+        class="flex-[2] py-3.5 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">Aplicar
+        Filtros</button>
+    </div>
+  </div>
+
+  <!-- Edit Order Drawer (Right Side) -->
+  <div id="edit-order-drawer-overlay" class="hidden fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[99998]"></div>
+  <div id="edit-order-drawer"
+    class="closed fixed top-0 right-0 h-full w-full max-w-[400px] bg-white z-[99999] flex flex-col shadow-2xl transition-transform duration-300 transform translate-x-full">
+    <div class="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+      <div>
+        <h3 class="text-base font-black text-gray-900 leading-tight">Editar Venda</h3>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest" id="edit-order-id-label">Pedido: #0000
+        </p>
+      </div>
+      <button id="btn-close-edit-drawer"
+        class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+      <!-- Seção: Cliente -->
+      <div class="space-y-4">
+        <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center gap-2">
+          <i class="fa-solid fa-user text-[8px]"></i> Dados do Cliente
+        </h4>
+        <div class="space-y-3">
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Nome Completo</label>
+            <input type="text" id="edit-cliente-nome"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              placeholder="Nome do cliente">
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">WhatsApp / Telefone</label>
+            <input type="text" id="edit-cliente-fone"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              placeholder="(00) 0 0000-0000">
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção: Detalhes da Venda -->
+      <div class="space-y-4 pt-4 border-t border-gray-100">
+        <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center gap-2">
+          <i class="fa-solid fa-calendar-check text-[8px]"></i> Detalhes da Venda
+        </h4>
+        <div class="space-y-3">
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Data e Hora</label>
+            <input type="text" id="edit-data-venda"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              placeholder="DD/MM/AAAA HH:MM">
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Status do Pedido</label>
+            <select id="edit-status-venda"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+              <option value="Pendente">Pendente</option>
+              <option value="Fechado">Fechado</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção: Pagamento -->
+      <div class="space-y-4 pt-4 border-t border-gray-100">
+        <div class="flex items-center justify-between">
+          <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center gap-2">
+            <i class="fa-solid fa-credit-card text-[8px]"></i> Pagamento
+          </h4>
+          <button type="button" id="edit-btn-add-pagamento"
+            class="text-[9px] font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-all">
+            <i class="fa-solid fa-plus-circle"></i> Add Método
+          </button>
+        </div>
+
+        <div id="edit-payment-methods-container" class="space-y-2">
+          <!-- Linhas de pagamento inseridas via JS -->
+        </div>
+
+        <div id="edit-payment-summary"
+          class="bg-indigo-50/30 rounded-2xl p-4 border border-indigo-100/50 flex justify-between items-center hidden animate-[fadeIn_0.3s_ease-out]">
+          <div class="flex flex-col">
+            <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Saldo Restante</span>
+            <span id="edit-payment-remaining-label" class="text-[9px] font-bold text-rose-400">Pendente</span>
+          </div>
+          <span id="edit-payment-remaining-value" class="text-sm font-black text-rose-500">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- Seção: Financeiro -->
+      <div class="space-y-4 pt-4 border-t border-gray-100">
+        <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center gap-2">
+          <i class="fa-solid fa-money-bill-wave text-[8px]"></i> Financeiro
+        </h4>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Total Original</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">R$</span>
+              <input type="number" id="edit-total-venda"
+                class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-[9px] font-bold text-gray-400 uppercase ml-1">Preço Final (Real)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">R$</span>
+              <input type="number" id="edit-final-price-venda"
+                class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção: Observações -->
+      <div class="space-y-4 pt-4 border-t border-gray-100">
+        <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center gap-2">
+          <i class="fa-solid fa-comment-dots text-[8px]"></i> Observações Internas
+        </h4>
+        <textarea id="edit-obs-venda" rows="4"
+          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none"
+          placeholder="Notas sobre a venda..."></textarea>
+      </div>
+    </div>
+
+    <div id="edit-order-errors" class="hidden mx-6 mb-4 p-3 bg-rose-50 border border-rose-100 rounded-xl animate-[fadeIn_0.2s_ease-out]">
+      <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span id="edit-order-errors-msg">Erro na validação</span>
+      </p>
+    </div>
+
+    <div class="p-6 border-t border-gray-100 bg-gray-50 flex gap-3 sticky bottom-0 z-10">
+      <button id="btn-cancel-edit"
+        class="flex-1 py-3.5 rounded-xl border border-gray-200 text-gray-500 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all">Descartar</button>
+      <button id="btn-save-edit"
+        class="flex-[2] py-3.5 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+        <i class="fa-solid fa-save"></i> Salvar Alterações
+      </button>
+    </div>
+  </div>
+
+  <style>
+    #edit-order-drawer {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #edit-order-drawer.closed {
+      transform: translateX(100%);
+    }
+
+    #edit-order-drawer:not(.closed) {
+      transform: translateX(0);
+    }
+  </style>
 
 </body>
 

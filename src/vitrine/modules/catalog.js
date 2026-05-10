@@ -32,7 +32,7 @@ function mapearProduto(item) {
     bateria: String(item.bateria || ''),
     tela: String(item.tela || ''),
     condicao: String(item.condicao || '').trim(),
-    ativo: item.ativo === true || String(item.ativo).toLowerCase() === 'true',
+    ativo: item.ativo === undefined || item.ativo === '' || item.ativo === null || item.ativo === true || String(item.ativo).toLowerCase() === 'true',
     custo: Number(item.custo || 0),
     clicks: Number(item.clicks || 0),
     imei1: String(item.imei1 || ''),
@@ -124,14 +124,15 @@ function renderProdutos(lista, useAnimation = false) {
     }
 
     const card = document.createElement('div');
+    card.className = 'product-card bg-white rounded-2xl overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer open-modal-wrap';
+    card.setAttribute('data-id', produto.grupo_id);
+    card.setAttribute('data-product-id', produto.id);
+
     if (useAnimation) {
       card.style.opacity = '0';
       card.style.animationDelay = `${index * 60}ms`;
       card.classList.add('product-fade-in');
     }
-    card.className += ' product-card bg-white rounded-2xl overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer open-modal-wrap';
-    card.setAttribute('data-id', produto.grupo_id);
-    card.setAttribute('data-product-id', produto.id);
 
     let conditionBadge = '';
     if (produto.condicao && produto.condicao.toLowerCase() === 'novo') {
@@ -162,7 +163,7 @@ function renderProdutos(lista, useAnimation = false) {
           <p class="text-sm text-gray-400 line-through mb-1">${formatarMoedaBRL(Number(produto.preco) + 250)}</p>
           <p class="text-2xl font-bold text-gray-900 mb-4">${formatarMoedaBRL(Number(produto.preco))}</p>
           <div class="flex flex-col gap-2">
-            <button ${disabled ? 'disabled' : ''} class="w-full btn-solid py-3 rounded-lg font-semibold text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}">
+            <button ${disabled ? 'disabled' : ''} class="w-full btn-solid btn-ver-opcoes py-3 rounded-lg font-semibold text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}">
               VER OPÇÕES
             </button>
             <button ${disabled ? 'disabled' : ''} class="compare-card-btn w-full py-2.5 rounded-lg transition text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}" data-grupo-id="${produto.grupo_id}" data-product-id="${produto.id}">
@@ -178,23 +179,6 @@ function renderProdutos(lista, useAnimation = false) {
 
   elements.productsGrid.innerHTML = '';
   elements.productsGrid.appendChild(fragment);
-
-  document.querySelectorAll('.open-modal-wrap').forEach(wrap => {
-    wrap.addEventListener('click', (e) => {
-      if (e.target.closest('.compare-card-btn')) return;
-      const gId = wrap.getAttribute('data-id');
-      const pId = wrap.getAttribute('data-product-id');
-      openProductModal(gId, pId);
-    });
-  });
-
-  document.querySelectorAll('.compare-card-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const pId = btn.getAttribute('data-product-id');
-      toggleComparacao(pId);
-    });
-  });
 }
 
 export function filtrarProdutos(useAnimation = false) {
@@ -290,7 +274,7 @@ export function filtrarProdutos(useAnimation = false) {
 // ===== Compare Logic =====
 let compareToastTimer = null;
 
-function toggleComparacao(produtoId) {
+export function toggleComparacao(produtoId) {
   const produto = store.produtos.find(p => p.id === produtoId);
   if (!produto) return;
 
@@ -725,26 +709,54 @@ export function openProductModal(grupoId, productId) {
 
   updateModalSelection();
 
-  const oldBuy = document.getElementById('pm-buy-btn');
-  const newBuy = oldBuy.cloneNode(true);
-  oldBuy.parentNode.replaceChild(newBuy, oldBuy);
-  newBuy.addEventListener('click', () => {
-    if (store.currentTargetId) {
-      adicionarAoCarrinho(store.currentTargetId);
-      aplicarAnimacaoAdicao(newBuy);
-    }
-  });
+  // Configuração direta dos botões do modal para máxima assertividade
+  const btnBuy = document.getElementById('pm-buy-btn');
+  if (btnBuy) {
+    btnBuy.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const produtoId = store.currentTargetId;
+      if (!produtoId) return;
 
-  const oldCompare = document.getElementById('pm-compare-btn');
-  const newCompare = oldCompare.cloneNode(true);
-  oldCompare.parentNode.replaceChild(newCompare, oldCompare);
-  newCompare.addEventListener('click', () => {
-    if (store.currentTargetId) {
-      toggleComparacao(store.currentTargetId);
-      const isComp = store.comparacao.some(c => c.id === store.currentTargetId);
-      newCompare.textContent = isComp ? '✓ Adicionado' : 'Comparar';
-    }
-  });
+      const produto = store.produtos.find(p => p.id === produtoId);
+      if (!produto) return;
+
+      // Verificar se já está no carrinho
+      const jaNoCarrinho = store.carrinho.find(i => i.id === produto.id);
+      if (!jaNoCarrinho) {
+        // Adicionar ao carrinho diretamente (sem checar ativo — o modal já faz isso via disabled)
+        store.carrinho.push({
+          id: produto.id,
+          nome: produto.nome,
+          preco: Number(produto.preco),
+          quantidade: 1,
+          imagem: produto.imagem
+        });
+        // Salvar no localStorage
+        const CARRINHO_KEY = 'catalogo_cart_v2';
+        localStorage.setItem(CARRINHO_KEY, JSON.stringify(store.carrinho));
+      }
+
+      // Fechar o modal de detalhes
+      mModal.classList.add('hidden');
+      document.body.style.overflow = '';
+
+      // Renderizar carrinho e abrir painel
+      renderCarrinho();
+      openCart();
+    };
+  }
+
+  const btnCompare = document.getElementById('pm-compare-btn');
+  if (btnCompare) {
+    btnCompare.onclick = () => {
+      if (store.currentTargetId) {
+        toggleComparacao(store.currentTargetId);
+        const isComp = store.comparacao.some(c => c.id === store.currentTargetId);
+        btnCompare.textContent = isComp ? '✓ Adicionado' : 'Comparar';
+      }
+    };
+  }
 
   const closeBtn = document.getElementById('close-product');
   if (closeBtn) {

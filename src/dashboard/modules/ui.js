@@ -52,7 +52,7 @@ export function setTab(activeBtn, activeTab, allBtns, allTabs) {
 // Formatters
 export const formatText = (val) => val && val.trim() !== '' ? val : 'N/A';
 export const formatMoney = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-export const parseNumber = (val) => { 
+export const parseNumber = (val) => {
   if (typeof val === 'number') return val;
   let s = String(val || '').replace('R$', '').trim();
   if (s.includes(',') && s.includes('.')) {
@@ -60,8 +60,8 @@ export const parseNumber = (val) => {
   } else if (s.includes(',')) {
     s = s.replace(',', '.');
   }
-  let n = parseFloat(s.replace(/[^0-9.-]+/g, "")); 
-  return isNaN(n) ? 0 : n; 
+  let n = parseFloat(s.replace(/[^0-9.-]+/g, ""));
+  return isNaN(n) ? 0 : n;
 };
 
 export function formatCpfCnpj(val) {
@@ -244,7 +244,7 @@ export function showNotification(order) {
   const id = document.createElement('div');
   const orderId = order.id_do_pedido || 'Pedido';
   const productName = order.produto || 'Novo item';
-  
+
   id.className = 'notification-enter bg-white border border-gray-100 rounded-xl shadow-2xl p-4 pointer-events-auto flex gap-4 items-start relative overflow-hidden group cursor-pointer';
   id.innerHTML = `
     <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600"></div>
@@ -286,7 +286,7 @@ export function showNotification(order) {
     const tabBtn = document.getElementById('tab-btn-geral');
     if (tabBtn) {
       tabBtn.click();
-      
+
       const orderTag = order.item_id || order.id_do_pedido;
 
       // Feedback visual: rolar diretamente até a tabela de pedidos
@@ -294,7 +294,7 @@ export function showNotification(order) {
         const target = document.getElementById('section-historico-pedidos');
         if (target) {
           target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          
+
           // Animação de pulse na linha específica
           const row = document.getElementById(`order-row-${orderTag}`);
           if (row) {
@@ -340,8 +340,13 @@ export function setupViewToggle(btnListId, btnGridId, storageKey, onToggleCallba
 
   btnList.addEventListener('click', () => setActive('list'));
   btnGrid.addEventListener('click', () => setActive('grid'));
-  
+
   return initialView;
+}
+
+export function getActiveTabId() {
+  const activeTab = document.querySelector('.tab-content:not(.hidden)');
+  return activeTab ? activeTab.id : null;
 }
 
 export function getViewPreference(storageKey, defaultView = 'list') {
@@ -363,7 +368,7 @@ export function initTooltips() {
     activeTrigger = trigger;
     tooltipEl.textContent = content;
     tooltipEl.classList.remove('hidden');
-    
+
     // Positioning
     const rect = trigger.getBoundingClientRect();
     let top = rect.top - tooltipEl.offsetHeight - 10;
@@ -376,7 +381,7 @@ export function initTooltips() {
 
     tooltipEl.style.top = `${top}px`;
     tooltipEl.style.left = `${left}px`;
-    
+
     // Fade in
     requestAnimationFrame(() => {
       tooltipEl.classList.remove('opacity-0');
@@ -407,9 +412,9 @@ export function initTooltips() {
     const trigger = e.target.closest('.js-tooltip-trigger');
     if (trigger) {
       if (activeTrigger !== trigger) {
-         showTooltip(trigger);
+        showTooltip(trigger);
       } else {
-         hideTooltip();
+        hideTooltip();
       }
     } else {
       hideTooltip();

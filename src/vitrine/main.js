@@ -1,11 +1,11 @@
 import { CONFIG, applyTheme } from '../shared/config.js';
 import { elements, openCart, closeCart } from './modules/ui.js';
-import { renderComparacao, filtrarProdutos, aplicarProdutos } from './modules/catalog.js';
-import { removerDoCarrinho, ajustarQuantidade, limparCarrinho, finalizarPedido, carregarCarrinhoLocalStorage, renderCarrinho, abrirSimuladorParcelamento } from '../shared/modules/cart.js';
+import { renderComparacao, filtrarProdutos, aplicarProdutos, openProductModal, toggleComparacao } from './modules/catalog.js';
+import { adicionarAoCarrinho, removerDoCarrinho, ajustarQuantidade, limparCarrinho, finalizarPedido, carregarCarrinhoLocalStorage, renderCarrinho, abrirSimuladorParcelamento } from '../shared/modules/cart.js';
 import { carregarCacheProdutos, cacheValido, salvarCacheProdutos } from '../shared/modules/utils.js';
 import { fetchProdutosApi, fetchPedidosApi } from '../shared/modules/api.js';
 import { store } from '../shared/modules/store.js';
-import { initOnboarding, iniciarPopupsSociais, showElement, hideElement, setError } from './modules/ui.js';
+import { initOnboarding, iniciarPopupsSociais, showElement, hideElement, setError, aplicarAnimacaoAdicao } from './modules/ui.js';
 import { trackHeroWhatsAppClick } from './modules/tracker.js'; // Auto-starts visit tracking + heartbeat
 
 function aplicarEventos() {
@@ -23,6 +23,28 @@ function aplicarEventos() {
     elements.compareModal.classList.add('hidden');
   });
   elements.overlay.addEventListener('click', closeCart);
+ 
+  // Event Delegation for Products Grid
+  elements.productsGrid.addEventListener('click', (e) => {
+    const target = e.target;
+    
+    // 1. Botão Comparar
+    const compareBtn = target.closest('.compare-card-btn');
+    if (compareBtn) {
+      e.stopPropagation();
+      const pId = compareBtn.getAttribute('data-product-id');
+      toggleComparacao(pId);
+      return;
+    }
+    
+    // 2. Card ou Botão "Ver Opções"
+    const card = target.closest('.open-modal-wrap');
+    if (card) {
+      const gId = card.getAttribute('data-id');
+      const pId = card.getAttribute('data-product-id');
+      openProductModal(gId, pId);
+    }
+  });
 
   const heroCta = document.getElementById('hero-cta');
   if (heroCta) {
@@ -40,7 +62,7 @@ function aplicarEventos() {
 
   elements.cartPanel.addEventListener('click', (e) => e.stopPropagation());
   elements.compareModal.addEventListener('click', (e) => e.stopPropagation());
-
+ 
   elements.cartItems.addEventListener('click', (e) => {
     const target = e.target;
     if (target.classList.contains('remove-item')) {

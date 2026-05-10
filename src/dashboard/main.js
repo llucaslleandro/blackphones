@@ -52,6 +52,12 @@ async function init() {
 // ---- RENDER PIPELINE ----
 // This combines multiple module renders into one flow
 const RENDER_PIPELINE = {
+  onLoadingStarted: () => {
+    const activeTabId = ui.getActiveTabId();
+    if (activeTabId === 'tab-vendas-historico' && ui.getViewPreference() === 'grid') {
+      dashboard.renderOrderSkeletons();
+    }
+  },
   onDataLoaded: () => {
     // Check for new orders to notify
     if (!IS_LOGIN_PAGE) {
@@ -81,22 +87,70 @@ const RENDER_PIPELINE = {
     dashboard.aplicarFiltroPeriodo({ onRender: RENDER_PIPELINE.renderVisuals });
     isAppInitializing = false;
   },
-  onBrandsLoaded: (brands) => {
+  onBrandsLoaded: (data) => {
     const brandSelect = document.getElementById('table-brand');
     if (brandSelect) {
       brandSelect.innerHTML = '<option value="all">Todas Categorias</option>';
-      brands.forEach(b => brandSelect.innerHTML += `<option value="${b}">${b}</option>`);
+      data.categories.forEach(b => brandSelect.innerHTML += `<option value="${b}">${b}</option>`);
+    }
+
+    const condSelect = document.getElementById('table-condition');
+    if (condSelect) {
+      condSelect.innerHTML = '<option value="all">Todas Condições</option>';
+      data.conditions.forEach(c => condSelect.innerHTML += `<option value="${c}">${c}</option>`);
+    }
+
+    const storageSelect = document.getElementById('table-storage');
+    if (storageSelect) {
+      storageSelect.innerHTML = '<option value="all">Todos Armaz.</option>';
+      data.storage.forEach(s => storageSelect.innerHTML += `<option value="${s}">${s}</option>`);
     }
   },
   renderVisuals: () => {
-    analytics.calcularKPIsEInsights();
-    analytics.renderCharts();
-    analytics.renderRankings();
-    dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
+    try {
+      // 1. Core Analytics (Global)
+      analytics.calcularKPIsEInsights();
+      analytics.renderCharts();
+      analytics.renderRankings();
+      
+      // 2. Specialized Tab Rendering
+      const activeTabId = ui.getActiveTabId();
+      if (!activeTabId) return;
 
-    const tabEstoque = document.getElementById('tab-estoque');
-    if (tabEstoque && !tabEstoque.classList.contains('hidden')) {
-      inventory.renderEstoque({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
+      if (activeTabId === 'tab-geral') {
+         // Default views already handled by global analytics
+      }
+      
+      if (activeTabId === 'tab-metricas') {
+        renderMetricas();
+      }
+      
+      if (activeTabId === 'tab-vendas-historico') {
+        dashboard.renderTable({ 
+          onStatusUpdated: RENDER_PIPELINE.onDataLoaded, 
+          onRender: RENDER_PIPELINE.renderVisuals, 
+          dataCallbacks: RENDER_PIPELINE 
+        });
+      }
+      
+      if (activeTabId === 'tab-fiado') {
+        fiado.initAndRender();
+      }
+      
+      if (activeTabId === 'tab-estoque') {
+        inventory.renderEstoque({ 
+          onEdit: inventory.abrirModalEdicao, 
+          dataCallbacks: RENDER_PIPELINE 
+        });
+      }
+      
+      if (activeTabId === 'tab-encomendados') {
+        compras.initAndRender();
+      }
+
+      refreshActiveCount();
+    } catch (err) {
+      console.error('Erro ao renderizar visuais:', err);
     }
   },
   dataCallbacks: null // Circular ref handled below
@@ -130,20 +184,22 @@ function setupDashboardListeners() {
   // Tabs
   const btnTabGeral = document.getElementById('tab-btn-geral');
   const btnTabEstrategia = document.getElementById('tab-btn-estrategia');
-  const btnTabEstoque = document.getElementById('tab-btn-estoque');
   const btnTabMetricas = document.getElementById('tab-btn-metricas');
-  const btnTabEncomendados = document.getElementById('tab-btn-encomendados');
+  const btnTabVendasHistorico = document.getElementById('tab-btn-vendas-historico');
   const btnTabFiado = document.getElementById('tab-btn-fiado');
+  const btnTabEstoque = document.getElementById('tab-btn-estoque');
+  const btnTabEncomendados = document.getElementById('tab-btn-encomendados');
 
   const tabGeral = document.getElementById('tab-geral');
   const tabEstrategia = document.getElementById('tab-estrategia');
-  const tabEstoque = document.getElementById('tab-estoque');
   const tabMetricas = document.getElementById('tab-metricas');
-  const tabEncomendados = document.getElementById('tab-encomendados');
+  const tabVendasHistorico = document.getElementById('tab-vendas-historico');
   const tabFiado = document.getElementById('tab-fiado');
+  const tabEstoque = document.getElementById('tab-estoque');
+  const tabEncomendados = document.getElementById('tab-encomendados');
 
-  const tabs = [tabGeral, tabEstrategia, tabEstoque, tabMetricas, tabEncomendados, tabFiado];
-  const btns = [btnTabGeral, btnTabEstrategia, btnTabEstoque, btnTabMetricas, btnTabEncomendados, btnTabFiado];
+  const tabs = [tabGeral, tabEstrategia, tabMetricas, tabVendasHistorico, tabFiado, tabEstoque, tabEncomendados];
+  const btns = [btnTabGeral, btnTabEstrategia, btnTabMetricas, btnTabVendasHistorico, btnTabFiado, btnTabEstoque, btnTabEncomendados];
 
   const globalFilterWrap = document.getElementById('global-filter-wrap');
   const globalFilterWrapMobile = document.getElementById('global-filter-wrap-mobile');
@@ -184,16 +240,34 @@ function setupDashboardListeners() {
     showGlobalFilters(true);
     closeMobileSidebar();
   });
-  btnTabEstoque?.addEventListener('click', () => {
-    ui.setTab(btnTabEstoque, tabEstoque, btns, tabs);
-    showGlobalFilters(false);
-    inventory.renderEstoque({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
-    closeMobileSidebar();
-  });
   btnTabMetricas?.addEventListener('click', () => {
     ui.setTab(btnTabMetricas, tabMetricas, btns, tabs);
     showGlobalFilters(false);
     renderMetricas();
+    closeMobileSidebar();
+  });
+
+  // Operação Listeners
+  btnTabVendasHistorico?.addEventListener('click', () => {
+    ui.setTab(btnTabVendasHistorico, tabVendasHistorico, btns, tabs);
+    showGlobalFilters(false);
+    dashboard.renderTable({
+      onStatusUpdated: RENDER_PIPELINE.onDataLoaded,
+      onRender: RENDER_PIPELINE.renderVisuals,
+      dataCallbacks: RENDER_PIPELINE
+    });
+    closeMobileSidebar();
+  });
+  btnTabFiado?.addEventListener('click', () => {
+    ui.setTab(btnTabFiado, tabFiado, btns, tabs);
+    showGlobalFilters(false);
+    fiado.initAndRender();
+    closeMobileSidebar();
+  });
+  btnTabEstoque?.addEventListener('click', () => {
+    ui.setTab(btnTabEstoque, tabEstoque, btns, tabs);
+    showGlobalFilters(false);
+    inventory.renderEstoque({ onEdit: inventory.abrirModalEdicao, dataCallbacks: RENDER_PIPELINE });
     closeMobileSidebar();
   });
   btnTabEncomendados?.addEventListener('click', () => {
@@ -202,11 +276,19 @@ function setupDashboardListeners() {
     compras.initAndRender();
     closeMobileSidebar();
   });
-  btnTabFiado?.addEventListener('click', () => {
-    ui.setTab(btnTabFiado, tabFiado, btns, tabs);
-    showGlobalFilters(false);
-    fiado.initAndRender();
-    closeMobileSidebar();
+
+  // Submenu Toggle
+  const btnVendasParent = document.getElementById('btn-vendas-parent');
+  const submenuVendas = document.getElementById('submenu-vendas');
+
+  btnVendasParent?.addEventListener('click', () => {
+    const isExpanded = btnVendasParent.classList.contains('expanded');
+
+    // Toggle classes
+    btnVendasParent.classList.toggle('expanded');
+    submenuVendas?.classList.toggle('expanded');
+
+    // Rotate chevron is handled by CSS on .expanded
   });
 
   // ---- SIDEBAR COLLAPSE / MOBILE DRAWER ----
@@ -296,7 +378,7 @@ function setupDashboardListeners() {
   periodFilter?.addEventListener('change', () => handlePeriodChange(periodFilter, periodFilterMobile));
   periodFilterMobile?.addEventListener('change', () => handlePeriodChange(periodFilterMobile, periodFilter));
   // Custom date inputs - Desktop
-  const dateInputs = ['date-start', 'date-end', 'date-start-mobile', 'date-end-mobile', 'table-date-start'];
+  const dateInputs = ['date-start', 'date-end', 'date-start-mobile', 'date-end-mobile', 'table-date-start', 'table-date-end', 'table-date-start-quick', 'table-date-end-quick'];
   dateInputs.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', ui.applyDateMask);
@@ -334,38 +416,22 @@ function setupDashboardListeners() {
   document.getElementById('table-date-start')?.addEventListener('change', () => {
     dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
   });
+  document.getElementById('table-date-end')?.addEventListener('change', () => {
+    dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
+  });
 
   // Novo Pedido Manual
   document.getElementById('btn-novo-pedido')?.addEventListener('click', dashboard.abrirModalNovoPedido);
+  document.getElementById('btn-novo-pedido-vendas')?.addEventListener('click', dashboard.abrirModalNovoPedido);
   document.getElementById('novo-pedido-close')?.addEventListener('click', dashboard.fecharModalNovoPedido);
   document.getElementById('novo-pedido-cancel')?.addEventListener('click', dashboard.fecharModalNovoPedido);
   document.getElementById('novo-pedido-submit')?.addEventListener('click', () => dashboard.salvarPedidoManual({ dataCallbacks: RENDER_PIPELINE, onRender: RENDER_PIPELINE.renderVisuals }));
 
-  // Table Filters
-  document.getElementById('table-search')?.addEventListener('input', (e) => {
-    store.state.tableSearchTerm = e.target.value.toLowerCase();
-    dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
-  });
 
-  document.getElementById('table-brand')?.addEventListener('change', (e) => {
-    store.state.tableBrandFilter = e.target.value;
-    dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
-  });
 
-  document.getElementById('table-status')?.addEventListener('change', (e) => {
-    store.state.tableStatusFilter = e.target.value;
-    dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
-  });
 
-  document.getElementById('table-period')?.addEventListener('change', (e) => {
-    store.state.tablePeriodFilter = e.target.value;
-    document.getElementById('table-custom-wrap')?.classList.toggle('hidden', e.target.value !== 'custom');
-    dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
-  });
 
-  document.getElementById('table-date-start')?.addEventListener('change', () => {
-    dashboard.renderTable({ onStatusUpdated: RENDER_PIPELINE.onDataLoaded, onRender: RENDER_PIPELINE.renderVisuals, dataCallbacks: RENDER_PIPELINE });
-  });
+
 
   // Negotiation Modal
   dashboard.initNegotiationModal();
@@ -514,6 +580,9 @@ function setupDashboardListeners() {
   }
 
   fiado.setupListeners();
+
+  // Initialize new Sales Filter system
+  dashboard.initDashboardListeners(RENDER_PIPELINE);
 }
 
 function setupImageDragAndDrop() {

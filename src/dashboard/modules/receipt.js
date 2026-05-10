@@ -115,8 +115,8 @@ export function initReceiptModal() {
     });
   }
 
-  // Delegate event for table buttons
-  document.getElementById('orders-table-body')?.addEventListener('click', (e) => {
+  // Delegate event for table and card buttons
+  document.getElementById('tab-vendas-historico')?.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-gerar-recibo');
     if (btn) {
       try {
@@ -210,7 +210,7 @@ export function abrirModalRecibo(order) {
   document.getElementById('rec-subtotal').value = total;
   document.getElementById('rec-total').value = total;
   document.getElementById('rec-valor-pago').value = total;
-  document.getElementById('rec-metodo').value = 'PIX';
+  document.getElementById('rec-metodo').value = (order.pagamento || 'Pix').toUpperCase();
   document.getElementById('rec-data').value = dataVenda;
   document.getElementById('rec-vencimento').value = dataVenc;
 

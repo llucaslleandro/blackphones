@@ -9,11 +9,19 @@ export const state = {
   tableSearchTerm: "",
   tableBrandFilter: "all",
   tableStatusFilter: "all",
+  tableConditionFilter: "all",
+  tableStorageFilter: "all",
   tablePeriodFilter: "all",
+  tablePaymentFilter: "all",
+  tableMarginFilter: "all",
+  tableNegotiatedOnly: false,
+  tableLossOnly: false,
+  viewPreference: "list",
   currentPeriodStart: null,
   currentPeriodEnd: null,
   allFiados: [],
-  allEncomendas: []
+  allEncomendas: [],
+  isFetching: false
 };
 
 export async function fetchJSON(url) {
@@ -47,6 +55,11 @@ export async function uploadImageToDrive(base64, filename) {
 
 export async function loadDashboardData(callbacks, silent = false) {
   if (!silent) toggleLoading(true);
+  state.isFetching = true;
+  
+  // Trigger immediate render if possible to show skeletons
+  if (callbacks.onLoadingStarted) callbacks.onLoadingStarted();
+
   try {
     const [rawPedidos, rawProdutos, rawFiados, rawEncomendas] = await fetchPedidosEProdutos();
 
@@ -56,8 +69,11 @@ export async function loadDashboardData(callbacks, silent = false) {
 
     // Trigger callback to populate brand select
     if (callbacks.onBrandsLoaded) {
-      const brands = new Set(rawProdutos.map(p => p.categoria || 'N/A').filter(b => b !== 'N/A'));
-      callbacks.onBrandsLoaded(Array.from(brands));
+      const categories = Array.from(new Set(rawProdutos.map(p => p.categoria).filter(Boolean))).sort();
+      const conditions = Array.from(new Set(rawProdutos.map(p => p.condição || p.condicao).filter(Boolean))).sort();
+      const storage = Array.from(new Set(rawProdutos.map(p => p.armazenamento).filter(Boolean))).sort();
+      
+      callbacks.onBrandsLoaded({ categories, conditions, storage });
     }
 
     state.allOrders = rawPedidos.map(order => ({
@@ -71,11 +87,13 @@ export async function loadDashboardData(callbacks, silent = false) {
       condicao: order.condição || order.condicao || 'Novo'
     })).sort((a, b) => b.parsedDate - a.parsedDate);
 
+    state.isFetching = false;
     // Trigger render pipeline
     if (callbacks.onDataLoaded) callbacks.onDataLoaded();
 
     if (!silent) toggleLoading(false, true, state.allOrders.length > 0);
   } catch (error) {
+    state.isFetching = false;
     console.error(error);
     if (!silent) toggleLoading(false, false);
   }

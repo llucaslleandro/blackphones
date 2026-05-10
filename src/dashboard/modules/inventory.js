@@ -3,7 +3,7 @@ import { state, loadDashboardData, uploadImageToDrive } from './store.js';
 import { formatMoney, formatText, showToast, compressImage, parseNumber, getViewPreference, applyDateMask, parseDateBr, formatDateBr } from './ui.js';
 
 let pendingEstoqueUpdates = {};
-let pendingDeleteSku = null;
+let pendingDeleteId = null;
 
 export function renderEstoque(callbacks = {}) {
   const container = document.getElementById('estoque-list-container');
@@ -236,13 +236,13 @@ export function renderEstoque(callbacks = {}) {
               </div>
               <!-- Mobile actions (visible only on mobile) -->
               <div class="flex sm:hidden items-center gap-1.5 shrink-0">
-                <button class="est-toggle-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition" data-sku="${p.sku}" title="${isActive ? 'Desativar' : 'Ativar'}">
+                <button class="est-toggle-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition" data-id="${p.id}" title="${isActive ? 'Desativar' : 'Ativar'}">
                    <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-[10px]"></i>
                 </button>
-                <button class="est-edit-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-indigo-500 hover:bg-indigo-50 transition" data-sku="${p.sku}">
+                <button class="est-edit-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-indigo-500 hover:bg-indigo-50 transition" data-id="${p.id}">
                    <i class="fa-solid fa-pen text-[10px]"></i>
                 </button>
-                <button class="est-delete-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-300 hover:text-red-500 hover:border-red-200 transition" data-sku="${p.sku}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
+                <button class="est-delete-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-300 hover:text-red-500 hover:border-red-200 transition" data-id="${p.id}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
                    <i class="fa-solid fa-trash-can text-[10px]"></i>
                 </button>
               </div>
@@ -284,22 +284,22 @@ export function renderEstoque(callbacks = {}) {
             <div class="flex flex-col sm:items-center">
                <span class="sm:hidden text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Estoque:</span>
                <div class="flex items-center gap-1.5">
-                  <input type="number" value="${estVal}" class="est-val-input w-14 px-1.5 py-1 text-center text-xs font-black border border-gray-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all ${estVal <= 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-gray-900'}" data-sku="${p.sku}">
+                  <input type="number" value="${estVal}" class="est-val-input w-14 px-1.5 py-1 text-center text-xs font-black border border-gray-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all ${estVal <= 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-gray-900'}" data-id="${p.id}">
                   <span class="text-gray-300 text-[10px] font-bold">/</span>
-                  <input type="number" min="0" value="${minVal}" class="est-min-input w-12 px-1 py-1 text-center text-[10px] font-bold border border-gray-100 bg-gray-50 rounded text-gray-500 outline-none" data-sku="${p.sku}">
+                  <input type="number" min="0" value="${minVal}" class="est-min-input w-12 px-1 py-1 text-center text-[10px] font-bold border border-gray-100 bg-gray-50 rounded text-gray-500 outline-none" data-id="${p.id}">
                </div>
                <span class="text-[8px] font-black uppercase tracking-tighter mt-1.5 ${statusColor}">${statusText}</span>
             </div>
           </td>
           <td class="hidden sm:table-cell px-6 py-4">
             <div class="flex items-center justify-center gap-1.5">
-              <button class="est-toggle-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition" data-sku="${p.sku}" title="${isActive ? 'Desativar' : 'Ativar'}">
+              <button class="est-toggle-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 transition" data-id="${p.id}" title="${isActive ? 'Desativar' : 'Ativar'}">
                  <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-[10px]"></i>
               </button>
-              <button class="est-edit-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-indigo-500 hover:bg-indigo-50 transition" data-sku="${p.sku}">
+              <button class="est-edit-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-indigo-500 hover:bg-indigo-50 transition" data-id="${p.id}">
                  <i class="fa-solid fa-pen text-[10px]"></i>
               </button>
-              <button class="est-delete-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-300 hover:text-red-500 hover:border-red-200 transition" data-sku="${p.sku}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
+              <button class="est-delete-btn w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-300 hover:text-red-500 hover:border-red-200 transition" data-id="${p.id}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
                  <i class="fa-solid fa-trash-can text-[10px]"></i>
               </button>
             </div>
@@ -327,13 +327,13 @@ export function renderEstoque(callbacks = {}) {
               ${!isActive ? '<span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-bold uppercase rounded">Inativo</span>' : ''}
             </div>
             <div class="flex gap-2 text-gray-300">
-              <button class="est-toggle-btn hover:text-indigo-500 transition" data-sku="${p.sku}" title="${isActive ? 'Desativar' : 'Ativar'}">
+              <button class="est-toggle-btn hover:text-indigo-500 transition" data-id="${p.id}" title="${isActive ? 'Desativar' : 'Ativar'}">
                  <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-xs"></i>
               </button>
-              <button class="est-edit-btn hover:text-indigo-500 transition" data-sku="${p.sku}">
+              <button class="est-edit-btn hover:text-indigo-500 transition" data-id="${p.id}">
                  <i class="fa-solid fa-pen text-xs"></i>
               </button>
-              <button class="est-delete-btn hover:text-red-500 transition" data-sku="${p.sku}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
+              <button class="est-delete-btn hover:text-red-500 transition" data-id="${p.id}" data-nome="${(p.nome || '').replace(/"/g, '&quot;')}">
                  <i class="fa-solid fa-trash-can text-xs"></i>
               </button>
             </div>
@@ -395,9 +395,9 @@ export function renderEstoque(callbacks = {}) {
                <i class="fa-solid fa-box-open text-gray-400"></i> <span class="font-medium">Em Estoque</span>
             </div>
             <div class="flex items-center gap-1">
-               <input type="number" value="${estVal}" class="est-val-input w-12 px-1 py-0.5 text-center text-xs font-bold border border-gray-200 rounded focus:border-indigo-500 transition-all ${estVal <= 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-gray-900'}" data-sku="${p.sku}">
+               <input type="number" value="${estVal}" class="est-val-input w-12 px-1 py-0.5 text-center text-xs font-bold border border-gray-200 rounded focus:border-indigo-500 transition-all ${estVal <= 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-gray-900'}" data-id="${p.id}">
                <span class="text-gray-300">/ min</span>
-               <input type="number" min="0" value="${minVal}" class="est-min-input w-10 px-1 py-0.5 text-center text-[10px] font-bold border border-gray-100 bg-gray-50 rounded text-gray-500 outline-none" data-sku="${p.sku}" title="Estoque mínimo">
+               <input type="number" min="0" value="${minVal}" class="est-min-input w-10 px-1 py-0.5 text-center text-[10px] font-bold border border-gray-100 bg-gray-50 rounded text-gray-500 outline-none" data-id="${p.id}" title="Estoque mínimo">
             </div>
           </div>
           
@@ -435,25 +435,25 @@ export function renderEstoque(callbacks = {}) {
 
   // Bind Events
   document.querySelectorAll('.est-min-input').forEach(inp => {
-    inp.addEventListener('change', (e) => { handleEstoqueEdit(e.target.dataset.sku, 'estoque_minimo', e.target.value); if (btnSalvar) btnSalvar.classList.remove('hidden'); });
+    inp.addEventListener('change', (e) => { handleEstoqueEdit(e.target.dataset.id, 'estoque_minimo', e.target.value); if (btnSalvar) btnSalvar.classList.remove('hidden'); });
   });
   document.querySelectorAll('.est-val-input').forEach(inp => {
-    inp.addEventListener('change', (e) => { handleEstoqueEdit(e.target.dataset.sku, 'estoque', e.target.value); if (btnSalvar) btnSalvar.classList.remove('hidden'); });
+    inp.addEventListener('change', (e) => { handleEstoqueEdit(e.target.dataset.id, 'estoque', e.target.value); if (btnSalvar) btnSalvar.classList.remove('hidden'); });
   });
-  document.querySelectorAll('.est-edit-btn').forEach(btn => btn.addEventListener('click', () => callbacks.onEdit?.(btn.dataset.sku)));
-  document.querySelectorAll('.est-toggle-btn').forEach(btn => btn.addEventListener('click', () => toggleAtivoProduto(btn.dataset.sku, callbacks)));
-  document.querySelectorAll('.est-delete-btn').forEach(btn => btn.addEventListener('click', () => confirmarExclusao(btn.dataset.sku, btn.dataset.nome)));
+  document.querySelectorAll('.est-edit-btn').forEach(btn => btn.addEventListener('click', () => callbacks.onEdit?.(btn.dataset.id)));
+  document.querySelectorAll('.est-toggle-btn').forEach(btn => btn.addEventListener('click', () => toggleAtivoProduto(btn.dataset.id, callbacks)));
+  document.querySelectorAll('.est-delete-btn').forEach(btn => btn.addEventListener('click', () => confirmarExclusao(btn.dataset.id, btn.dataset.nome)));
 }
 
-function handleEstoqueEdit(sku, type, value) {
-  if (!pendingEstoqueUpdates[sku]) {
-    const prod = state.allProducts.find(p => p.sku === sku);
-    pendingEstoqueUpdates[sku] = {
+function handleEstoqueEdit(id, type, value) {
+  if (!pendingEstoqueUpdates[id]) {
+    const prod = state.allProducts.find(p => p.id === id);
+    pendingEstoqueUpdates[id] = {
       estoque: prod ? (Number(prod.estoque) || 0) : 0,
       estoque_minimo: prod ? (Number(prod.estoque_minimo) || 2) : 2
     };
   }
-  pendingEstoqueUpdates[sku][type] = Number(value);
+  pendingEstoqueUpdates[id][type] = Number(value);
 }
 
 export async function salvarEstoqueManualmente(callbacks = {}) {
@@ -477,7 +477,7 @@ export async function salvarEstoqueManualmente(callbacks = {}) {
     if (!(await resp.json()).ok) throw new Error('Erro na API');
 
     keys.forEach(k => {
-      const prod = state.allProducts.find(p => p.sku === k);
+      const prod = state.allProducts.find(p => p.id === k);
       if (prod) Object.assign(prod, pendingEstoqueUpdates[k]);
     });
 
@@ -502,7 +502,7 @@ async function toggleAtivoProduto(sku, callbacks = {}) {
     const resp = await fetch(`${CONFIG.apiBaseUrl}?action=toggle_ativo`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ sku })
+      body: JSON.stringify({ id })
     });
     const json = await resp.json();
     if (!json.ok) throw new Error('Erro na API');
@@ -516,21 +516,21 @@ async function toggleAtivoProduto(sku, callbacks = {}) {
   }
 }
 
-function confirmarExclusao(sku, nome) {
-  pendingDeleteSku = sku;
+function confirmarExclusao(id, nome) {
+  pendingDeleteId = id;
   const nameEl = document.getElementById('exclusao-nome');
-  if (nameEl) nameEl.textContent = nome || sku;
+  if (nameEl) nameEl.textContent = nome || id;
   document.getElementById('modal-confirmar-exclusao')?.classList.remove('hidden');
 }
 
 export function cancelarExclusao() {
-  pendingDeleteSku = null;
+  pendingDeleteId = null;
   document.getElementById('modal-confirmar-exclusao')?.classList.add('hidden');
 }
 
 export async function executarExclusao(callbacks = {}) {
-  if (!pendingDeleteSku) return;
-  const sku = pendingDeleteSku;
+  if (!pendingDeleteId) return;
+  const id = pendingDeleteId;
   cancelarExclusao();
 
   try {
@@ -538,7 +538,7 @@ export async function executarExclusao(callbacks = {}) {
     const resp = await fetch(`${CONFIG.apiBaseUrl}?action=remover_produto`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ sku })
+      body: JSON.stringify({ id })
     });
     if (!(await resp.json()).ok) throw new Error('Erro na API');
 
@@ -553,6 +553,7 @@ export async function executarExclusao(callbacks = {}) {
 
 export function resetPendingUpdates() {
   pendingEstoqueUpdates = {};
+  pendingDeleteId = null;
   document.getElementById('btn-salvar-estoque')?.classList.add('hidden');
 }
 
@@ -560,7 +561,7 @@ export function resetPendingUpdates() {
 let cadastroTipo = 'Novo';
 let cadastroVariacoes = [];
 let cadastroTemVariacoes = false;
-let editModeSku = null;
+let editModeId = null;
 
 const modalCadastro = document.getElementById('modal-cadastro-produto');
 const btnCadSubmit = document.getElementById('cadastro-submit');
@@ -571,7 +572,7 @@ export function abrirModalCadastro() {
   cadastroTipo = 'Novo';
   cadastroVariacoes = [];
   cadastroTemVariacoes = false;
-  editModeSku = null;
+  editModeId = null;
 
   ['cad-nome', 'cad-desc', 'cad-preco', 'cad-custo', 'cad-cor', 'cad-armazenamento', 'cad-ram',
     'cad-cam-frontal', 'cad-cam-traseira', 'cad-bateria', 'cad-tela',
@@ -649,12 +650,12 @@ export function abrirModalCadastro() {
   modalCadastro.classList.remove('hidden');
 }
 
-export function abrirModalEdicao(sku) {
-  const prod = state.allProducts.find(p => p.sku === sku);
+export function abrirModalEdicao(id) {
+  const prod = state.allProducts.find(p => p.id === id);
   if (!prod) return;
 
   abrirModalCadastro();
-  editModeSku = sku;
+  editModeId = id;
 
   const modalTitle = modalCadastro.querySelector('h3');
   if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-pen-to-square text-indigo-500 mr-2"></i>Editar Produto';
@@ -953,7 +954,8 @@ function gerarIds(nome, cor, armazenamento, condicao) {
   const grupoId = gerarSlug(nome) || ('prod-' + Date.now());
   const variacao = [armazenamento, cor, condicao].filter(Boolean).map(gerarSlug).join('-');
   const sku = variacao ? `${grupoId}-${variacao}` : grupoId;
-  return { id: sku, sku, grupo_id: grupoId };
+  const uniqueId = `prod-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  return { id: uniqueId, sku, grupo_id: grupoId };
 }
 
 function getCategoria() {
@@ -1136,6 +1138,11 @@ export async function salvarNovoProduto(callbacks = {}) {
         sku: ids.sku,
         grupo_id: ids.grupo_id
       };
+      
+      // Se estamos editando e há apenas uma variação, preserva o ID
+      if (editModeId && cadastroVariacoes.length === 1) {
+          p.id = editModeId;
+      }
 
       // Se a variação tem imagens próprias, substitui as do base
       if (v.images && v.images.length > 0) {
@@ -1148,7 +1155,8 @@ export async function salvarNovoProduto(callbacks = {}) {
       finalProducts.push(p);
     });
   } else {
-    const ids = editModeSku ? { id: editModeSku, sku: editModeSku, grupo_id: val('cad-grupo-id') || editModeSku } : gerarIds(nome, cor, armazenamento, cadastroTipo);
+    const existingProd = editModeId ? state.allProducts.find(p => p.id === editModeId) : null;
+    const ids = editModeId ? { id: editModeId, sku: existingProd?.sku || existingProd?.id || editModeId, grupo_id: val('cad-grupo-id') || existingProd?.grupo_id || editModeId } : gerarIds(nome, cor, armazenamento, cadastroTipo);
     const p = {
       ...baseProduct,
       cor: cor,
@@ -1171,7 +1179,7 @@ export async function salvarNovoProduto(callbacks = {}) {
       btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
     }
 
-    if (editModeSku) {
+    if (editModeId) {
       // Editar modo (sempre um por um)
       const resp = await fetch(`${CONFIG.apiBaseUrl}?action=editar_produto`, {
         method: 'POST',
@@ -1202,7 +1210,7 @@ export async function salvarNovoProduto(callbacks = {}) {
     const btnSubmit = document.getElementById('cadastro-submit');
     if (btnSubmit) {
       btnSubmit.disabled = false;
-      btnSubmit.innerHTML = editModeSku ? '<i class="fa-solid fa-check"></i> Salvar Alterações' : '<i class="fa-solid fa-check"></i> Salvar Produto';
+      btnSubmit.innerHTML = editModeId ? '<i class="fa-solid fa-check"></i> Salvar Alterações' : '<i class="fa-solid fa-check"></i> Salvar Produto';
     }
   }
 }

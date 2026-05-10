@@ -79,7 +79,7 @@ function doPost(e) {
       if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
       if (!payload.item_id || !payload.status) throw new Error('ID ou Status não fornecidos.');
       
-      var res = atualizarStatusPedido(payload.item_id, payload.status, payload.final_price);
+      var res = atualizarStatusPedido(payload.item_id, payload.status, payload.final_price, payload.cliente, payload.telefone, payload.pagamento);
       return buildResponse({ ok: true, rowsUpdated: res });
     } catch (err) {
       return buildResponse({ ok: false, error: err.toString() });
@@ -94,6 +94,19 @@ function doPost(e) {
       
       var res = salvarEstoqueManualmente(payload.estoque_updates);
       return buildResponse({ ok: true, rowsUpdated: res });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  if (action === 'salvar_edicao_pedido') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      if (!payload.id || !payload.data) throw new Error('ID ou Dados não fornecidos.');
+      
+      var res = salvarEdicaoPedido(payload.id, payload.data);
+      return buildResponse({ ok: true });
     } catch (err) {
       return buildResponse({ ok: false, error: err.toString() });
     }
@@ -547,7 +560,7 @@ function salvarPedido(pedido) {
   return { pedido_id: pedidoId };
 }
 
-function atualizarStatusPedido(itemId, novoStatus, precoFinal) {
+function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone, pagamento) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('Pedidos');
   var prodSheet = ss.getSheetByName('Produtos');
@@ -591,6 +604,26 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal) {
     estProcColIdx = headers.length;
     sheet.getRange(1, estProcColIdx + 1).setValue('Estoque Processado');
     headers.push('estoque processado');
+  }
+
+  // NOVOS CAMPOS: Cliente, Telefone, Pagamento
+  var clienteColIdx = headers.indexOf('cliente');
+  if (clienteColIdx === -1) {
+    clienteColIdx = headers.length;
+    sheet.getRange(1, clienteColIdx + 1).setValue('Cliente');
+    headers.push('cliente');
+  }
+  var telefoneColIdx = headers.indexOf('telefone');
+  if (telefoneColIdx === -1) {
+    telefoneColIdx = headers.length;
+    sheet.getRange(1, telefoneColIdx + 1).setValue('Telefone');
+    headers.push('telefone');
+  }
+  var pagamentoColIdx = headers.indexOf('pagamento');
+  if (pagamentoColIdx === -1) {
+    pagamentoColIdx = headers.length;
+    sheet.getRange(1, pagamentoColIdx + 1).setValue('Pagamento');
+    headers.push('pagamento');
   }
 
   var updatedCount = 0;
@@ -637,6 +670,20 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal) {
         sheet.getRange(i + 1, finalPriceColIdx + 1).setValue(precoFinal);
         rows[i][finalPriceColIdx] = precoFinal;
       }
+
+      // Atualiza Cliente, Telefone, Pagamento (se fornecidos)
+      if (cliente) {
+        sheet.getRange(i + 1, clienteColIdx + 1).setValue(cliente);
+        rows[i][clienteColIdx] = cliente;
+      }
+      if (telefone) {
+        sheet.getRange(i + 1, telefoneColIdx + 1).setValue(telefone);
+        rows[i][telefoneColIdx] = telefone;
+      }
+      if (pagamento) {
+        sheet.getRange(i + 1, pagamentoColIdx + 1).setValue(pagamento);
+        rows[i][pagamentoColIdx] = pagamento;
+      }
       
       // Regra de Estoque (Sempre por item)
       if (novoStatus === 'Fechado' && estProc !== 'SIM' && sku) {
@@ -658,6 +705,52 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal) {
     }
   }
   return updatedCount;
+}
+
+function salvarEdicaoPedido(id, data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Pedidos');
+  if (!sheet) throw new Error('Aba Pedidos não encontrada.');
+
+  var rows = sheet.getDataRange().getValues();
+  if (rows.length < 2) throw new Error('Nenhum pedido encontrado.');
+
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase(); });
+  var idCol = headers.indexOf('id do pedido');
+  var itemIdCol = headers.indexOf('id do item');
+  var dataCol = headers.indexOf('data');
+  var clienteCol = headers.indexOf('cliente');
+  var telefoneCol = headers.indexOf('telefone');
+  var statusCol = headers.indexOf('status');
+  var totalCol = headers.indexOf('total');
+  var pagamentoCol = headers.indexOf('pagamento');
+  var obsCol = headers.indexOf('observações');
+  var finalPriceCol = headers.indexOf('preço final');
+
+  // Find row
+  var rowIndex = -1;
+  for (var i = 1; i < rows.length; i++) {
+    // Try matching ID do Item first, then ID do Pedido
+    if ((itemIdCol !== -1 && String(rows[i][itemIdCol]) === String(id)) || 
+        (idCol !== -1 && String(rows[i][idCol]) === String(id))) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
+
+  if (rowIndex === -1) throw new Error('Pedido não encontrado para edição.');
+
+  // Update fields if they exist in data
+  if (data.data && dataCol !== -1) sheet.getRange(rowIndex, dataCol + 1).setValue(data.data);
+  if (data.cliente && clienteCol !== -1) sheet.getRange(rowIndex, clienteCol + 1).setValue(data.cliente);
+  if (data.telefone && telefoneCol !== -1) sheet.getRange(rowIndex, telefoneCol + 1).setValue(data.telefone);
+  if (data.status && statusCol !== -1) sheet.getRange(rowIndex, statusCol + 1).setValue(data.status);
+  if (data.total !== undefined && totalCol !== -1) sheet.getRange(rowIndex, totalCol + 1).setValue(data.total);
+  if (data.pagamento && pagamentoCol !== -1) sheet.getRange(rowIndex, pagamentoCol + 1).setValue(data.pagamento);
+  if (data.observacoes !== undefined && obsCol !== -1) sheet.getRange(rowIndex, obsCol + 1).setValue(data.observacoes);
+  if (data.final_price !== undefined && finalPriceCol !== -1) sheet.getRange(rowIndex, finalPriceCol + 1).setValue(data.final_price);
+
+  return { ok: true };
 }
 
 function excluirPedido(itemId) {
@@ -898,16 +991,18 @@ function editarProduto_(payload) {
     'imagem_4': 'imagem_4', 'imagem_5': 'imagem_5', 'data_entrada_estoque': 'data_entrada_estoque'
   };
 
-  var targetSku = String(payload.sku);
+  var targetId = String(payload.id || payload.sku);
   var found = false;
 
   for (var i = 1; i < rows.length; i++) {
     var rowSku = skuCol !== -1 ? String(rows[i][skuCol]) : '';
     var rowId = idCol !== -1 ? String(rows[i][idCol]) : '';
-    if (rowSku === targetSku || rowId === targetSku) {
+    
+    // Prioritiza busca pelo ID único
+    if (rowId === targetId || (rowId === '' && rowSku === targetId)) {
       // Update each field that was sent
       for (var key in payload) {
-        if (key === 'sku' && !payload.force_update_sku) continue;
+        if ((key === 'sku' || key === 'id') && !payload.force_update_ids) continue;
         var sheetHeader = normalizeKey_(fieldMap[key] || key);
         var val = payload[key];
 
@@ -923,7 +1018,7 @@ function editarProduto_(payload) {
     }
   }
 
-  if (!found) throw new Error('Produto com SKU ' + targetSku + ' não encontrado.');
+  if (!found) throw new Error('Produto com ID/SKU ' + targetId + ' não encontrado.');
   return true;
 }
 
@@ -939,11 +1034,11 @@ function toggleAtivoProduto_(sku) {
   var ativoCol = headers.indexOf('ativo');
   if (ativoCol === -1) throw new Error('Coluna "ativo" não encontrada.');
 
-  var targetSku = String(sku);
+  var targetId = String(sku);
   for (var i = 1; i < rows.length; i++) {
     var rowSku = skuCol !== -1 ? String(rows[i][skuCol]) : '';
     var rowId = idCol !== -1 ? String(rows[i][idCol]) : '';
-    if (rowSku === targetSku || rowId === targetSku) {
+    if (rowId === targetId || (rowId === '' && rowSku === targetId)) {
       var currentVal = String(rows[i][ativoCol] || '').toLowerCase();
       var isActive = currentVal === 'true' || currentVal === 'sim';
       var newVal = !isActive;
@@ -951,7 +1046,7 @@ function toggleAtivoProduto_(sku) {
       return newVal;
     }
   }
-  throw new Error('Produto com SKU ' + targetSku + ' não encontrado.');
+  throw new Error('Produto com ID/SKU ' + targetId + ' não encontrado.');
 }
 
 function removerProduto_(sku) {
@@ -964,16 +1059,16 @@ function removerProduto_(sku) {
   var skuCol = headers.indexOf('sku');
   var idCol = headers.indexOf('id');
 
-  var targetSku = String(sku);
+  var targetId = String(sku);
   for (var i = 1; i < rows.length; i++) {
     var rowSku = skuCol !== -1 ? String(rows[i][skuCol]) : '';
     var rowId = idCol !== -1 ? String(rows[i][idCol]) : '';
-    if (rowSku === targetSku || rowId === targetSku) {
+    if (rowId === targetId || (rowId === '' && rowSku === targetId)) {
       sheet.deleteRow(i + 1);
       return;
     }
   }
-  throw new Error('Produto com SKU ' + targetSku + ' não encontrado.');
+  throw new Error('Produto com ID/SKU ' + targetId + ' não encontrado.');
 }
 
 function buildResponse(obj) {
@@ -1348,7 +1443,7 @@ function marcarChegou(payload) {
     imagem_4: payload.imagem_4 || '',
     imagem_5: payload.imagem_5 || '',
     data_entrada_estoque: new Date().toISOString(),
-    id: friendlySku,
+    id: generatedId,
     sku: friendlySku, 
     grupo_id: slugBase || friendlySku
   };

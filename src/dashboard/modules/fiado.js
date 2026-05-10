@@ -62,13 +62,15 @@ function calcularMetricas() {
   const fiados = store.state.allFiados || [];
   
   let clientesPendentes = new Set();
-  let aReceber = 0;
-  let recebido = 0;
-  let totalVendido = 0;
-  let parcelasVencidas = 0;
+  let aReceberTotal = 0;
+  let recebidoTotal = 0;
+  let recebidoMes = 0;
+  let valorAtrasado = 0;
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
+  
+  const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
 
   fiados.forEach(f => {
     if (f.status === 'cancelado') return;
@@ -77,29 +79,47 @@ function calcularMetricas() {
       clientesPendentes.add(f.cliente);
     }
     
-    totalVendido += Number(f.valorvenda || f.valor_venda || 0);
-    recebido += Number(f.entradadinheiro || f.entrada_dinheiro || 0);
+    // Entrada inicial
+    recebidoTotal += Number(f.entradadinheiro || f.entrada_dinheiro || 0);
+    
+    // Se a entrada foi este mês
+    const dataVenda = f.created_at ? new Date(f.created_at) : (f.datavenda ? new Date(f.datavenda) : null);
+    if (dataVenda && dataVenda >= primeiroDiaMes) {
+      recebidoMes += Number(f.entradadinheiro || f.entrada_dinheiro || 0);
+    }
     
     const parcelas = f.parcelas || [];
     parcelas.forEach(p => {
+      const valorParcela = Number(p.valor || 0);
       if (p.status === 'pago') {
-        recebido += Number(p.valor);
+        recebidoTotal += valorParcela;
+        
+        // Se foi pago este mês
+        const dataPagamento = p.dataPagamento ? new Date(p.dataPagamento) : null;
+        if (dataPagamento && dataPagamento >= primeiroDiaMes) {
+          recebidoMes += valorParcela;
+        }
       } else {
-        aReceber += Number(p.valor);
+        aReceberTotal += valorParcela;
         
         const dataVencimento = p.vencimento ? new Date(p.vencimento + 'T00:00:00') : null;
         if (dataVencimento && dataVencimento < hoje) {
-          parcelasVencidas++;
+          valorAtrasado += valorParcela;
         }
       }
     });
   });
 
-  document.getElementById('metric-clientes-pendentes').textContent = clientesPendentes.size;
-  document.getElementById('metric-a-receber').textContent = ui.formatMoney(aReceber);
-  document.getElementById('metric-recebido').textContent = ui.formatMoney(recebido);
-  document.getElementById('metric-total-fiado').textContent = ui.formatMoney(totalVendido);
-  document.getElementById('metric-parcelas-vencidas').textContent = parcelasVencidas;
+  const updateMetric = (id, val, isMoney = true) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = isMoney ? ui.formatMoney(val) : val;
+  };
+
+  updateMetric('metric-fiado-pendente-valor', aReceberTotal);
+  updateMetric('metric-fiado-recebido-mes', recebidoMes);
+  updateMetric('metric-fiado-clientes-count', clientesPendentes.size, false);
+  updateMetric('metric-fiado-atrasado-valor', valorAtrasado);
+  updateMetric('metric-fiado-recebido-total', recebidoTotal);
 }
 
 function renderList() {
