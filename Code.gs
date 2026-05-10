@@ -140,8 +140,9 @@ function doPost(e) {
     try {
       var payload = {};
       if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
-      if (!payload.sku) throw new Error('SKU não fornecido.');
-      var res = toggleAtivoProduto_(payload.sku);
+      var target = payload.id || payload.sku;
+      if (!target) throw new Error('ID ou SKU não fornecido.');
+      var res = toggleAtivoProduto_(target);
       return buildResponse({ ok: true, ativo: res });
     } catch (err) {
       return buildResponse({ ok: false, error: err.toString() });
@@ -152,8 +153,9 @@ function doPost(e) {
     try {
       var payload = {};
       if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
-      if (!payload.sku) throw new Error('SKU não fornecido.');
-      removerProduto_(payload.sku);
+      var target = payload.id || payload.sku;
+      if (!target) throw new Error('ID ou SKU não fornecido.');
+      removerProduto_(target);
       return buildResponse({ ok: true });
     } catch (err) {
       return buildResponse({ ok: false, error: err.toString() });

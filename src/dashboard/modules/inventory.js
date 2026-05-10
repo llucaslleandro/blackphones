@@ -307,7 +307,7 @@ export function renderEstoque(callbacks = {}) {
         </tr>
       `;
     } else {
-      const imageUrl = (p.images && p.images[0]) || p.imagem1 || p.imagem || '../../assets/images/placeholder.png';
+      const imageUrl = (p.images && p.images[0]) || p.imagem1 || p.imagem || 'https://via.placeholder.com/400x300?text=Sem+Imagem';
       const margin = precoVenda > 0 ? Math.round((lucro / precoVenda) * 100) : 0;
       let badgeCondicao = p.condicao ? p.condicao.toUpperCase() : 'NOVO';
 
@@ -341,7 +341,7 @@ export function renderEstoque(callbacks = {}) {
           
           <!-- Product Image -->
           <div class="w-full aspect-[4/3] rounded-lg overflow-hidden mb-3 bg-gray-50 border border-gray-100">
-             <img src="${imageUrl}" class="w-full h-full object-cover" onerror="this.src='../../assets/images/placeholder.png'">
+             <img src="${imageUrl}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Sem+Imagem';">
           </div>
           
           <!-- Detalhes / Observações -->
