@@ -496,7 +496,23 @@ function renderTable() {
 
     const rect = btn.getBoundingClientRect();
     const menuWidth = 160; // w-40
-    menu.style.top = `${rect.bottom + 8}px`;
+    
+    // Mostra temporariamente para medir a altura
+    menu.style.visibility = 'hidden';
+    menu.classList.remove('hidden');
+    const menuHeight = menu.offsetHeight;
+    menu.classList.add('hidden');
+    menu.style.visibility = 'visible';
+
+    let top = rect.bottom + 8;
+    if (top + menuHeight > window.innerHeight) {
+      top = rect.top - menuHeight - 8;
+    }
+    
+    // Garantir que não fuja pelo topo também
+    if (top < 8) top = 8;
+
+    menu.style.top = `${top}px`;
     menu.style.left = `${rect.right - menuWidth}px`;
 
     menu.classList.remove('hidden');
