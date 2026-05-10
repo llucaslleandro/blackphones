@@ -357,8 +357,10 @@ export function renderCarrinho() {
 }
 
 export function adicionarAoCarrinho(produtoId) {
-  const produto = store.produtos.find(p => p.id === produtoId);
-  if (!produto || !produto.ativo) return;
+  const cleanId = String(produtoId).trim();
+  // Busca preferencialmente por SKU, depois por ID, e sempre prioriza o ATIVO
+  const produto = store.produtos.find(p => (String(p.sku).trim() === cleanId || String(p.id).trim() === cleanId) && p.ativo);
+  if (!produto) return;
 
   // Contar cliques e persistir
   store.produtoClicks[produtoId] = (store.produtoClicks[produtoId] || 0) + 1;
@@ -368,7 +370,9 @@ export function adicionarAoCarrinho(produtoId) {
   // Track product click for metrics
   trackProductClick(produto);
 
-  const itemEmCarrinho = store.carrinho.find(i => i.id === produto.id);
+  // No carrinho, a unicidade deve ser pelo SKU se disponível, senão pelo ID
+  const searchKey = produto.sku || produto.id;
+  const itemEmCarrinho = store.carrinho.find(i => (i.sku || i.id) === searchKey);
 
   // Se já está no carrinho, apenas abrimos o modal sem adicionar mais (conforme pedido do usuário)
   if (itemEmCarrinho) {
@@ -377,29 +381,40 @@ export function adicionarAoCarrinho(produtoId) {
   }
 
   // Se não está no carrinho, adicionamos
-  store.carrinho.push({ id: produto.id, nome: produto.nome, preco: Number(produto.preco), quantidade: 1, imagem: produto.imagem });
+  store.carrinho.push({ 
+    id: produto.id, 
+    sku: produto.sku,
+    nome: produto.nome, 
+    preco: Number(produto.preco), 
+    quantidade: 1, 
+    imagem: produto.imagem 
+  });
 
   salvarCarrinhoLocalStorage();
   renderCarrinho();
   atualizarBadge();
   setMessage('success', `Produto "${produto.nome}" adicionado ao carrinho.`);
-  
+
   if (typeof openCart === 'function') openCart();
 }
 
 export function removerDoCarrinho(produtoId) {
-  store.carrinho = store.carrinho.filter(i => i.id !== produtoId);
+  const cleanId = String(produtoId).trim();
+  store.carrinho = store.carrinho.filter(i => (i.sku || i.id) !== cleanId && i.id !== cleanId);
   salvarCarrinhoLocalStorage();
   renderCarrinho();
   atualizarBadge();
 }
 
 export function ajustarQuantidade(produtoId, delta) {
-  const item = store.carrinho.find(i => i.id === produtoId);
+  const cleanId = String(produtoId).trim();
+  // No carrinho, buscamos por SKU ou ID
+  const item = store.carrinho.find(i => (i.sku || i.id) === cleanId || String(i.id).trim() === cleanId);
   if (!item) return;
 
   if (delta > 0) {
-    const produto = store.produtos.find(p => String(p.id) === String(produtoId));
+    // No catálogo, buscamos o produto ativo correspondente
+    const produto = store.produtos.find(p => (String(p.sku).trim() === cleanId || String(p.id).trim() === cleanId) && p.ativo);
     // Regra de privacidade: só restringir se o estoque for EXATAMENTE 1
     if (produto && produto.estoque === 1 && item.quantidade >= 1) {
       if (typeof setMessage === 'function') {

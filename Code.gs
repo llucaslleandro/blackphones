@@ -334,11 +334,11 @@ function getProdutos() {
     var cameraFrontal = String(obj['camera_frontal'] || obj['câmera_frontal'] || obj['camera frontal'] || obj['câmera frontal'] || '');
     var cameraTraseira = String(obj['camera_traseira'] || obj['câmera_traseira'] || obj['camera traseira'] || obj['câmera traseira'] || '');
     return {
-      id: String(obj['id'] || ''),
-      sku: String(obj['sku'] || obj['id'] || ''),
+      id: String(obj['id'] || '').trim(),
+      sku: String(obj['sku'] || obj['id'] || '').trim(),
       estoque: obj['estoque'] !== undefined && obj['estoque'] !== '' ? Number(obj['estoque']) : 0,
       estoque_minimo: obj['estoque_minimo'] !== undefined && obj['estoque_minimo'] !== '' ? Number(obj['estoque_minimo']) : 2,
-      grupo_id: String(obj['grupo_id'] || obj['sku'] || obj['id'] || ''),
+      grupo_id: String(obj['grupo_id'] || obj['sku'] || obj['id'] || '').trim(),
       cor: String(obj['cor'] || ''),
       nome: String(obj['nome'] || ''),
       descricao: String(obj['descrição'] || obj['descricao'] || ''),
@@ -452,8 +452,14 @@ function registrarClick(produtoId) {
   }
 
   // Encontrar a linha do produto e incrementar
+  var targetId = String(produtoId).trim();
+  var skuCol = headers.indexOf('sku');
+  
   for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][idCol]) === String(produtoId)) {
+    var rowId = String(rows[i][idCol]).trim();
+    var rowSku = skuCol !== -1 ? String(rows[i][skuCol]).trim() : '';
+    
+    if (rowId === targetId || (rowSku && rowSku === targetId)) {
       var currentClicks = Number(sheet.getRange(i + 1, clicksCol + 1).getValue()) || 0;
       var newClicks = currentClicks + 1;
       sheet.getRange(i + 1, clicksCol + 1).setValue(newClicks);

@@ -13,30 +13,30 @@ function renderCategorias() {
 
 function mapearProduto(item) {
   return {
-    id: String(item.id),
-    sku: String(item.sku || ''),
+    id: String(item.id || '').trim(),
+    sku: String(item.sku || '').trim(),
     estoque: Number(item.estoque || 0),
     estoque_minimo: Number(item.estoque_minimo || 2),
-    grupo_id: String(item.grupo_id || item.id || ''),
-    cor: String(item.cor || ''),
-    nome: String(item.nome || ''),
-    descricao: String(item.descricao || ''),
-    categoria: String(item.categoria || 'Sem categoria'),
+    grupo_id: String(item.grupo_id || item.sku || item.id || '').trim(),
+    cor: String(item.cor || '').trim(),
+    nome: String(item.nome || '').trim(),
+    descricao: String(item.descricao || '').trim(),
+    categoria: String(item.categoria || 'Sem categoria').trim(),
     preco: Number(item.preco || 0),
     imagem: String(item.imagem || item.imagem_1 || 'https://via.placeholder.com/400x250?text=Imagem'),
     images: Array.isArray(item.images) ? item.images : [String(item.imagem || item.imagem_1 || '')].filter(Boolean),
-    armazenamento: String(item.armazenamento || ''),
-    ram: String(item.ram || ''),
-    camera_frontal: String(item.camera_frontal || ''),
-    camera_traseira: String(item.camera_traseira || ''),
-    bateria: String(item.bateria || ''),
-    tela: String(item.tela || ''),
+    armazenamento: String(item.armazenamento || '').trim(),
+    ram: String(item.ram || '').trim(),
+    camera_frontal: String(item.camera_frontal || '').trim(),
+    camera_traseira: String(item.camera_traseira || '').trim(),
+    bateria: String(item.bateria || '').trim(),
+    tela: String(item.tela || '').trim(),
     condicao: String(item.condicao || '').trim(),
     ativo: item.ativo === undefined || item.ativo === '' || item.ativo === null || item.ativo === true || String(item.ativo).toLowerCase() === 'true',
     custo: Number(item.custo || 0),
     clicks: Number(item.clicks || 0),
-    imei1: String(item.imei1 || ''),
-    saude_bateria: String(item.saude_bateria || '')
+    imei1: String(item.imei1 || '').trim(),
+    saude_bateria: String(item.saude_bateria || '').trim()
   };
 }
 
@@ -668,7 +668,8 @@ function removerDaComparacao(produtoId) {
 
 // ===== Lógica do Modal de Produto =====
 export function openProductModal(grupoId, productId) {
-  store.modalVariacoes = store.produtos.filter(p => p.grupo_id === grupoId);
+  // Filtramos apenas produtos ATIVOS para evitar que linhas duplicadas inativas atrapalhem
+  store.modalVariacoes = store.produtos.filter(p => p.grupo_id === grupoId && p.ativo);
   if (!store.modalVariacoes.length) return;
 
   const mModal = document.getElementById('product-modal');
@@ -718,32 +719,13 @@ export function openProductModal(grupoId, productId) {
       const produtoId = store.currentTargetId;
       if (!produtoId) return;
 
-      const produto = store.produtos.find(p => p.id === produtoId);
-      if (!produto) return;
+      // Chama a função central que já cuida de tudo: 
+      // adicionar, salvar, renderizar carrinho, atualizar badge e abrir o painel do carrinho
+      adicionarAoCarrinho(produtoId);
 
-      // Verificar se já está no carrinho
-      const jaNoCarrinho = store.carrinho.find(i => i.id === produto.id);
-      if (!jaNoCarrinho) {
-        // Adicionar ao carrinho diretamente (sem checar ativo — o modal já faz isso via disabled)
-        store.carrinho.push({
-          id: produto.id,
-          nome: produto.nome,
-          preco: Number(produto.preco),
-          quantidade: 1,
-          imagem: produto.imagem
-        });
-        // Salvar no localStorage
-        const CARRINHO_KEY = 'catalogo_cart_v2';
-        localStorage.setItem(CARRINHO_KEY, JSON.stringify(store.carrinho));
-      }
-
-      // Fechar o modal de detalhes
+      // Fecha o modal de detalhes após adicionar
       mModal.classList.add('hidden');
       document.body.style.overflow = '';
-
-      // Renderizar carrinho e abrir painel
-      renderCarrinho();
-      openCart();
     };
   }
 
@@ -851,8 +833,8 @@ function updateModalSelection() {
     const minMatch = Number(match.estoque_minimo) || 2;
     const isPoucas = emEstoque && Number(match.estoque) > 1 && Number(match.estoque) <= minMatch;
 
-    store.currentTargetId = match.id;
-    
+    store.currentTargetId = match.sku || match.id;
+
     // Gallery Rendering
     const allImages = match.images && match.images.length > 0 ? match.images : [match.imagem];
     if (allImages.length > 1) {
@@ -884,7 +866,7 @@ function updateModalSelection() {
       let currentIdx = 0;
       const mainImg = document.getElementById('pm-main-img');
       const thumbs = document.querySelectorAll('.pm-thumb');
-      
+
       const updateGallery = (newIdx) => {
         currentIdx = (newIdx + allImages.length) % allImages.length;
         mainImg.style.opacity = '0';
@@ -892,7 +874,7 @@ function updateModalSelection() {
           mainImg.src = allImages[currentIdx];
           mainImg.style.opacity = '1';
         }, 150);
-        
+
         thumbs.forEach((t, i) => {
           const isSelected = i === currentIdx;
           t.className = `pm-thumb w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 ${isSelected ? 'border-gray-900 bg-gray-50' : 'border-transparent bg-white'} overflow-hidden flex-shrink-0 transition-all hover:border-gray-300 shadow-sm`;
