@@ -103,7 +103,7 @@ function criarPopupContainer() {
     position: fixed;
     top: 80px;
     left: 16px;
-    z-index: 900;
+    z-index: 5;
     pointer-events: none;
     max-width: 340px;
     width: calc(100% - 32px);
@@ -156,13 +156,16 @@ function mostrarPopupSocial() {
     requestAnimationFrame(() => {
       popup.style.transform = 'translateX(0)';
       popup.style.opacity = '1';
+
+      // Only start the close timer after the open animation has been applied
+      setTimeout(() => {
+        popup.style.transform = 'translateX(-120%)';
+        popup.style.opacity = '0';
+        // Remove from DOM after the exit transition completes (0.5s)
+        setTimeout(() => popup.remove(), 600);
+      }, 4000);
     });
   });
-
-  setTimeout(() => {
-    popup.style.transform = 'translateX(-120%)';
-    popup.style.opacity = '0';
-  }, 4000);
 }
 
 export function iniciarPopupsSociais() {
