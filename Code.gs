@@ -55,6 +55,10 @@ function doGet(e) {
       result.data = getMetricas_(periodo);
       result.ok = true;
       return buildResponse(result);
+    } else if (action === 'movimentos_caixa') {
+      result.data = getMovimentosCaixa_();
+      result.ok = true;
+      return buildResponse(result);
     } else {
       return buildResponse({ ok: false, error: 'Ação inválida. Use action=produtos, action=click ou action=pedido.' });
     }
@@ -281,6 +285,40 @@ function doPost(e) {
       var payload = {};
       if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
       cancelarFiado(payload.fiado_id);
+      return buildResponse({ ok: true });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  if (action === 'salvar_movimento_caixa') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      var res = salvarMovimentoCaixa_(payload);
+      return buildResponse({ ok: true, id: res.id });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  if (action === 'remover_movimento_caixa') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      if (!payload.id) throw new Error('ID não fornecido.');
+      removerMovimentoCaixa_(payload.id);
+      return buildResponse({ ok: true });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  if (action === 'marcar_pagamento_lote') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      marcarPagamentoLote_(payload);
       return buildResponse({ ok: true });
     } catch (err) {
       return buildResponse({ ok: false, error: err.toString() });
@@ -1304,7 +1342,7 @@ function salvarLoteEncomendado(payload) {
   var sheet = ss.getSheetByName('Produtos_Encomendados');
   if (!sheet) {
     sheet = ss.insertSheet('Produtos_Encomendados');
-    var defaultHeaders = ['ID', 'Lote ID', 'Categoria', 'Modelo', 'Versao', 'Cor', 'Memoria', 'Condicao', 'Fornecedor', 'Data Compra', 'Previsao Chegada', 'Custo Compra', 'Custo Frete', 'Custo Taxas', 'Custo Adicional Lote', 'Custo Adicional', 'Custo Total', 'Preco Venda Previsto', 'Bateria', 'IMEI', 'Serial', 'Observacoes', 'Observacoes Lote', 'Status', 'Status Lote', 'Created At'];
+    var defaultHeaders = ['ID', 'Lote ID', 'Categoria', 'Modelo', 'Versao', 'Cor', 'Memoria', 'Condicao', 'Fornecedor', 'Data Compra', 'Previsao Chegada', 'Custo Compra', 'Custo Frete', 'Custo Taxas', 'Custo Adicional Lote', 'Custo Adicional', 'Custo Total', 'Preco Venda Previsto', 'Bateria', 'IMEI', 'Serial', 'Observacoes', 'Observacoes Lote', 'Status', 'Status Lote', 'Created At', 'Status Pagamento', 'Data Pagamento', 'Valor Pago Lote', 'Valor Pendente Lote'];
     sheet.appendRow(defaultHeaders);
   }
 
@@ -1362,6 +1400,10 @@ function salvarLoteEncomendado(payload) {
       observacoes_lote: loteData.observacoes_lote,
       status_lote: loteData.status_lote,
       created_at: loteData.created_at,
+      status_pagamento: loteData.status_pagamento || 'pendente',
+      data_pagamento: loteData.data_pagamento || '',
+      valor_pago_lote: loteData.valor_pago_lote || '',
+      valor_pendente_lote: loteData.valor_pendente_lote || '',
       
       categoria: item.categoria,
       modelo: item.modelo,
@@ -1391,6 +1433,50 @@ function salvarLoteEncomendado(payload) {
   });
 
   return { lote_id: loteId };
+}
+
+function marcarPagamentoLote_(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Produtos_Encomendados');
+  if (!sheet) throw new Error('Aba Produtos_Encomendados não encontrada.');
+
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  
+  var loteIdColIdx = headers.indexOf('lote_id');
+  var idColIdx = headers.indexOf('id');
+  var spCol = headers.indexOf('status_pagamento');
+  var dpCol = headers.indexOf('data_pagamento');
+  var vpCol = headers.indexOf('valor_pago_lote');
+  var pendCol = headers.indexOf('valor_pendente_lote');
+
+  if (loteIdColIdx === -1 && idColIdx === -1) throw new Error('Coluna Lote ID não encontrada.');
+  if (spCol === -1) {
+    // Inject headers if missing
+    headers.push('status_pagamento', 'data_pagamento', 'valor_pago_lote', 'valor_pendente_lote');
+    sheet.getRange(1, headers.length - 3).setValue('Status Pagamento');
+    sheet.getRange(1, headers.length - 2).setValue('Data Pagamento');
+    sheet.getRange(1, headers.length - 1).setValue('Valor Pago Lote');
+    sheet.getRange(1, headers.length).setValue('Valor Pendente Lote');
+    spCol = headers.length - 4;
+    dpCol = headers.length - 3;
+    vpCol = headers.length - 2;
+    pendCol = headers.length - 1;
+  }
+
+  var found = false;
+  for (var i = 1; i < rows.length; i++) {
+    var rLoteId = rows[i][loteIdColIdx] || rows[i][idColIdx]; 
+    if (String(rLoteId) === String(payload.lote_id)) {
+      sheet.getRange(i + 1, spCol + 1).setValue(payload.status_pagamento);
+      sheet.getRange(i + 1, dpCol + 1).setValue(payload.data_pagamento || '');
+      sheet.getRange(i + 1, vpCol + 1).setValue(payload.valor_pago_lote !== undefined ? payload.valor_pago_lote : '');
+      sheet.getRange(i + 1, pendCol + 1).setValue(payload.valor_pendente_lote !== undefined ? payload.valor_pendente_lote : '');
+      found = true;
+    }
+  }
+
+  if (!found) throw new Error('Lote não encontrado.');
 }
 
 function marcarChegou(payload) {
@@ -1746,4 +1832,76 @@ function cancelarFiado(fiadoId) {
   }
 
   return true;
+}
+
+// =============================================
+// FLUXO DE CAIXA — Movimentações Manuais
+// =============================================
+
+function getMovimentosCaixa_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Fluxo_Caixa');
+  if (!sheet) return [];
+
+  var rows = sheet.getDataRange().getValues();
+  if (rows.length < 2) return [];
+
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var dataRows = rows.slice(1);
+
+  return dataRows.map(function(r) {
+    var obj = {};
+    headers.forEach(function(h, idx) {
+      obj[h] = r[idx];
+    });
+    return obj;
+  });
+}
+
+function salvarMovimentoCaixa_(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Fluxo_Caixa');
+  if (!sheet) {
+    sheet = ss.insertSheet('Fluxo_Caixa');
+    sheet.appendRow([
+      'id', 'tipo', 'data', 'valor', 'categoria', 'descricao',
+      'forma_pagamento', 'status', 'observacao', 'created_at'
+    ]);
+  }
+
+  var movId = 'MOV-' + new Date().getTime() + '-' + Math.floor(Math.random() * 1000);
+  var dataHora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  sheet.appendRow([
+    movId,
+    payload.tipo || 'entrada',
+    payload.data || dataHora.split(' ')[0],
+    Number(payload.valor) || 0,
+    payload.categoria || '',
+    payload.descricao || '',
+    payload.forma_pagamento || '',
+    payload.status || 'confirmado',
+    payload.observacao || '',
+    dataHora
+  ]);
+
+  return { id: movId };
+}
+
+function removerMovimentoCaixa_(id) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Fluxo_Caixa');
+  if (!sheet) return;
+
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var idColIdx = headers.indexOf('id');
+  if (idColIdx === -1) return;
+
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][idColIdx]) === String(id)) {
+      sheet.deleteRow(i + 1);
+      return;
+    }
+  }
 }

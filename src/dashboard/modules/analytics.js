@@ -402,7 +402,12 @@ export function renderCharts() {
         borderColor: '#23be30ff', backgroundColor: 'rgba(35, 190, 48, 0.1)', borderWidth: 2, fill: true, tension: 0.4
       }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    options: { 
+      animation: state.isSilentRefresh ? false : { duration: 1000 },
+      responsive: true, 
+      maintainAspectRatio: false, 
+      plugins: { legend: { display: false } } 
+    }
   });
 
   // Distribution Chart
@@ -427,6 +432,12 @@ export function renderCharts() {
         backgroundColor: ['#eecf22ff', '#dadadaff', '#da9240ff', '#3b3b3bff', '#000000ff'],
       }]
     },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right' } } }
+    options: { 
+      animation: state.isSilentRefresh ? false : { duration: 1000 },
+      responsive: true, 
+      maintainAspectRatio: false, 
+      cutout: '70%', 
+      plugins: { legend: { position: 'right' } } 
+    }
   });
 }

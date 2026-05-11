@@ -10,6 +10,7 @@ import * as fiado from './modules/fiado.js';
 import { initOnboarding } from './modules/onboarding.js';
 import { renderMetricas, refreshActiveCount } from './modules/metrics.js';
 import { initReceiptModal } from './modules/receipt.js';
+import * as cashflow from './modules/cashflow/index.js';
 
 // ---- INITIALIZATION ----
 const IS_LOGIN_PAGE = window.location.pathname.includes('login.html');
@@ -41,8 +42,9 @@ async function init() {
       // Don't refresh if there are pending stock changes OR if a Compras modal is open
       const isInventoryPending = Object.keys(inventory.pendingEstoqueUpdates || {}).length > 0;
       const isComprasModalOpen = compras.isModalOpen && compras.isModalOpen();
+      const isCashflowModalOpen = cashflow.isModalOpen && cashflow.isModalOpen();
       
-      if (!isInventoryPending && !isComprasModalOpen) {
+      if (!isInventoryPending && !isComprasModalOpen && !isCashflowModalOpen) {
         store.loadDashboardData(RENDER_PIPELINE, true);
       }
     }, 45000);
@@ -151,6 +153,10 @@ const RENDER_PIPELINE = {
         compras.initAndRender();
       }
 
+      if (activeTabId === 'tab-cashflow') {
+        cashflow.initAndRender();
+      }
+
       refreshActiveCount();
     } catch (err) {
       console.error('Erro ao renderizar visuais:', err);
@@ -192,6 +198,7 @@ function setupDashboardListeners() {
   const btnTabFiado = document.getElementById('tab-btn-fiado');
   const btnTabEstoque = document.getElementById('tab-btn-estoque');
   const btnTabEncomendados = document.getElementById('tab-btn-encomendados');
+  const btnTabCashflow = document.getElementById('tab-btn-cashflow');
 
   const tabGeral = document.getElementById('tab-geral');
   const tabEstrategia = document.getElementById('tab-estrategia');
@@ -200,9 +207,10 @@ function setupDashboardListeners() {
   const tabFiado = document.getElementById('tab-fiado');
   const tabEstoque = document.getElementById('tab-estoque');
   const tabEncomendados = document.getElementById('tab-encomendados');
+  const tabCashflow = document.getElementById('tab-cashflow');
 
-  const tabs = [tabGeral, tabEstrategia, tabMetricas, tabVendasHistorico, tabFiado, tabEstoque, tabEncomendados];
-  const btns = [btnTabGeral, btnTabEstrategia, btnTabMetricas, btnTabVendasHistorico, btnTabFiado, btnTabEstoque, btnTabEncomendados];
+  const tabs = [tabGeral, tabEstrategia, tabMetricas, tabVendasHistorico, tabFiado, tabEstoque, tabEncomendados, tabCashflow];
+  const btns = [btnTabGeral, btnTabEstrategia, btnTabMetricas, btnTabVendasHistorico, btnTabFiado, btnTabEstoque, btnTabEncomendados, btnTabCashflow];
 
   const globalFilterWrap = document.getElementById('global-filter-wrap');
   const globalFilterWrapMobile = document.getElementById('global-filter-wrap-mobile');
@@ -277,6 +285,12 @@ function setupDashboardListeners() {
     ui.setTab(btnTabEncomendados, tabEncomendados, btns, tabs);
     showGlobalFilters(false);
     compras.initAndRender();
+    closeMobileSidebar();
+  });
+  btnTabCashflow?.addEventListener('click', () => {
+    ui.setTab(btnTabCashflow, tabCashflow, btns, tabs);
+    showGlobalFilters(false);
+    cashflow.initAndRender();
     closeMobileSidebar();
   });
 

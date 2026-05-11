@@ -10,28 +10,29 @@ let selectedEncomendadoId = null;
 let loteChegouQueue = [];
 let loteChegouIndex = 0;
 let isLoteFlow = false;
+let currentLoteTotalValue = 0;
 
 function getCustoItemReal(item, loteGroup) {
   // Se o item já tem custo_total e custo_adicional salvos pelo novo fluxo
   if (item.custo_total !== undefined && item.custo_total !== null && String(item.custo_total) !== '') {
     return Number(item.custo_total) || 0;
   }
-  
+
   // Compatibilidade com lotes antigos: calcula o rateio dinamicamente
   const custoBase = Number(item.custo_compra) || 0;
   if (!loteGroup) return custoBase;
-  
+
   const frete = Number(loteGroup.frete || loteGroup.custo_frete) || 0;
   const taxas = Number(loteGroup.taxas || loteGroup.custo_taxas) || 0;
   const adicLote = Number(loteGroup.adicLote || loteGroup.custo_adicional_lote) || 0;
-  
+
   const custosGerais = frete + taxas + adicLote;
-  
+
   const itemsArray = loteGroup.items || loteGroup.allItems || [];
   const qtd = itemsArray.length;
-  
+
   const rateio = qtd > 0 ? custosGerais / qtd : 0;
-  
+
   return custoBase + rateio;
 }
 
@@ -107,13 +108,13 @@ export async function initAndRender() {
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse" id="enc-table">
               <thead class="hidden md:table-header-group">
-                <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  <th class="p-4">Lote / Fornecedor</th>
-                  <th class="p-4">Datas</th>
-                  <th class="p-4">Itens Totais</th>
-                  <th class="p-4">Valor do lote</th>
-                  <th class="p-4">Status do Lote</th>
-                  <th class="p-4 text-center">Ações</th>
+                <tr class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  <th class="px-4 py-4 font-black w-[20%]">Lote / Fornecedor</th>
+                  <th class="px-4 py-4 font-black w-[18%]">Datas</th>
+                  <th class="px-4 py-4 font-black text-center w-[10%]">Itens</th>
+                  <th class="px-4 py-4 font-black text-center w-[15%]">Valor do Lote</th>
+                  <th class="px-4 py-4 font-black w-[17%]">Status</th>
+                  <th class="px-4 py-4 font-black text-center w-[20%]">Ações</th>
                 </tr>
               </thead>
               <tbody class="text-sm divide-y divide-gray-100" id="enc-tbody">
@@ -143,6 +144,18 @@ export async function initAndRender() {
 
     document.getElementById('lote-data-compra').addEventListener('input', applyDateMask);
     document.getElementById('lote-previsao').addEventListener('input', applyDateMask);
+
+    const pagStatus = document.getElementById('pag-status');
+    if (pagStatus) pagStatus.addEventListener('change', togglePagamentoFields);
+
+    const btnSavePag = document.getElementById('btn-save-pagamento');
+    if (btnSavePag) btnSavePag.addEventListener('click', salvarPagamentoLote);
+
+    const pagData = document.getElementById('pag-data');
+    if (pagData) pagData.addEventListener('input', applyDateMask);
+
+    const pagValorPago = document.getElementById('pag-valor-pago');
+    if (pagValorPago) pagValorPago.addEventListener('input', handlePagamentoInput);
   }
 
   // Use global store data if available, otherwise fetch
@@ -166,6 +179,8 @@ async function fetchData() {
 
     if (result.ok) {
       comprasData = result.data || [];
+      // Sync with global store
+      state.allEncomendas = comprasData;
     } else {
       throw new Error(result.error);
     }
@@ -514,7 +529,7 @@ function renderTable() {
 
     const rect = btn.getBoundingClientRect();
     const menuWidth = 160; // w-40
-    
+
     // Mostra temporariamente para medir a altura
     menu.style.visibility = 'hidden';
     menu.classList.remove('hidden');
@@ -526,7 +541,7 @@ function renderTable() {
     if (top + menuHeight > window.innerHeight) {
       top = rect.top - menuHeight - 8;
     }
-    
+
     // Garantir que não fuja pelo topo também
     if (top < 8) top = 8;
 
@@ -567,78 +582,100 @@ function renderTable() {
     });
 
     let statusBadge = '';
-    if (arrivedCount === 0) statusBadge = `<span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-[10px] font-bold rounded uppercase tracking-wider">A Caminho</span>`;
-    else if (arrivedCount < items.length) statusBadge = `<span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase tracking-wider">Parcial (${arrivedCount}/${items.length})</span>`;
-    else statusBadge = `<span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase tracking-wider">Recebido</span>`;
+    if (arrivedCount === 0) statusBadge = `<span class="px-2.5 py-1 bg-amber-50 text-amber-700 text-[10px] font-black rounded-lg border border-amber-100 uppercase tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-truck-moving text-[9px] opacity-70"></i> A Caminho</span>`;
+    else if (arrivedCount < items.length) statusBadge = `<span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-[10px] font-black rounded-lg border border-blue-100 uppercase tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-spinner fa-spin text-[9px] opacity-70"></i> Parcial (${arrivedCount}/${items.length})</span>`;
+    else statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black rounded-lg border border-emerald-100 uppercase tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-check-double text-[9px] opacity-70"></i> Recebido</span>`;
+
+    let finStatus = lote.status_pagamento || 'pendente';
+    let finBadge = '';
+    if (finStatus === 'pago') finBadge = `<span class="px-2.5 py-1 bg-gray-900 text-white text-[10px] font-black rounded-lg uppercase tracking-widest flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-circle-check text-emerald-400 text-[9px]"></i> Pago</span>`;
+    else if (finStatus === 'parcial') {
+      let vPago = Number(lote.valor_pago_lote) || 0;
+      let vPend = Number(lote.valor_pendente_lote) || 0;
+      finBadge = `<span class="px-2.5 py-1 bg-white text-amber-600 text-[10px] font-black rounded-lg border border-amber-200 uppercase tracking-widest flex items-center gap-1.5 shadow-sm tooltip" title="Pago: R$ ${vPago.toFixed(2)} | Pend: R$ ${vPend.toFixed(2)}"><i class="fa-solid fa-circle-half-stroke text-[9px]"></i> Parcial</span>`;
+    } else {
+      finBadge = `<span class="px-2.5 py-1 bg-white text-gray-400 text-[10px] font-black rounded-lg border border-gray-200 uppercase tracking-widest flex items-center gap-1.5 shadow-sm"><i class="fa-regular fa-clock text-[9px]"></i> Pendente</span>`;
+    }
 
     let html = `
-      <tr class="flex flex-col md:table-row hover:bg-gray-50/80 transition cursor-pointer border-t-[3px] border-gray-200 p-4 md:p-0" onclick="window.toggleLote('${lid}')">
-        <td class="p-0 md:p-4 block md:table-cell">
-          <div class="text-base font-black text-gray-900 flex items-center gap-2">
-            <i id="lote-icon-${lid}" class="fa-solid fa-chevron-down text-gray-400 text-xs"></i> 
-            ${lote.fornecedor || 'Desconhecido'}
-          </div>
-          <div class="text-[10px] text-gray-400 font-medium uppercase mt-1 tracking-wider">ID: ${String(lid).substring(0, 8)} • Compra: ${formatDateBr(lote.data_compra)}</div>
-        </td>
-        <td class="pt-2 md:p-4 block md:table-cell">
-          <span class="md:hidden text-[10px] font-bold text-gray-400 uppercase mr-1">Datas:</span>
-          <div class="inline-block md:block text-xs text-gray-500 mb-0.5">
-            <span class="font-medium text-gray-400">Compra:</span> ${formatDateBr(lote.data_compra)}
-          </div>
-          <div class="inline-flex md:flex items-center gap-1.5 text-xs text-gray-700 mt-1 md:mt-0">
-            <span class="font-medium text-gray-400">Chegada:</span> ${formatDateBr(lote.previsao_chegada)}
-            ${getRelativeDateBadge(lote.previsao_chegada, arrivedCount === items.length)}
+      <tr class="flex flex-col md:table-row hover:bg-gray-50/50 transition cursor-pointer border-t border-gray-100 group p-4 md:p-0" onclick="window.toggleLote('${lid}')">
+        <td class="p-0 md:px-4 md:py-5 md:table-cell align-middle">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors shrink-0">
+              <i id="lote-icon-${lid}" class="fa-solid fa-chevron-down text-[9px]"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="text-sm font-bold text-gray-900 leading-tight truncate">${lote.fornecedor || 'Desconhecido'}</div>
+              <div class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">ID: ${String(lid).substring(0, 8)}</div>
+            </div>
           </div>
         </td>
-        <td class="py-1 md:p-4 block md:table-cell">
-          <span class="md:hidden text-[10px] font-bold text-gray-400 uppercase mr-1">Itens:</span>
-          <div class="inline-block md:block text-sm font-bold text-gray-800">${items.length}</div>
-          <div class="hidden md:block text-xs text-gray-500">${pendingCount} pendentes</div>
+
+        <td class="py-2 md:px-4 md:py-5 md:table-cell align-middle">
+          <div class="flex flex-col gap-0.5">
+            <div class="flex items-center gap-1.5 text-[10px] text-gray-500">
+              <i class="fa-regular fa-calendar text-[9px] text-gray-300"></i>
+              <span class="md:hidden font-bold text-gray-400 uppercase tracking-tighter mr-1">Compra:</span>
+              <span class="font-bold text-gray-700">${formatDateBr(lote.data_compra)}</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px] text-gray-500">
+              <i class="fa-solid fa-truck-fast text-[9px] text-gray-300"></i>
+              <span class="md:hidden font-bold text-gray-400 uppercase tracking-tighter mr-1">Chegada:</span>
+              <span class="font-bold text-gray-700">${formatDateBr(lote.previsao_chegada)}</span>
+              ${getRelativeDateBadge(lote.previsao_chegada, arrivedCount === items.length)}
+            </div>
+          </div>
         </td>
-        <td class="py-1 md:p-4 block md:table-cell">
-          <span class="md:hidden text-[10px] font-bold text-gray-400 uppercase mr-1">Custo Total:</span>
-          <div class="inline-block md:block text-sm font-bold text-gray-900">${formatMoney(totalLoteValue)}</div>
+
+        <td class="py-1 md:px-4 md:py-5 md:table-cell align-middle text-left md:text-center">
+          <span class="md:hidden text-[10px] font-bold text-gray-400 uppercase tracking-tighter mr-2">Itens:</span>
+          <div class="inline-block md:block text-sm font-bold text-gray-900">${items.length}</div>
+          <div class="inline-block md:block text-[9px] font-bold text-amber-600 uppercase tracking-tighter ml-2 md:ml-0">${pendingCount} pendentes</div>
         </td>
-        <td class="py-1 md:p-4 block md:table-cell">
-          <span class="md:hidden text-[10px] font-bold text-gray-400 uppercase mr-1">Status:</span>
-          <div class="inline-block md:block">${statusBadge}</div>
+
+        <td class="py-1 md:px-4 md:py-5 md:table-cell align-middle text-left md:text-center">
+          <span class="md:hidden text-[10px] font-bold text-gray-400 uppercase tracking-tighter mr-2">Total:</span>
+          <div class="inline-block md:block text-sm font-black text-gray-900">${formatMoney(totalLoteValue)}</div>
         </td>
-        <td class="py-2 md:py-4 px-4 block md:table-cell" onclick="event.stopPropagation()">
-          <div class="flex flex-wrap md:flex-nowrap justify-start md:justify-center items-center gap-4 md:gap-6">
-            <!-- Primary Action -->
-            <button onclick="window.abrirLoteChegou('${lid}')" class="flex-1 md:flex-none px-4 py-2.5 bg-gray-700 hover:bg-gray-800 text-white text-[11px] font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-2 whitespace-nowrap">
-              <i class="fa-solid fa-boxes-stacked"></i> <span>Receber</span>
+
+        <td class="py-2 md:px-4 md:py-5 md:table-cell align-middle">
+          <div class="flex flex-row md:flex-col gap-1.5 items-center md:items-start">
+            <span class="md:hidden text-[10px] font-bold text-gray-400 uppercase tracking-tighter mr-2">Status:</span>
+            ${statusBadge}
+            ${finBadge}
+          </div>
+        </td>
+
+        <td class="py-3 md:px-4 md:py-5 md:table-cell align-middle" onclick="event.stopPropagation()">
+          <div class="flex items-center justify-start md:justify-end gap-2">
+            <button onclick="window.abrirLoteChegou('${lid}')" class="flex-1 md:flex-none px-3 py-2 bg-gray-900 hover:bg-gray-800 text-white text-[10px] font-black rounded-lg shadow-sm transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-boxes-stacked text-[9px]"></i> Receber
+            </button>
+            <button onclick="event.stopPropagation(); window.abrirModalPagamentoLote('${lid}')" class="flex-1 md:flex-none px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-lg shadow-sm transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-file-invoice-dollar text-[9px]"></i> Pagar
             </button>
 
-            <!-- Secondary Navigation -->
-            <button onclick="window.toggleLote('${lid}')" class="flex-1 md:flex-none text-indigo-600 hover:text-indigo-800 text-[11px] font-bold flex items-center justify-center gap-1 transition whitespace-nowrap">
-              <span id="toggle-text-${lid}">Ver itens</span>
-              <i id="lote-icon-inline-${lid}" class="fa-solid fa-chevron-down text-[10px]"></i>
-            </button>
-
-            <!-- Contextual Menu -->
-            <div class="relative ml-auto md:ml-0">
-              <button class="w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 md:bg-transparent hover:bg-gray-100 text-gray-400 transition border border-gray-100 md:border-none" onclick="window.toggleActionMenu(event, '${lid}')">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
+            <div class="relative ml-1">
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition" onclick="window.toggleActionMenu(event, '${lid}')">
+                <i class="fa-solid fa-ellipsis-vertical text-xs"></i>
               </button>
             </div>
           </div>
         </td>
       </tr>
-      <tr id="lote-items-${lid}" class="hidden bg-gray-50 border-b border-gray-200">
-        <td colspan="6" class="p-0 md:p-4">
-          <div class="p-2 md:pl-8 border-l-4 border-indigo-500">
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-              <table class="w-full text-left">
-                <thead class="hidden md:table-header-group bg-gray-100 border-b border-gray-200 text-[10px] font-bold text-gray-500 uppercase">
-                  <tr>
-                    <th class="p-2 pl-4">Aparelho</th>
-                    <th class="p-2">Características</th>
-                    <th class="p-2">Custo Unitário</th>
-                    <th class="p-2">Status</th>
-                    <th class="p-2 text-center">Ação</th>
-                  </tr>
-                </thead>
+      <tr id="lote-items-${lid}" class="hidden bg-gray-50/30">
+        <td colspan="6" class="p-4 md:p-6">
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 animate-[fadeIn_0.3s_ease-out]">
+            <table class="w-full text-left">
+              <thead class="hidden md:table-header-group bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                <tr>
+                  <th class="px-6 py-3">Aparelho</th>
+                  <th class="px-6 py-3">Características</th>
+                  <th class="px-6 py-3 text-center">Custo Unitário</th>
+                  <th class="px-6 py-3 text-center">Status</th>
+                  <th class="px-6 py-3 text-center">Gestão</th>
+                </tr>
+              </thead>
                 <tbody class="divide-y divide-gray-100 text-xs">
     `;
 
@@ -651,35 +688,33 @@ function renderTable() {
       if (isChegou && filter === 'pendentes') return;
 
       html += `
-        <tr class="flex flex-col md:table-row ${isChegou ? 'opacity-60 bg-gray-50' : ''} p-3 md:p-0">
-          <td class="p-0 md:p-2 md:pl-4 block md:table-cell">
-            <div class="font-bold text-gray-900">${i.modelo || '-'}</div>
-            <div class="text-[10px] text-gray-500">${i.versao || ''} - ${i.condicao || ''}</div>
+        <tr class="flex flex-col md:table-row ${isChegou ? 'bg-gray-50/50' : ''} group/item transition-colors hover:bg-gray-50/80">
+          <td class="px-4 py-3 md:table-cell align-middle">
+            <div class="font-bold text-gray-900 text-xs">${i.modelo || '-'}</div>
+            <div class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">${i.versao || ''}</div>
           </td>
-          <td class="py-1 md:p-2 block md:table-cell">
-            <span class="md:hidden text-[9px] font-bold text-gray-400 uppercase mr-1">Config:</span>
-            <span class="font-medium">${i.memoria || '-'}</span>, ${i.cor || '-'}
+          <td class="px-4 py-3 md:table-cell align-middle">
+            <div class="text-[11px] font-medium text-gray-700">${i.memoria || '-'} • ${i.cor || '-'}</div>
+            <div class="text-[9px] text-gray-400 mt-0.5">${i.condicao || '-'}</div>
           </td>
-          <td class="py-1 md:p-2 block md:table-cell">
-            <span class="md:hidden text-[9px] font-bold text-gray-400 uppercase mr-1">Custo:</span>
-            <div class="inline-block md:block font-bold text-gray-900">${formatMoney(custoItemReal)}</div>
-            <div class="hidden md:block text-[9px] text-gray-400 font-medium">Base: ${formatMoney(custoItemBase)}</div>
+          <td class="px-4 py-3 md:table-cell align-middle text-left md:text-center">
+            <div class="font-black text-gray-900 text-xs">${formatMoney(custoItemReal)}</div>
+            <div class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Base: ${formatMoney(custoItemBase)}</div>
           </td>
-          <td class="py-1 md:p-2 block md:table-cell">
-            <span class="md:hidden text-[9px] font-bold text-gray-400 uppercase mr-1">Status:</span>
-             <div class="inline-block md:block">${isChegou ? '<span class="text-green-600 font-bold"><i class="fa-solid fa-check mr-1"></i>Recebido</span>' : '<span class="text-yellow-600 font-bold"><i class="fa-solid fa-clock mr-1"></i>Pendente</span>'}</div>
+          <td class="px-4 py-3 md:table-cell align-middle text-left md:text-center">
+             <div class="inline-flex">${isChegou ? '<span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-black rounded border border-emerald-100 uppercase tracking-widest flex items-center gap-1"><i class="fa-solid fa-check text-[8px]"></i> Recebido</span>' : '<span class="px-2 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-black rounded border border-amber-100 uppercase tracking-widest flex items-center gap-1"><i class="fa-solid fa-clock text-[8px]"></i> Pendente</span>'}</div>
           </td>
-          <td class="py-2 px-4 block md:table-cell text-center">
-            <div class="flex flex-wrap md:flex-nowrap justify-start md:justify-center gap-2">
-              ${isChegou ? '-' : `
-                <button onclick="window.encomendadosChegou('${i.id}')" class="px-3 py-2 md:px-2 md:py-1 bg-green-500 hover:bg-green-600 text-white text-[10px] font-bold rounded-lg shadow-sm transition flex items-center gap-1>
-                  <i class="fa-solid fa-check"></i> <span class="md:hidden">Chegou</span>
+          <td class="px-4 py-3 md:table-cell align-middle">
+            <div class="flex items-center justify-center gap-1.5">
+              ${isChegou ? '<span class="text-gray-300 text-[9px] font-bold uppercase tracking-widest">OK</span>' : `
+                <button onclick="window.encomendadosChegou('${i.id}')" class="w-7 h-7 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg shadow-sm transition" title="Marcar como Chegou">
+                  <i class="fa-solid fa-check text-[9px]"></i>
                 </button>
-                <button onclick="window.abrirModalEdicaoLote('${lid}', '${i.id}')" class="px-3 py-2 md:px-2 md:py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg shadow-sm transition flex items-center gap-1 border border-indigo-100 md:border-none" title="Editar Aparelho">
-                  <i class="fa-solid fa-pen-to-square"></i> <span class="md:hidden">Editar</span>
+                <button onclick="window.abrirModalEdicaoLote('${lid}', '${i.id}')" class="w-7 h-7 flex items-center justify-center bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition border border-indigo-100" title="Editar Aparelho">
+                  <i class="fa-solid fa-pen text-[9px]"></i>
                 </button>
-                <button onclick="window.excluirEncomendado('${i.id}', false)" class="w-10 h-10 md:w-6 md:h-6 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition shadow-sm md:shadow-none" title="Excluir Item">
-                  <i class="fa-solid fa-trash-can text-[10px]"></i>
+                <button onclick="window.excluirEncomendado('${i.id}', false)" class="w-7 h-7 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition border border-red-100" title="Excluir Item">
+                  <i class="fa-solid fa-trash-can text-[9px]"></i>
                 </button>
               `}
             </div>
@@ -826,6 +861,56 @@ function renderModals() {
           <button type="button" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition enc-close-modal">Cancelar</button>
           <button type="button" id="btn-save-lote" class="px-6 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition flex items-center gap-2">
             <i class="fa-solid fa-check"></i> Salvar Lote
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Pagamento Lote -->
+    <div id="modal-pagamento-lote" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[110] p-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col">
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-emerald-50/50">
+          <h3 class="text-lg font-bold text-emerald-800"><i class="fa-solid fa-file-invoice-dollar text-emerald-500 mr-2"></i>Pagamento do Lote</h3>
+          <button type="button" class="text-gray-400 hover:text-gray-600 transition" onclick="document.getElementById('modal-pagamento-lote').classList.add('hidden'); document.getElementById('modal-pagamento-lote').classList.remove('flex');"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="pag-lote-id">
+          
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Status Financeiro *</label>
+            <select id="pag-status" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+              <option value="pendente">Pendente</option>
+              <option value="pago">Pago Total</option>
+              <option value="parcial">Pagamento Parcial</option>
+            </select>
+          </div>
+          
+          <div class="relative">
+            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Data do Pagamento</label>
+            <div class="relative">
+              <input type="text" id="pag-data" class="w-full pl-3 pr-8 py-2 border rounded-lg text-sm outline-none text-gray-700" placeholder="DD/MM/YYYY" maxlength="10">
+              <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center">
+                <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="pag-data">
+                <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div id="pag-parcial-fields" class="hidden grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div>
+              <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Valor Pago (R$)</label>
+              <input type="number" id="pag-valor-pago" class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-white" placeholder="0.00">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Valor Restante (R$)</label>
+              <input type="number" id="pag-valor-pendente" class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-white" placeholder="0.00">
+            </div>
+          </div>
+        </div>
+        <div class="p-4 border-t border-gray-100 flex justify-end gap-2 bg-gray-50">
+          <button type="button" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition" onclick="document.getElementById('modal-pagamento-lote').classList.add('hidden'); document.getElementById('modal-pagamento-lote').classList.remove('flex');">Cancelar</button>
+          <button type="button" id="btn-save-pagamento" class="px-6 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition flex items-center gap-2">
+            <i class="fa-solid fa-check"></i> Confirmar
           </button>
         </div>
       </div>
@@ -1038,10 +1123,10 @@ function clearLoteErrors() {
   });
 }
 
-window.updateRateioAndSummary = function() {
+window.updateRateioAndSummary = function () {
   const itemForms = document.querySelectorAll('.item-enc-form');
   let totalUnidades = 0;
-  
+
   itemForms.forEach(form => {
     const qtd = parseInt(form.querySelector('.i-qtd').value) || 0;
     totalUnidades += qtd;
@@ -1050,10 +1135,10 @@ window.updateRateioAndSummary = function() {
   const frete = Number(document.getElementById('lote-frete')?.value) || 0;
   const taxas = Number(document.getElementById('lote-taxas')?.value) || 0;
   const adic = Number(document.getElementById('lote-adic')?.value) || 0;
-  
+
   const custosGeraisLote = frete + taxas + adic;
   const rateioPorUnidade = totalUnidades > 0 ? (custosGeraisLote / totalUnidades) : 0;
-  
+
   let custoTotalRealLote = 0;
   let vendaPrevistaTotal = 0;
 
@@ -1064,7 +1149,7 @@ window.updateRateioAndSummary = function() {
 
     const custoRealUnitario = custoUnitario + rateioPorUnidade;
     const custoRealTotalItem = custoRealUnitario * qtd;
-    
+
     custoTotalRealLote += custoRealTotalItem;
     vendaPrevistaTotal += (vendaPrevista * qtd);
 
@@ -1079,7 +1164,7 @@ window.updateRateioAndSummary = function() {
         previewDiv.classList.add('hidden');
       }
     }
-    
+
     // Armazena dados calculados no form para salvar no payload
     form.dataset.rateioCalculado = rateioPorUnidade;
     form.dataset.custoRealTotal = custoRealUnitario;
@@ -1197,7 +1282,7 @@ function appendItemForm(itemData = null) {
     div.querySelector('.i-custo').value = Number(itemData.custo_compra) || 0; // Mostrar apenas o custo base no input
     div.querySelector('.i-venda').value = itemData.preco_venda_previsto || '';
   }
-  
+
   window.updateRateioAndSummary();
 }
 
@@ -1217,7 +1302,7 @@ window.duplicarItemForm = function (counterId) {
   newItem.querySelector('.i-custo').value = original.querySelector('.i-custo').value;
   newItem.querySelector('.i-venda').value = original.querySelector('.i-venda').value;
   newItem.querySelector('.i-qtd').value = original.querySelector('.i-qtd').value;
-  
+
   window.updateRateioAndSummary();
 }
 
@@ -1327,6 +1412,16 @@ async function salvarLoteEncomenda() {
     custo_adicional_lote: Number(document.getElementById('lote-adic').value) || 0,
     observacoes_lote: document.getElementById('lote-obs').value.trim()
   };
+
+  if (editingLoteId) {
+    const loteGroup = comprasData.find(e => (e.lote_id || e.id) === editingLoteId);
+    if (loteGroup) {
+      loteData.status_pagamento = loteGroup.status_pagamento || 'pendente';
+      loteData.data_pagamento = loteGroup.data_pagamento || '';
+      loteData.valor_pago_lote = loteGroup.valor_pago_lote || '';
+      loteData.valor_pendente_lote = loteGroup.valor_pendente_lote || '';
+    }
+  }
 
   const itemForms = document.querySelectorAll('.item-enc-form');
   if (itemForms.length === 0) {
@@ -1762,6 +1857,122 @@ async function confirmarChegada() {
         btnText.textContent = oldText;
       }
     }
+    btn.disabled = false;
+  }
+}
+
+// ==========================================
+// FINANCEIRO / PAGAMENTO LOTE
+// ==========================================
+
+function togglePagamentoFields() {
+  const status = document.getElementById('pag-status').value;
+  const partialFields = document.getElementById('pag-parcial-fields');
+
+  if (status === 'parcial') {
+    partialFields.classList.remove('hidden');
+    // If empty, suggest full value as a starting point? 
+    // Actually just let user type.
+  } else if (status === 'pago') {
+    partialFields.classList.add('hidden');
+    document.getElementById('pag-valor-pago').value = currentLoteTotalValue.toFixed(2);
+    document.getElementById('pag-valor-pendente').value = '0';
+  } else {
+    partialFields.classList.add('hidden');
+  }
+}
+
+function handlePagamentoInput() {
+  const valorPago = Number(document.getElementById('pag-valor-pago').value) || 0;
+  const restante = Math.max(0, currentLoteTotalValue - valorPago);
+  document.getElementById('pag-valor-pendente').value = restante.toFixed(2);
+}
+
+window.abrirModalPagamentoLote = function (loteId) {
+  const loteItems = comprasData.filter(e => (e.lote_id || e.id) === loteId);
+  const lote = loteItems[0];
+  if (!lote) return;
+
+  document.getElementById('pag-lote-id').value = loteId;
+  document.getElementById('pag-status').value = lote.status_pagamento || 'pendente';
+
+  // Calculate total lot value for autocomplete logic
+  currentLoteTotalValue = 0;
+  const lGroupForCalc = {
+    frete: Number(lote.custo_frete) || 0,
+    taxas: Number(lote.custo_taxas) || 0,
+    adicLote: Number(lote.custo_adicional_lote) || 0,
+    items: loteItems
+  };
+  loteItems.forEach(i => {
+    currentLoteTotalValue += getCustoItemReal(i, lGroupForCalc);
+  });
+
+  // Format data for input (DD/MM/YYYY)
+  const dateVal = lote.data_pagamento ? formatDateBr(lote.data_pagamento) : formatDateBr(new Date());
+  document.getElementById('pag-data').value = dateVal;
+
+  document.getElementById('pag-valor-pago').value = lote.valor_pago_lote || '';
+  document.getElementById('pag-valor-pendente').value = lote.valor_pendente_lote || '';
+
+  togglePagamentoFields();
+
+  const modal = document.getElementById('modal-pagamento-lote');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+};
+
+async function salvarPagamentoLote() {
+  const loteId = document.getElementById('pag-lote-id').value;
+  const status = document.getElementById('pag-status').value;
+  const dataInput = document.getElementById('pag-data').value;
+  const data = parseDateBr(dataInput);
+  const valorPago = Number(document.getElementById('pag-valor-pago').value) || 0;
+  const valorPendente = Number(document.getElementById('pag-valor-pendente').value) || 0;
+
+  if (!data) {
+    showToast('Informe a data do pagamento', 'red', 'fa-xmark');
+    return;
+  }
+
+  const payload = {
+    lote_id: loteId,
+    status_pagamento: status,
+    data_pagamento: data,
+    valor_pago_lote: valorPago,
+    valor_pendente_lote: valorPendente
+  };
+
+  const btn = document.getElementById('btn-save-pagamento');
+  const oldText = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch(`${CONFIG.apiBaseUrl}?action=marcar_pagamento_lote`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+
+    if (result.ok) {
+      showToast('Pagamento atualizado!', 'green', 'fa-check');
+      const modal = document.getElementById('modal-pagamento-lote');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+      await fetchData(); // Refresh table
+    } else {
+      throw new Error(result.error || 'Erro ao salvar pagamento');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Erro ao salvar pagamento', 'red', 'fa-xmark');
+  } finally {
+    btn.innerHTML = oldText;
     btn.disabled = false;
   }
 }

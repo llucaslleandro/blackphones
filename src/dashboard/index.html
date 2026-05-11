@@ -1076,6 +1076,8 @@
       background: #cbd5e1;
     }
   </style>
+  <!-- Cashflow Module Styles -->
+  <link rel="stylesheet" href="modules/cashflow/styles.css" />
   <!-- Driver.js for Onboarding -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css" />
 </head>
@@ -1118,6 +1120,12 @@
               class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-gray-900 bg-gray-100">
               <i class="fa-solid fa-chart-pie sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
               <span class="sidebar-label">Painel Geral</span>
+            </button>
+
+            <button id="tab-btn-cashflow" data-tooltip="Fluxo de Caixa"
+              class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-gray-500 hover:bg-gray-50 hover:text-gray-700">
+              <i class="fa-solid fa-money-bill-transfer sidebar-nav-icon text-sm mr-0 w-5 text-center"></i>
+              <span class="sidebar-label">Fluxo de Caixa</span>
             </button>
 
             <button id="tab-btn-estrategia" data-tooltip="Análise Estratégica"
@@ -1629,6 +1637,11 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- CONTEÚDO: FLUXO DE CAIXA -->
+        <div id="tab-cashflow" class="tab-content hidden space-y-6">
+          <!-- Renderizado via JS para manter a modularidade -->
         </div>
 
         <!-- CONTEÚDO: ENCOMENDADOS -->

@@ -21,7 +21,8 @@ export const state = {
   currentPeriodEnd: null,
   allFiados: [],
   allEncomendas: [],
-  isFetching: false
+  isFetching: false,
+  isSilentRefresh: false
 };
 
 export async function fetchJSON(url) {
@@ -54,6 +55,7 @@ export async function uploadImageToDrive(base64, filename) {
 }
 
 export async function loadDashboardData(callbacks, silent = false) {
+  state.isSilentRefresh = silent;
   if (!silent) toggleLoading(true);
   state.isFetching = true;
   
@@ -90,6 +92,8 @@ export async function loadDashboardData(callbacks, silent = false) {
     state.isFetching = false;
     // Trigger render pipeline
     if (callbacks.onDataLoaded) callbacks.onDataLoaded();
+    
+    state.isSilentRefresh = false;
 
     if (!silent) toggleLoading(false, true, state.allOrders.length > 0);
   } catch (error) {
