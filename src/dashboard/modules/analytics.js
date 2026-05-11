@@ -388,7 +388,9 @@ export function renderCharts() {
   const dData = {};
   [...state.filteredOrders].sort((a, b) => a.parsedDate - b.parsedDate).forEach(o => {
     if (o.parsedDate.getTime() === 0 || o.status !== 'Fechado') return;
-    const k = o.parsedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+    const day = String(o.parsedDate.getDate()).padStart(2, '0');
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const k = `${day}/${months[o.parsedDate.getMonth()]}`;
     dData[k] = (dData[k] || 0) + (o.final_price || o.total);
   });
 

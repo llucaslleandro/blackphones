@@ -117,11 +117,17 @@ export function formatDateBr(val) {
   if (!val) return '-';
   const d = new Date(val);
   if (isNaN(d.getTime())) return val;
-  // Adjust for timezone if it's a pure date string (YYYY-MM-DD)
-  if (typeof val === 'string' && val.length === 10) {
-    d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+
+  // Handle ISO date strings (YYYY-MM-DD) carefully to avoid timezone shifts
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    const [y, m, day] = val.split('-').map(Number);
+    return `${String(day).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
   }
-  return d.toLocaleDateString('pt-BR');
+
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 /**

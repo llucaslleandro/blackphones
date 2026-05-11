@@ -139,15 +139,20 @@ export function renderTable(callbacks = {}) {
   };
 
   displayOrders.forEach(o => {
-    const dataFormatada = o.parsedDate.getTime() === 0 ? o.data : formatDateBr(o.parsedDate) + ' ' + o.parsedDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const isDateValid = o.parsedDate && !isNaN(o.parsedDate.getTime()) && o.parsedDate.getTime() !== 0;
+    const dataFormatada = isDateValid 
+      ? formatDateBr(o.parsedDate) + ' ' + o.parsedDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      : formatDateBr(o.data);
 
     // Financial logic
-    const prodRef = state.allProducts.find(p =>
+    let prodRef = state.allProducts.find(p =>
       (p.sku && String(p.sku) === String(o.sku)) ||
       (p.id && String(p.id) === String(o.sku)) ||
-      (p.id && String(p.id) === String(o.id)) ||
-      (p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase())
+      (p.id && String(p.id) === String(o.id))
     );
+    if (!prodRef) {
+      prodRef = state.allProducts.find(p => p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase());
+    }
     const custoUnit = prodRef ? parseFloat(prodRef.custo || prodRef.preco_custo) || 0 : 0;
     const rev = parseFloat(o.final_price || o.total) || 0;
     const lucro = rev - (custoUnit * (o.quantidade || 1));
@@ -405,11 +410,14 @@ function renderOperationalKPIs(orders) {
     totalRevenue += rev;
 
     // Lookup product for cost (same logic as analytics.js)
-    const prodRef = state.allProducts.find(p =>
+    let prodRef = state.allProducts.find(p =>
       (p.sku && String(p.sku) === String(o.sku)) ||
       (p.id && String(p.id) === String(o.sku)) ||
       (p.id && String(p.id) === String(o.id))
     );
+    if (!prodRef) {
+      prodRef = state.allProducts.find(p => p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase());
+    }
 
     if (prodRef) {
       const custoUnit = parseFloat(prodRef.custo || prodRef.preco_custo) || 0;
@@ -878,7 +886,10 @@ export function abrirModalEdicaoPedido(id, callbacks = {}) {
 
   document.getElementById('edit-btn-add-pagamento').onclick = () => addEditPaymentRow();
 
-  const dataFormatada = order.parsedDate.getTime() === 0 ? order.data : formatDateBr(order.parsedDate) + ' ' + order.parsedDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const isDateValid = order.parsedDate && !isNaN(order.parsedDate.getTime()) && order.parsedDate.getTime() !== 0;
+  const dataFormatada = isDateValid 
+    ? formatDateBr(order.parsedDate) + ' ' + order.parsedDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : formatDateBr(order.data);
   document.getElementById('edit-data-venda').value = dataFormatada;
 
   // Abrir Drawer
@@ -1386,12 +1397,14 @@ export function filterOrders() {
   }
   if (state.tableLossOnly) {
     displayOrders = displayOrders.filter(o => {
-      const prodRef = state.allProducts.find(p =>
+      let prodRef = state.allProducts.find(p =>
         (p.sku && String(p.sku) === String(o.sku)) ||
         (p.id && String(p.id) === String(o.sku)) ||
-        (p.id && String(p.id) === String(o.id)) ||
-        (p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase())
+        (p.id && String(p.id) === String(o.id))
       );
+      if (!prodRef) {
+        prodRef = state.allProducts.find(p => p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase());
+      }
       if (!prodRef) return false;
       const rev = parseFloat(o.final_price || o.total) || 0;
       const custoTotal = (parseFloat(prodRef.custo || prodRef.preco_custo) || 0) * (o.quantidade || 1);
@@ -1400,12 +1413,14 @@ export function filterOrders() {
   }
   if (state.tableMarginFilter !== 'all') {
     displayOrders = displayOrders.filter(o => {
-      const prodRef = state.allProducts.find(p =>
+      let prodRef = state.allProducts.find(p =>
         (p.sku && String(p.sku) === String(o.sku)) ||
         (p.id && String(p.id) === String(o.sku)) ||
-        (p.id && String(p.id) === String(o.id)) ||
-        (p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase())
+        (p.id && String(p.id) === String(o.id))
       );
+      if (!prodRef) {
+        prodRef = state.allProducts.find(p => p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase());
+      }
       if (!prodRef) return false;
       const rev = parseFloat(o.final_price || o.total) || 0;
       const custoTotal = (parseFloat(prodRef.custo || prodRef.preco_custo) || 0) * (o.quantidade || 1);

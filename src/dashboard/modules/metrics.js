@@ -203,7 +203,12 @@ function formatTimeAgo(date) {
   if (diffMin < 60) return `há ${diffMin} min`;
   if (diffHr < 24) return `há ${diffHr}h`;
 
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+
+  return `${day}/${month} às ${hour}:${minute}`;
 }
 
 function renderMetricsData(metrics) {

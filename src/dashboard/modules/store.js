@@ -81,7 +81,27 @@ export async function loadDashboardData(callbacks, silent = false) {
     state.allOrders = rawPedidos.map(order => ({
       ...order,
       item_id: order.id_do_item || null,
-      parsedDate: order.data ? new Date(order.data) : new Date(0),
+      parsedDate: (() => {
+        if (!order.data) return new Date(0);
+        
+        // INTERCEPT BR format strings first!
+        // If it starts with DD/MM/YYYY, new Date() might incorrectly parse it as MM/DD/YYYY
+        if (typeof order.data === 'string' && /^\d{2}\/\d{2}\/\d{4}/.test(order.data)) {
+          const parts = order.data.split(/[\/\s-:]/);
+          const day = parts[0];
+          const month = parts[1];
+          const year = parts[2];
+          const hr = parts[3] || '12';
+          const mn = parts[4] || '00';
+          const sc = parts[5] || '00';
+          return new Date(`${year}-${month}-${day}T${hr}:${mn}:${sc}`);
+        }
+        
+        const d = new Date(order.data);
+        if (!isNaN(d.getTime())) return d;
+        
+        return new Date(0);
+      })(),
       quantidade: parseInt(order.quantidade) || 1,
       total: parseNumber(order.total),
       final_price: order.preço_final ? parseNumber(order.preço_final) : null,

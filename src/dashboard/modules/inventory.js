@@ -320,13 +320,13 @@ export function renderEstoque(callbacks = {}) {
           </div>
           
           <!-- Badges & Actions -->
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex gap-2">
-              <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-bold uppercase rounded">${badgeCondicao}</span>
-              <span class="px-2 py-0.5 ${estVal > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'} text-[8px] font-bold uppercase rounded">${estVal > 0 ? 'Em Estoque' : 'Esgotado'}</span>
-              ${!isActive ? '<span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-bold uppercase rounded">Inativo</span>' : ''}
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div class="flex flex-wrap gap-1.5 flex-1 min-w-0">
+              <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-bold uppercase rounded whitespace-nowrap">${badgeCondicao}</span>
+              <span class="px-2 py-0.5 ${estVal > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'} text-[8px] font-bold uppercase rounded whitespace-nowrap">${estVal > 0 ? 'Em Estoque' : 'Esgotado'}</span>
+              ${!isActive ? '<span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-bold uppercase rounded whitespace-nowrap">Inativo</span>' : ''}
             </div>
-            <div class="flex gap-2 text-gray-300">
+            <div class="flex items-center gap-2 text-gray-300 shrink-0 mt-0.5">
               <button class="est-toggle-btn hover:text-indigo-500 transition" data-id="${p.id}" title="${isActive ? 'Desativar' : 'Ativar'}">
                  <i class="fa-solid ${isActive ? 'fa-eye text-green-500' : 'fa-eye-slash'} text-xs"></i>
               </button>
@@ -950,9 +950,23 @@ function gerarSlug(texto) {
     .replace(/^-|-$/g, '');
 }
 
-function gerarIds(nome, cor, armazenamento, condicao) {
+function gerarIds(nome, cor, armazenamento, condicao, saude_bateria, imei1) {
   const grupoId = gerarSlug(nome) || ('prod-' + Date.now());
-  const variacao = [armazenamento, cor, condicao].filter(Boolean).map(gerarSlug).join('-');
+  
+  let extras = [];
+  if (condicao && String(condicao).toLowerCase().includes('seminovo')) {
+    if (saude_bateria) {
+      const batVal = String(saude_bateria).replace(/[^0-9]/g, '');
+      if (batVal) extras.push(`bat${batVal}`);
+    }
+    if (imei1) {
+      const imeiStr = String(imei1).replace(/[^a-zA-Z0-9]/g, '');
+      if (imeiStr.length >= 4) extras.push(imeiStr.slice(-4));
+      else if (imeiStr) extras.push(imeiStr);
+    }
+  }
+
+  const variacao = [armazenamento, cor, condicao, ...extras].filter(Boolean).map(gerarSlug).join('-');
   const sku = variacao ? `${grupoId}-${variacao}` : grupoId;
   const uniqueId = `prod-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   return { id: uniqueId, sku, grupo_id: grupoId };
@@ -1124,7 +1138,7 @@ export async function salvarNovoProduto(callbacks = {}) {
   if (cadastroTemVariacoes && cadastroVariacoes.length > 0) {
     cadastroVariacoes.forEach(v => {
       const armaz = v.armazenamento_num ? v.armazenamento_num + v.armazenamento_unit : '';
-      const ids = gerarIds(nome, v.cor, armaz, v.condicao);
+      const ids = gerarIds(nome, v.cor, armaz, v.condicao, baseProduct.saude_bateria, baseProduct.imei1);
 
       const p = {
         ...baseProduct,
@@ -1156,7 +1170,7 @@ export async function salvarNovoProduto(callbacks = {}) {
     });
   } else {
     const existingProd = editModeId ? state.allProducts.find(p => p.id === editModeId) : null;
-    const ids = editModeId ? { id: editModeId, sku: existingProd?.sku || existingProd?.id || editModeId, grupo_id: val('cad-grupo-id') || existingProd?.grupo_id || editModeId } : gerarIds(nome, cor, armazenamento, cadastroTipo);
+    const ids = editModeId ? { id: editModeId, sku: existingProd?.sku || existingProd?.id || editModeId, grupo_id: val('cad-grupo-id') || existingProd?.grupo_id || editModeId } : gerarIds(nome, cor, armazenamento, cadastroTipo, baseProduct.saude_bateria, baseProduct.imei1);
     const p = {
       ...baseProduct,
       cor: cor,
