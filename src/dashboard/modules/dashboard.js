@@ -204,6 +204,12 @@ export function renderTable(callbacks = {}) {
               </div>
               <div class="flex flex-col gap-1">
                 ${pagamentosHtml}
+                ${o.aparelho_troca ? `
+                  <div class="flex items-center gap-1.5 mt-1 text-[9px] text-emerald-600 bg-emerald-50/50 px-2 py-0.5 rounded-md border border-emerald-100/30 w-fit">
+                    <i class="fa-solid fa-repeat text-[7px]"></i>
+                    <span class="font-bold truncate max-w-[130px]">${o.aparelho_troca} (+${formatMoney(o.valor_troca)})</span>
+                  </div>
+                ` : ''}
               </div>
             </div>
           </td>
@@ -339,9 +345,17 @@ export function renderTable(callbacks = {}) {
              </div>
              
              <!-- Compact Client Row -->
-             <div class="flex items-center gap-2.5 pt-4 border-t border-gray-200/50 min-w-0">
-                <i class="fa-solid fa-user text-[9px] text-gray-400"></i>
-                <p class="text-xs font-bold text-gray-700 truncate">${o.cliente || 'Consumidor Final'}</p>
+             <div class="flex items-center justify-between gap-2.5 pt-4 border-t border-gray-200/50 min-w-0">
+                <div class="flex items-center gap-2.5 min-w-0">
+                   <i class="fa-solid fa-user text-[9px] text-gray-400"></i>
+                   <p class="text-xs font-bold text-gray-700 truncate">${o.cliente || 'Consumidor Final'}</p>
+                </div>
+                ${o.aparelho_troca ? `
+                   <div class="flex items-center gap-1.5 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm" title="Troca: ${o.aparelho_troca}">
+                      <i class="fa-solid fa-repeat text-[8px] text-emerald-500"></i>
+                      <span class="text-[9px] font-black text-emerald-600">+${formatMoney(o.valor_troca)}</span>
+                   </div>
+                ` : ''}
              </div>
           </div>
 
@@ -490,7 +504,10 @@ async function updateStatusAPI(sel, itemId, newStatus, finalPrice, callbacks, ex
         final_price: finalPrice,
         cliente: extraData.cliente,
         telefone: extraData.telefone,
-        pagamento: extraData.pagamento
+        pagamento: extraData.pagamento,
+        temAparelho: extraData.temAparelho,
+        produtoRecebidoDados: extraData.produtoRecebidoDados,
+        addEstoque: extraData.addEstoque
       })
     });
 
@@ -544,11 +561,34 @@ export function initNegotiationModal() {
     };
   }
 
+  const chkTemAparelho = document.getElementById('negoc-tem-aparelho');
+  const aparelhoCampos = document.getElementById('negoc-aparelho-campos');
+  const valAparelho = document.getElementById('negoc-aparelho-valor');
+  const chkAddEstoque = document.getElementById('negoc-add-estoque');
+  const estoqueCampos = document.getElementById('negoc-estoque-campos');
+
+  if (chkTemAparelho) {
+    chkTemAparelho.onchange = (e) => {
+      aparelhoCampos.classList.toggle('hidden', !e.target.checked);
+      updatePaymentBalance();
+    };
+  }
+  if (valAparelho) {
+    valAparelho.oninput = updatePaymentBalance;
+  }
+  if (chkAddEstoque) {
+    chkAddEstoque.onchange = (e) => {
+      estoqueCampos.classList.toggle('hidden', !e.target.checked);
+    };
+  }
+
   if (btnAddPay) {
     btnAddPay.onclick = () => {
       const currentTotal = currentNegotiation.useCustom ? parseFloat(inputFinal.value) : currentNegotiation.currentTotal;
+      const chkTemAparelho = document.getElementById('negoc-tem-aparelho');
+      const valorAparelho = chkTemAparelho && chkTemAparelho.checked ? (parseFloat(document.getElementById('negoc-aparelho-valor').value) || 0) : 0;
       const values = Array.from(document.querySelectorAll('.pay-value')).map(el => parseFloat(el.value) || 0);
-      const totalPaid = values.reduce((a, b) => a + b, 0);
+      const totalPaid = values.reduce((a, b) => a + b, 0) + valorAparelho;
       const remaining = currentTotal - totalPaid;
       addPaymentRow(remaining > 0 ? remaining : '');
     };
@@ -617,15 +657,38 @@ export function initNegotiationModal() {
       }).join(' + ');
     }
 
+    const chkTemAparelho = document.getElementById('negoc-tem-aparelho');
+    const temAparelho = chkTemAparelho && chkTemAparelho.checked;
+    const valorAparelho = temAparelho ? (parseFloat(document.getElementById('negoc-aparelho-valor').value) || 0) : 0;
+    const addEstoque = document.getElementById('negoc-add-estoque')?.checked;
+
+    if (temAparelho) {
+      const modeloTroca = document.getElementById('negoc-aparelho-modelo').value;
+      const trocaStr = `Troca: ${modeloTroca} (${formatMoney(valorAparelho)})`;
+      pagamentoStr = pagamentoStr ? `${pagamentoStr} + ${trocaStr}` : trocaStr;
+    }
+
     // Validation
-    const inputFinal = document.getElementById('input-final-price');
     const currentTotal = currentNegotiation.useCustom ? (parseFloat(inputFinal.value) || 0) : currentNegotiation.currentTotal;
+    
     const values = Array.from(document.querySelectorAll('.pay-value')).map(el => parseFloat(el.value) || 0);
-    const totalPaid = values.reduce((a, b) => a + b, 0);
+    const totalPaid = values.reduce((a, b) => a + b, 0) + valorAparelho;
     const remaining = currentTotal - totalPaid;
 
     const errorContainer = document.getElementById('negoc-errors');
     const errorMsg = document.getElementById('negoc-errors-msg');
+
+    if (temAparelho) {
+      const mod = document.getElementById('negoc-aparelho-modelo').value.trim();
+      const mem = document.getElementById('negoc-aparelho-memoria').value.trim();
+      if (!mod || !mem || valorAparelho <= 0) {
+        if (errorContainer && errorMsg) {
+          errorMsg.textContent = 'Preencha modelo, memória e valor do aparelho corretamente.';
+          errorContainer.classList.remove('hidden');
+        }
+        return;
+      }
+    }
 
     if (Math.abs(remaining) > 0.01) {
       if (errorContainer && errorMsg) {
@@ -645,10 +708,29 @@ export function initNegotiationModal() {
       return;
     }
 
+    let produtoRecebidoDados = null;
+    if (temAparelho) {
+      produtoRecebidoDados = {
+        nome: document.getElementById('negoc-aparelho-modelo').value,
+        armazenamento: document.getElementById('negoc-aparelho-memoria').value,
+        condicao: document.getElementById('negoc-aparelho-condicao').value,
+        custo: valorAparelho,
+        preco: Number(document.getElementById('negoc-aparelho-preco-venda').value) || 0,
+        estoque: 1,
+        estoque_minimo: 1,
+        ativo: 'false',
+        imagem_1: '',
+        categoria: 'Usados'
+      };
+    }
+
     const extraData = {
       cliente: document.getElementById('input-negoc-cliente')?.value || '',
       telefone: document.getElementById('input-negoc-telefone')?.value || '',
-      pagamento: pagamentoStr || 'Pix'
+      pagamento: pagamentoStr || 'Pix',
+      temAparelho: temAparelho,
+      produtoRecebidoDados: produtoRecebidoDados,
+      addEstoque: addEstoque
     };
 
     modal.classList.add('hidden');
@@ -676,6 +758,17 @@ export function showNegotiationModal(pedidoId, currentTotal, onConfirm, onCancel
   if (payContainer) {
     payContainer.innerHTML = '';
     addPaymentRow(currentTotal);
+  }
+
+  if (document.getElementById('negoc-tem-aparelho')) {
+    document.getElementById('negoc-tem-aparelho').checked = false;
+    document.getElementById('negoc-aparelho-campos').classList.add('hidden');
+    document.getElementById('negoc-aparelho-modelo').value = '';
+    document.getElementById('negoc-aparelho-memoria').value = '';
+    document.getElementById('negoc-aparelho-valor').value = '';
+    document.getElementById('negoc-add-estoque').checked = false;
+    document.getElementById('negoc-estoque-campos').classList.add('hidden');
+    document.getElementById('negoc-aparelho-preco-venda').value = '';
   }
 
   inputWrap.classList.add('hidden');
@@ -792,8 +885,11 @@ function updatePaymentBalance() {
   const inputFinal = document.getElementById('input-final-price');
   const currentTotal = currentNegotiation.useCustom ? (parseFloat(inputFinal.value) || 0) : currentNegotiation.currentTotal;
 
+  const chkTemAparelho = document.getElementById('negoc-tem-aparelho');
+  const valorAparelho = chkTemAparelho && chkTemAparelho.checked ? (parseFloat(document.getElementById('negoc-aparelho-valor').value) || 0) : 0;
+
   const values = Array.from(document.querySelectorAll('.pay-value')).map(el => parseFloat(el.value) || 0);
-  const totalPaid = values.reduce((a, b) => a + b, 0);
+  const totalPaid = values.reduce((a, b) => a + b, 0) + valorAparelho;
   const remaining = currentTotal - totalPaid;
 
   const summary = document.getElementById('payment-summary');

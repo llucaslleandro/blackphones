@@ -3175,7 +3175,64 @@
             </div>
           </div>
 
+          <!-- Seção Aparelho na Troca -->
+          <div class="space-y-3">
+            <p class="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] border-b border-gray-50 pb-2">
+              Aparelho na Troca</p>
+            <div class="bg-gray-50/50 rounded-2xl p-4 border border-gray-100/50">
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" id="negoc-tem-aparelho" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 transition-all">
+                <span class="text-[11px] font-bold text-gray-700 group-hover:text-indigo-600 transition-colors">Recebi um aparelho como parte do pagamento</span>
+              </label>
+
+              <div id="negoc-aparelho-campos" class="hidden space-y-4 mt-4 pt-4 border-t border-gray-100 animate-[fadeIn_0.2s_ease-out]">
+                <div class="grid grid-cols-1 gap-3">
+                  <div class="relative group">
+                    <label class="absolute left-4 top-2 text-[8px] font-black text-gray-400 uppercase tracking-widest transition-all group-focus-within:text-indigo-500">Modelo Recebido *</label>
+                    <input type="text" id="negoc-aparelho-modelo" class="w-full pl-4 pr-4 pt-5 pb-2 bg-white border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-xs transition-all" placeholder="Ex: iPhone 11">
+                  </div>
+                  <div class="relative group">
+                    <label class="absolute left-4 top-2 text-[8px] font-black text-gray-400 uppercase tracking-widest transition-all group-focus-within:text-indigo-500">Memória *</label>
+                    <input type="text" id="negoc-aparelho-memoria" class="w-full pl-4 pr-4 pt-5 pb-2 bg-white border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-xs transition-all" placeholder="Ex: 64GB">
+                  </div>
+                  <div class="relative group">
+                    <label class="absolute left-4 top-2 text-[8px] font-black text-gray-400 uppercase tracking-widest transition-all group-focus-within:text-indigo-500">Condição</label>
+                    <select id="negoc-aparelho-condicao" class="w-full pl-4 pr-4 pt-5 pb-2 bg-white border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-xs transition-all appearance-none">
+                      <option value="Seminovo">Seminovo</option>
+                      <option value="Novo">Novo</option>
+                    </select>
+                  </div>
+                  <div class="relative group">
+                    <label class="absolute left-4 top-2 text-[8px] font-black text-emerald-500 uppercase tracking-widest transition-all">Valor Avaliado (R$) *</label>
+                    <span class="absolute left-4 bottom-2 text-emerald-600 font-black text-sm">R$</span>
+                    <input type="number" id="negoc-aparelho-valor" step="0.01" min="0" class="w-full pl-10 pr-4 pt-5 pb-2 bg-emerald-50/50 border border-emerald-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-black text-base text-emerald-600 transition-all" placeholder="0,00">
+                  </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" id="negoc-add-estoque" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 transition-all">
+                    <span class="text-[11px] font-bold text-gray-700 group-hover:text-indigo-600 transition-colors">Adicionar aparelho recebido ao estoque</span>
+                  </label>
+
+                  <div id="negoc-estoque-campos" class="hidden space-y-3 bg-indigo-50/30 p-3 rounded-xl border border-indigo-100/50 animate-[fadeIn_0.2s_ease-out]">
+                    <div class="relative group">
+                      <label class="absolute left-4 top-2 text-[8px] font-black text-indigo-400 uppercase tracking-widest transition-all">Preço de Revenda (R$)</label>
+                      <span class="absolute left-4 bottom-2 text-indigo-600 font-black text-sm">R$</span>
+                      <input type="number" id="negoc-aparelho-preco-venda" step="0.01" min="0" class="w-full pl-10 pr-4 pt-5 pb-2 bg-white border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-black text-sm text-indigo-600 transition-all" placeholder="0,00">
+                    </div>
+                    
+                    <p class="text-[9px] font-medium text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100 mt-2">
+                      <i class="fa-solid fa-circle-info mr-1"></i> O aparelho será adicionado ao estoque como <strong>Inativo</strong>. Complete o cadastro no módulo de Estoque posteriormente.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Seção Pagamento -->
+
           <div class="space-y-3 pb-2">
             <div class="flex items-center justify-between border-b border-gray-50 pb-2">
               <p class="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">Pagamento</p>

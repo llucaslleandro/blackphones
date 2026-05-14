@@ -42,7 +42,7 @@ export function generateFromOrders(orders) {
         valor: parseNumber(o.final_price || o.total || 0),
         categoria: 'Venda',
         descricao: `Venda ${o.produto || ''}`.trim(),
-        subDescricao: `${o.item_id || o.id_do_pedido || 'ID N/A'} • ${o.pagamento || 'Sem Pagamento'}`,
+        subDescricao: `${o.item_id || o.id_do_pedido || 'ID N/A'}`,
         origem: 'auto',
         origemRef: o.item_id || o.id_do_pedido || '',
         formaPagamento: o.pagamento || '',

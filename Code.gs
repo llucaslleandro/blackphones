@@ -83,7 +83,7 @@ function doPost(e) {
       if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
       if (!payload.item_id || !payload.status) throw new Error('ID ou Status não fornecidos.');
       
-      var res = atualizarStatusPedido(payload.item_id, payload.status, payload.final_price, payload.cliente, payload.telefone, payload.pagamento);
+      var res = atualizarStatusPedido(payload.item_id, payload.status, payload.final_price, payload.cliente, payload.telefone, payload.pagamento, payload.temAparelho, payload.produtoRecebidoDados, payload.addEstoque);
       return buildResponse({ ok: true, rowsUpdated: res });
     } catch (err) {
       return buildResponse({ ok: false, error: err.toString() });
@@ -606,7 +606,7 @@ function salvarPedido(pedido) {
   return { pedido_id: pedidoId };
 }
 
-function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone, pagamento) {
+function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone, pagamento, temAparelho, produtoRecebidoDados, addEstoque) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('Pedidos');
   var prodSheet = ss.getSheetByName('Produtos');
@@ -672,6 +672,19 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone
     headers.push('pagamento');
   }
 
+  var aparelhoTrocaColIdx = headers.indexOf('aparelho troca');
+  if (aparelhoTrocaColIdx === -1) {
+    aparelhoTrocaColIdx = headers.length;
+    sheet.getRange(1, aparelhoTrocaColIdx + 1).setValue('Aparelho Troca');
+    headers.push('aparelho troca');
+  }
+  var valorTrocaColIdx = headers.indexOf('valor troca');
+  if (valorTrocaColIdx === -1) {
+    valorTrocaColIdx = headers.length;
+    sheet.getRange(1, valorTrocaColIdx + 1).setValue('Valor Troca');
+    headers.push('valor troca');
+  }
+
   var updatedCount = 0;
   
   // Lógica de Estoque: Precisamos pegar ranges e values de Produtos
@@ -730,6 +743,14 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone
         sheet.getRange(i + 1, pagamentoColIdx + 1).setValue(pagamento);
         rows[i][pagamentoColIdx] = pagamento;
       }
+
+      if (temAparelho && produtoRecebidoDados) {
+        var descAparelho = produtoRecebidoDados.nome + ' ' + produtoRecebidoDados.armazenamento;
+        sheet.getRange(i + 1, aparelhoTrocaColIdx + 1).setValue(descAparelho);
+        sheet.getRange(i + 1, valorTrocaColIdx + 1).setValue(produtoRecebidoDados.custo);
+        rows[i][aparelhoTrocaColIdx] = descAparelho;
+        rows[i][valorTrocaColIdx] = produtoRecebidoDados.custo;
+      }
       
       // Regra de Estoque (Sempre por item)
       if (novoStatus === 'Fechado' && estProc !== 'SIM' && sku) {
@@ -750,6 +771,12 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone
       break; // Saímos do loop pois o item é único
     }
   }
+
+  // Lógica de Aparelho Recebido
+  if (novoStatus === 'Fechado' && temAparelho && addEstoque && produtoRecebidoDados) {
+    salvarNovoProduto([produtoRecebidoDados]);
+  }
+
   return updatedCount;
 }
 
