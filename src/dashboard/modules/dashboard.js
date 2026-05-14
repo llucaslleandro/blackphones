@@ -672,8 +672,17 @@ export function initNegotiationModal() {
     const currentTotal = currentNegotiation.useCustom ? (parseFloat(inputFinal.value) || 0) : currentNegotiation.currentTotal;
     
     const values = Array.from(document.querySelectorAll('.pay-value')).map(el => parseFloat(el.value) || 0);
-    const totalPaid = values.reduce((a, b) => a + b, 0) + valorAparelho;
-    const remaining = currentTotal - totalPaid;
+    const totalPagamentosForm = values.reduce((a, b) => a + b, 0);
+    const diferencaLiquida = currentTotal - valorAparelho;
+
+    let remaining = 0;
+    if (diferencaLiquida > 0) {
+      remaining = diferencaLiquida - totalPagamentosForm;
+    } else if (diferencaLiquida < 0) {
+      remaining = Math.abs(diferencaLiquida) - totalPagamentosForm;
+    } else {
+      remaining = 0 - totalPagamentosForm;
+    }
 
     const errorContainer = document.getElementById('negoc-errors');
     const errorMsg = document.getElementById('negoc-errors-msg');
@@ -700,9 +709,9 @@ export function initNegotiationModal() {
       return;
     }
 
-    if (totalPaid <= 0 && currentTotal > 0) {
+    if (totalPagamentosForm <= 0 && Math.abs(diferencaLiquida) > 0.01) {
       if (errorContainer && errorMsg) {
-        errorMsg.textContent = 'Adicione pelo menos um meio de pagamento.';
+        errorMsg.textContent = 'Adicione pelo menos um meio de pagamento para a diferença.';
         errorContainer.classList.remove('hidden');
       }
       return;
@@ -889,26 +898,46 @@ function updatePaymentBalance() {
   const valorAparelho = chkTemAparelho && chkTemAparelho.checked ? (parseFloat(document.getElementById('negoc-aparelho-valor').value) || 0) : 0;
 
   const values = Array.from(document.querySelectorAll('.pay-value')).map(el => parseFloat(el.value) || 0);
-  const totalPaid = values.reduce((a, b) => a + b, 0) + valorAparelho;
-  const remaining = currentTotal - totalPaid;
+  const totalPagamentosForm = values.reduce((a, b) => a + b, 0);
+
+  const diferencaLiquida = currentTotal - valorAparelho;
+  
+  let remaining = 0;
+  if (diferencaLiquida > 0) {
+    remaining = diferencaLiquida - totalPagamentosForm;
+  } else if (diferencaLiquida < 0) {
+    remaining = Math.abs(diferencaLiquida) - totalPagamentosForm;
+  } else {
+    remaining = 0 - totalPagamentosForm;
+  }
 
   const summary = document.getElementById('payment-summary');
   const remainingEl = document.getElementById('payment-remaining-value');
   const remainingLabel = document.getElementById('payment-remaining-label');
-  const btnConfirm = document.getElementById('btn-negoc-confirm');
 
   // Hide error on input
   document.getElementById('negoc-errors')?.classList.add('hidden');
 
-  const isComplete = Math.abs(remaining) < 0.01 && totalPaid > 0;
-  // btnConfirm.disabled = !isComplete; // Replaced with custom validation on click
-
-  if (Math.abs(remaining) > 0.01) {
+  if (Math.abs(diferencaLiquida) < 0.01) {
+    if (totalPagamentosForm > 0) {
+      summary.classList.remove('hidden');
+      remainingLabel.textContent = 'Excedido (Troca Equivalente)';
+      remainingLabel.className = 'text-[9px] font-bold text-amber-500';
+      remainingEl.textContent = formatMoney(totalPagamentosForm);
+      remainingEl.className = 'text-sm font-black text-amber-600';
+    } else {
+      summary.classList.remove('hidden');
+      remainingLabel.textContent = 'Troca Equivalente';
+      remainingLabel.className = 'text-[9px] font-bold text-emerald-500';
+      remainingEl.textContent = 'R$ 0,00';
+      remainingEl.className = 'text-sm font-black text-emerald-600';
+    }
+  } else if (Math.abs(remaining) > 0.01) {
     summary.classList.remove('hidden');
     remainingEl.textContent = formatMoney(Math.abs(remaining));
 
     if (remaining > 0) {
-      remainingLabel.textContent = 'Pendente de preenchimento';
+      remainingLabel.textContent = diferencaLiquida > 0 ? '⚠ Cliente deve pagar' : '⚠ Loja deve pagar';
       remainingLabel.className = 'text-[9px] font-bold text-rose-400';
       remainingEl.className = 'text-sm font-black text-rose-500';
     } else {
@@ -917,11 +946,12 @@ function updatePaymentBalance() {
       remainingEl.className = 'text-sm font-black text-amber-600';
     }
   } else {
-    if (totalPaid > 0) {
+    // Pago
+    if (totalPagamentosForm > 0) {
       summary.classList.remove('hidden');
-      remainingLabel.textContent = 'Valor Total Preenchido';
+      remainingLabel.textContent = diferencaLiquida > 0 ? '✅ Cliente pagou' : '✅ Loja pagou';
       remainingLabel.className = 'text-[9px] font-bold text-emerald-500';
-      remainingEl.textContent = formatMoney(totalPaid);
+      remainingEl.textContent = formatMoney(totalPagamentosForm);
       remainingEl.className = 'text-sm font-black text-emerald-600';
     } else {
       summary.classList.add('hidden');

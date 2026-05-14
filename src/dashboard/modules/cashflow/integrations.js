@@ -32,22 +32,93 @@ export function generateFromOrders(orders) {
       const s = String(o.status || '').toLowerCase();
       return s === 'fechado' || s === 'concluido';
     })
-    .map(o => {
+    .flatMap(o => {
       const parsedDate = safeParseDate(o.data || o.parsedDate);
-      return {
-        id: `AUTO-VENDA-${o.item_id || o.id_do_pedido}-${o.produto || ''}`.replace(/\s/g, ''),
-        tipo: 'entrada',
-        data: o.data || parsedDate.toISOString(),
-        parsedDate: parsedDate,
-        valor: parseNumber(o.final_price || o.total || 0),
-        categoria: 'Venda',
-        descricao: `Venda ${o.produto || ''}`.trim(),
-        subDescricao: `${o.item_id || o.id_do_pedido || 'ID N/A'}`,
-        origem: 'auto',
-        origemRef: o.item_id || o.id_do_pedido || '',
-        formaPagamento: o.pagamento || '',
-        status: 'confirmado'
+      
+      // Robust property access
+      const getVal = (keys) => {
+        for (const k of keys) {
+          if (o[k] !== undefined && o[k] !== null && o[k] !== '') return o[k];
+        }
+        return null;
       };
+
+      const valorVenda = parseNumber(getVal(['preço_final', 'preco_final', 'final_price', 'total', 'valor_venda']) || 0);
+      let aparelhoTroca = getVal(['aparelho_troca', 'aparelho_troca_nome', 'aparelho_troca']);
+      let valorTroca = parseNumber(getVal(['valor_troca', 'valor_troca_aparelho']) || 0);
+      
+      // Fallback: Parse from pagamento string if columns are missing/empty
+      const pagamento = String(o.pagamento || '');
+      if (valorTroca === 0 && pagamento.includes('Troca:')) {
+        const match = pagamento.match(/Troca:\s*([^()]+)\s*\(R\$\s*([0-9.,]+)\)/);
+        if (match) {
+          aparelhoTroca = match[1].trim();
+          valorTroca = parseNumber(match[2]);
+        }
+      }
+
+      const temTroca = (aparelhoTroca && String(aparelhoTroca).trim().length > 0) || (valorTroca > 0);
+
+      const movements = [];
+      const baseId = `AUTO-VENDA-${o.item_id || o.id_do_pedido}-${o.produto || ''}`.replace(/\s/g, '');
+
+      if (temTroca && valorTroca > 0) {
+        const diff = valorVenda - valorTroca;
+        
+        // 1. Movimento financeiro da diferença
+        if (Math.abs(diff) > 0.01) {
+          const isUpgrade = diff > 0;
+          movements.push({
+            id: `${baseId}-${isUpgrade ? 'UPGRADE' : 'DOWNGRADE'}`,
+            tipo: isUpgrade ? 'entrada' : 'saida',
+            data: o.data || parsedDate.toISOString(),
+            parsedDate: parsedDate,
+            valor: Math.abs(diff),
+            categoria: isUpgrade ? 'Venda' : 'Compra',
+            descricao: isUpgrade ? `Diferença recebida em troca` : `Diferença paga em troca`,
+            subDescricao: `${o.item_id || o.id_do_pedido || 'ID N/A'} • ${o.produto || ''}`.trim(),
+            origem: 'auto',
+            origemRef: o.item_id || o.id_do_pedido || '',
+            formaPagamento: o.pagamento || '',
+            status: 'confirmado'
+          });
+        }
+
+        // 2. Registro patrimonial do aparelho recebido (sempre gera, mesmo se diff for 0)
+        movements.push({
+          id: `${baseId}-PATRIMONIO`,
+          tipo: 'registro',
+          data: o.data || parsedDate.toISOString(),
+          parsedDate: parsedDate,
+          valor: valorTroca,
+          categoria: 'Patrimônio',
+          descricao: `Aparelho recebido em troca`,
+          subDescricao: `${aparelhoTroca || 'Aparelho na Troca'}`,
+          origem: 'auto',
+          origemRef: o.item_id || o.id_do_pedido || '',
+          formaPagamento: '-',
+          status: 'confirmado'
+        });
+
+      } else {
+        // Venda Normal
+        movements.push({
+          id: baseId,
+          tipo: 'entrada',
+          data: o.data || parsedDate.toISOString(),
+          parsedDate: parsedDate,
+          valor: valorVenda,
+          categoria: 'Venda',
+          descricao: `Venda ${o.produto || ''}`.trim(),
+          subDescricao: `${o.item_id || o.id_do_pedido || 'ID N/A'}`,
+          origem: 'auto',
+          origemRef: o.item_id || o.id_do_pedido || '',
+          formaPagamento: o.pagamento || '',
+          status: 'confirmado'
+        });
+      }
+
+      return movements;
     });
 }
 

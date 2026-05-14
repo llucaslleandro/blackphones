@@ -308,13 +308,26 @@ export function tableRowsTemplate(movements) {
   }
 
   return movements.map(m => {
-    const isEntrada = m.tipo === 'entrada';
+    let typeBadge = '';
+    let valorClass = '';
+    let valorPrefix = '';
+    
+    if (m.tipo === 'entrada') {
+      typeBadge = '<span class="cf-badge cf-badge-entrada"><i class="fa-solid fa-arrow-up text-[8px]"></i> Entrada</span>';
+      valorClass = 'text-emerald-600';
+      valorPrefix = '+';
+    } else if (m.tipo === 'saida') {
+      typeBadge = '<span class="cf-badge cf-badge-saida"><i class="fa-solid fa-arrow-down text-[8px]"></i> Saída</span>';
+      valorClass = 'text-red-500';
+      valorPrefix = '-';
+    } else {
+      typeBadge = '<span class="cf-badge bg-indigo-50 text-indigo-600 border border-indigo-100"><i class="fa-solid fa-box text-[8px]"></i> Patrimônio</span>';
+      valorClass = 'text-indigo-600';
+      valorPrefix = '';
+    }
+
     const d = m.parsedDate instanceof Date && !isNaN(m.parsedDate.getTime())
       ? m.parsedDate.toLocaleDateString('pt-BR') : '-';
-
-    const typeBadge = isEntrada
-      ? '<span class="cf-badge cf-badge-entrada"><i class="fa-solid fa-arrow-up text-[8px]"></i> Entrada</span>'
-      : '<span class="cf-badge cf-badge-saida"><i class="fa-solid fa-arrow-down text-[8px]"></i> Saída</span>';
 
     let statusBadge = '';
     if (m.status === 'confirmado') statusBadge = '<span class="cf-status-badge cf-status-confirmado">Confirmado</span>';
@@ -322,8 +335,6 @@ export function tableRowsTemplate(movements) {
     else if (m.status === 'cancelado') statusBadge = '<span class="cf-status-badge cf-status-cancelado">Cancelado</span>';
 
     const isAuto = m.origem === 'auto';
-    const valorClass = isEntrada ? 'text-emerald-600' : 'text-red-500';
-    const valorPrefix = isEntrada ? '+' : '-';
 
     return `
       <tr class="cf-table-row hover:bg-gray-50/60 transition-colors group">
