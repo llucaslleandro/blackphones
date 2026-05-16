@@ -186,7 +186,9 @@ export function generateFromCompras(encomendas) {
   // Group by lote
   const lotesMap = {};
   encomendas.forEach(e => {
-    const lid = e.lote_id || e.id;
+    // Prioritize lote_id. If missing, fallback to id but prefix it to avoid confusion with valid lote_ids
+    const lid = e.lote_id || e.id_lote || e.loteid || (e.id ? `SINGLE-${e.id}` : 'UNKN');
+    
     if (!lotesMap[lid]) {
       lotesMap[lid] = {
         id: lid,
@@ -250,7 +252,7 @@ export function generateFromCompras(encomendas) {
         valor: totalCost,
         categoria: 'Compra',
         descricao: `Compra Lote • ${lote.fornecedor}`,
-        subDescricao: `Lote ${String(lote.id).substring(0, 8)}${isLegacyPaid ? ' • Pago (Auto)' : ' • Pago'}`,
+        subDescricao: `Lote ${String(lote.id)}${isLegacyPaid ? ' • Pago (Auto)' : ' • Pago'}`,
         origem: 'auto',
         origemRef: lote.id,
         formaPagamento: '',
@@ -266,7 +268,7 @@ export function generateFromCompras(encomendas) {
         valor: lote.valor_pago_lote,
         categoria: 'Compra',
         descricao: `Pgto Parcial Lote • ${lote.fornecedor}`,
-        subDescricao: `Lote ${String(lote.id).substring(0, 8)} • Parcial`,
+        subDescricao: `Lote ${String(lote.id)} • Parcial`,
         origem: 'auto',
         origemRef: lote.id,
         formaPagamento: '',

@@ -1375,7 +1375,7 @@ function salvarLoteEncomendado(payload) {
 
   // Ensure dynamic headers exist
   var rows = sheet.getDataRange().getValues();
-  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/[ _]/g, '_'); });
+  var headers = rows[0].map(function(h) { return normalizeKey_(h); });
   
   var loteData = payload.lote || {};
   var itens = payload.itens || [];
@@ -1396,7 +1396,7 @@ function salvarLoteEncomendado(payload) {
   }
   
   // Reload rows/headers after potentially adding headers
-  headers = sheet.getDataRange().getValues()[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  headers = sheet.getDataRange().getValues()[0].map(function(h) { return normalizeKey_(h); });
   rows = sheet.getDataRange().getValues();
   
   var idColIdx = headers.indexOf('id');
@@ -1468,7 +1468,7 @@ function marcarPagamentoLote_(payload) {
   if (!sheet) throw new Error('Aba Produtos_Encomendados não encontrada.');
 
   var rows = sheet.getDataRange().getValues();
-  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var headers = rows[0].map(function(h) { return normalizeKey_(h); });
   
   var loteIdColIdx = headers.indexOf('lote_id');
   var idColIdx = headers.indexOf('id');

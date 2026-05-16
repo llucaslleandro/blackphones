@@ -1,6 +1,6 @@
 import { CONFIG } from '../../shared/config.js';
 import { formatMoney, showToast, compressImage, formatDateBr, parseDateBr, formatDateForInput, applyDateMask } from './ui.js';
-import { uploadImageToDrive, loadDashboardData } from './store.js';
+import { uploadImageToDrive, loadDashboardData, state } from './store.js';
 
 let comprasData = [];
 let loading = false;
@@ -159,7 +159,6 @@ export async function initAndRender() {
   }
 
   // Use global store data if available, otherwise fetch
-  const { state } = await import('./store.js');
   if (state.allEncomendas && state.allEncomendas.length > 0) {
     comprasData = state.allEncomendas;
     renderMetrics();
@@ -606,7 +605,7 @@ function renderTable() {
             </div>
             <div class="min-w-0">
               <div class="text-sm font-bold text-gray-900 leading-tight truncate">${lote.fornecedor || 'Desconhecido'}</div>
-              <div class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">ID: ${String(lid).substring(0, 8)}</div>
+              <div class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">ID: ${String(lid)}</div>
             </div>
           </div>
         </td>
@@ -1414,7 +1413,8 @@ async function salvarLoteEncomenda() {
   };
 
   if (editingLoteId) {
-    const loteGroup = comprasData.find(e => (e.lote_id || e.id) === editingLoteId);
+    const lidStr = String(editingLoteId);
+    const loteGroup = comprasData.find(e => String(e.lote_id || e.id) === lidStr);
     if (loteGroup) {
       loteData.status_pagamento = loteGroup.status_pagamento || 'pendente';
       loteData.data_pagamento = loteGroup.data_pagamento || '';
@@ -1457,9 +1457,14 @@ async function salvarLoteEncomenda() {
         preco_venda_previsto: Number(form.querySelector('.i-venda').value) || 0
       };
 
-      if (i === 0 && form.dataset.itemId) {
-        payloadItem.id = form.dataset.itemId;
-        payloadItem.status = form.dataset.status;
+      // Se estivermos editando e for a primeira iteração da quantidade, preservamos o ID original do item
+      if (form.dataset.itemId) {
+        // Se a quantidade for > 1, apenas o primeiro item "original" mantém o ID. 
+        // Os demais (duplicados pela quantidade) serão tratados como novos no backend.
+        if (i === 0) {
+          payloadItem.id = form.dataset.itemId;
+        }
+        payloadItem.status = form.dataset.status || 'encomendado';
       }
 
       itens.push(payloadItem);
