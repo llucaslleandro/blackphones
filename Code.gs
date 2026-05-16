@@ -1476,29 +1476,70 @@ function marcarPagamentoLote_(payload) {
   var dpCol = headers.indexOf('data_pagamento');
   var vpCol = headers.indexOf('valor_pago_lote');
   var pendCol = headers.indexOf('valor_pendente_lote');
+  var histCol = headers.indexOf('historico_pagamentos');
 
   if (loteIdColIdx === -1 && idColIdx === -1) throw new Error('Coluna Lote ID não encontrada.');
+  
+  // Inject missing headers
   if (spCol === -1) {
-    // Inject headers if missing
-    headers.push('status_pagamento', 'data_pagamento', 'valor_pago_lote', 'valor_pendente_lote');
-    sheet.getRange(1, headers.length - 3).setValue('Status Pagamento');
-    sheet.getRange(1, headers.length - 2).setValue('Data Pagamento');
-    sheet.getRange(1, headers.length - 1).setValue('Valor Pago Lote');
-    sheet.getRange(1, headers.length).setValue('Valor Pendente Lote');
-    spCol = headers.length - 4;
-    dpCol = headers.length - 3;
-    vpCol = headers.length - 2;
+    sheet.getRange(1, headers.length + 1).setValue('Status Pagamento');
+    headers.push('status_pagamento');
+    spCol = headers.length - 1;
+  }
+  if (dpCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Data Pagamento');
+    headers.push('data_pagamento');
+    dpCol = headers.length - 1;
+  }
+  if (vpCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Valor Pago Lote');
+    headers.push('valor_pago_lote');
+    vpCol = headers.length - 1;
+  }
+  if (pendCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Valor Pendente Lote');
+    headers.push('valor_pendente_lote');
     pendCol = headers.length - 1;
+  }
+  if (histCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('historico_pagamentos');
+    headers.push('historico_pagamentos');
+    histCol = headers.length - 1;
   }
 
   var found = false;
   for (var i = 1; i < rows.length; i++) {
     var rLoteId = rows[i][loteIdColIdx] || rows[i][idColIdx]; 
     if (String(rLoteId) === String(payload.lote_id)) {
+      var currentHistStr = rows[i][histCol] || '[]';
+      var history = [];
+      try { history = JSON.parse(currentHistStr); } catch(e) { history = []; }
+
+      // Se o status for pendente, limpamos o histórico para permitir "reset"
+      if (payload.status_pagamento === 'pendente') {
+        history = [];
+      } else if (payload.valor_pago_agora !== undefined && payload.valor_pago_agora > 0) {
+        // Se enviou um novo pagamento individual
+        history.push({
+          id: 'PG-' + new Date().getTime() + '-' + Math.floor(Math.random() * 1000),
+          data: payload.data_pagamento_agora || payload.data_pagamento || new Date().toISOString(),
+          valor: Number(payload.valor_pago_agora),
+          forma_pagamento: payload.forma_pagamento || 'Manual'
+        });
+      }
+
+      // Calcula totais
+      var totalPago = history.reduce(function(sum, p) { return sum + (Number(p.valor) || 0); }, 0);
+      var ultimaData = history.length > 0 
+        ? history[history.length - 1].data 
+        : (payload.data_pagamento_agora || payload.data_pagamento || rows[i][dpCol] || '');
+
       sheet.getRange(i + 1, spCol + 1).setValue(payload.status_pagamento);
-      sheet.getRange(i + 1, dpCol + 1).setValue(payload.data_pagamento || '');
-      sheet.getRange(i + 1, vpCol + 1).setValue(payload.valor_pago_lote !== undefined ? payload.valor_pago_lote : '');
-      sheet.getRange(i + 1, pendCol + 1).setValue(payload.valor_pendente_lote !== undefined ? payload.valor_pendente_lote : '');
+      sheet.getRange(i + 1, dpCol + 1).setValue(ultimaData);
+      sheet.getRange(i + 1, vpCol + 1).setValue(totalPago);
+      sheet.getRange(i + 1, pendCol + 1).setValue(payload.valor_pendente_lote !== undefined ? payload.valor_pendente_lote : (payload.status_pagamento === 'pendente' ? '' : ''));
+      sheet.getRange(i + 1, histCol + 1).setValue(JSON.stringify(history));
+      
       found = true;
     }
   }

@@ -12,12 +12,22 @@ function safeParseDate(dateStr) {
   if (!dateStr) return new Date(0);
   if (dateStr instanceof Date) return dateStr;
   
-  // Try BR format first
-  const br = parseDateBr(dateStr);
-  if (br) return new Date(br);
+  const str = String(dateStr).trim();
   
-  // Fallback to native
-  const d = new Date(dateStr);
+  // Try ISO Date (YYYY-MM-DD) - use local time construction to avoid UTC shifts
+  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+  }
+  
+  // Try BR Date (DD/MM/YYYY)
+  const brMatch = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (brMatch) {
+    return new Date(Number(brMatch[3]), Number(brMatch[2]) - 1, Number(brMatch[1]));
+  }
+
+  // Fallback to native (caution: ISO strings without time will shift to UTC)
+  const d = new Date(str);
   return isNaN(d.getTime()) ? new Date(0) : d;
 }
 
@@ -213,8 +223,8 @@ export function generateFromCompras(encomendas) {
     let paymentDate = lote.data_pagamento;
     let isLegacyPaid = false;
 
-    // Fallback for old data: if no payment status, but items arrived, assume paid
-    if (!paymentStatus || paymentStatus === 'pendente') {
+    // Fallback for old data: if NO payment status at all, but items arrived, assume paid
+    if (!paymentStatus) {
       const anyArrived = lote.items.some(i => {
         const s = String(i.status || '').toLowerCase();
         return s === 'chegou' || s === 'recebido' || s === 'entregue';
@@ -229,51 +239,83 @@ export function generateFromCompras(encomendas) {
 
     if (paymentStatus === 'pendente' || !paymentStatus) return;
 
-    if (paymentStatus === 'pago') {
-      // Calculate total cost of the lot
-      let totalCost = lote.frete + lote.taxas + lote.adicLote;
-      lote.items.forEach(i => {
-        const cBase = parseNumber(i.custo_compra || i.custo || i.custo_total);
-        totalCost += cBase;
-      });
+    // Check for payment history (new format)
+    let history = [];
+    try {
+      const firstItem = lote.items[0];
+      const rawHist = firstItem.historico_pagamentos || firstItem.historico_pagamentos_lote;
+      history = typeof rawHist === 'string' ? JSON.parse(rawHist) : (rawHist || []);
+    } catch (e) {
+      history = [];
+    }
 
-      // If calculation resulted in 0 but we have a manual valor_pago_lote, use that
-      if (totalCost === 0 && lote.valor_pago_lote > 0) {
-        totalCost = lote.valor_pago_lote;
+    if (history && Array.isArray(history) && history.length > 0) {
+      // Generate one movement per history entry
+      history.forEach((p, idx) => {
+        const parsedDate = safeParseDate(p.data);
+        const pId = p.id || `LEGACY-${idx}-${parsedDate.getTime()}`;
+        
+        movements.push({
+          id: `AUTO-LOTE-PGTO-${lote.id}-${pId}`,
+          tipo: 'saida',
+          data: p.data || '',
+          parsedDate: parsedDate,
+          valor: Number(p.valor || 0),
+          categoria: 'Compra',
+          descricao: `Pgto Lote • ${lote.fornecedor}`,
+          subDescricao: `Lote ${String(lote.id)} • Parcela ${idx + 1}`,
+          origem: 'auto',
+          origemRef: lote.id,
+          formaPagamento: p.forma_pagamento || '',
+          status: 'confirmado'
+        });
+      });
+    } else {
+      // Legacy Fallback (Single movement)
+      if (paymentStatus === 'pago') {
+        let totalCost = lote.frete + lote.taxas + lote.adicLote;
+        lote.items.forEach(i => {
+          const cBase = parseNumber(i.custo_compra || i.custo || i.custo_total);
+          totalCost += cBase;
+        });
+
+        if (totalCost === 0 && lote.valor_pago_lote > 0) {
+          totalCost = lote.valor_pago_lote;
+        }
+
+        const parsedDate = safeParseDate(paymentDate || lote.dataCompra);
+
+        movements.push({
+          id: `AUTO-LOTE-PAGO-${lote.id}`,
+          tipo: 'saida',
+          data: paymentDate || lote.dataCompra || '',
+          parsedDate: parsedDate,
+          valor: totalCost,
+          categoria: 'Compra',
+          descricao: `Compra Lote • ${lote.fornecedor}`,
+          subDescricao: `Lote ${String(lote.id)}${isLegacyPaid ? ' • Pago (Auto)' : ' • Pago'}`,
+          origem: 'auto',
+          origemRef: lote.id,
+          formaPagamento: '',
+          status: 'confirmado'
+        });
+      } else if (paymentStatus === 'parcial') {
+        const parsedDate = safeParseDate(paymentDate || lote.dataCompra);
+        movements.push({
+          id: `AUTO-LOTE-PARCIAL-${lote.id}`,
+          tipo: 'saida',
+          data: paymentDate || lote.dataCompra || '',
+          parsedDate: parsedDate,
+          valor: lote.valor_pago_lote,
+          categoria: 'Compra',
+          descricao: `Pgto Parcial Lote • ${lote.fornecedor}`,
+          subDescricao: `Lote ${String(lote.id)} • Parcial`,
+          origem: 'auto',
+          origemRef: lote.id,
+          formaPagamento: '',
+          status: 'confirmado'
+        });
       }
-
-      const parsedDate = safeParseDate(paymentDate || lote.dataCompra);
-
-      movements.push({
-        id: `AUTO-LOTE-PAGO-${lote.id}`,
-        tipo: 'saida',
-        data: paymentDate || lote.dataCompra || '',
-        parsedDate: parsedDate,
-        valor: totalCost,
-        categoria: 'Compra',
-        descricao: `Compra Lote • ${lote.fornecedor}`,
-        subDescricao: `Lote ${String(lote.id)}${isLegacyPaid ? ' • Pago (Auto)' : ' • Pago'}`,
-        origem: 'auto',
-        origemRef: lote.id,
-        formaPagamento: '',
-        status: 'confirmado'
-      });
-    } else if (paymentStatus === 'parcial') {
-      const parsedDate = safeParseDate(paymentDate || lote.dataCompra);
-      movements.push({
-        id: `AUTO-LOTE-PARCIAL-${lote.id}`,
-        tipo: 'saida',
-        data: paymentDate || lote.dataCompra || '',
-        parsedDate: parsedDate,
-        valor: lote.valor_pago_lote,
-        categoria: 'Compra',
-        descricao: `Pgto Parcial Lote • ${lote.fornecedor}`,
-        subDescricao: `Lote ${String(lote.id)} • Parcial`,
-        origem: 'auto',
-        origemRef: lote.id,
-        formaPagamento: '',
-        status: 'confirmado'
-      });
     }
   });
 

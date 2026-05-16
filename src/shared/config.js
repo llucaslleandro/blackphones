@@ -74,7 +74,7 @@ export const CONFIG = {
   },
 
   // Google Apps Script API
-  apiBaseUrl: 'https://script.google.com/macros/s/AKfycbx4T7wzEmMByD7rPASe40kGqsi-6MU_WUt3aC2xkv_wdXUu2eY2hyBcmpiCdwEmNEH3/exec',
+  apiBaseUrl: 'https://script.google.com/macros/s/AKfycbylTqHDDbx9VS2hiqtSqgjrlj7FzcFtZwB8-MEK43l62OiTnozPdmciMEZiviBscU-u/exec',
 
   // Banners do Carrossel
   // Para Desktop: tamanho recomendado 1200x400px (proporção 3:1)

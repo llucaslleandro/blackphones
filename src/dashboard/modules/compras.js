@@ -873,6 +873,12 @@ function renderModals() {
           <button type="button" class="text-gray-400 hover:text-gray-600 transition" onclick="document.getElementById('modal-pagamento-lote').classList.add('hidden'); document.getElementById('modal-pagamento-lote').classList.remove('flex');"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
         <div class="p-6 space-y-4">
+          <!-- Error Message Container -->
+          <div id="pag-error-msg" class="hidden p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="pag-error-text"></span>
+          </div>
+
           <input type="hidden" id="pag-lote-id">
           
           <div>
@@ -895,21 +901,31 @@ function renderModals() {
             </div>
           </div>
           
-          <div id="pag-parcial-fields" class="hidden grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
-            <div>
-              <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Valor Pago (R$)</label>
-              <input type="number" id="pag-valor-pago" class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-white" placeholder="0.00">
+          <div id="pag-parcial-fields" class="hidden space-y-4">
+            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Valor Desta Parcela (R$)</label>
+                <input type="number" id="pag-valor-pago" class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-white" placeholder="0.00">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Saldo Devedor (R$)</label>
+                <input type="number" id="pag-valor-pendente" class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-gray-100 text-gray-500" readonly>
+              </div>
             </div>
-            <div>
-              <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Valor Restante (R$)</label>
-              <input type="number" id="pag-valor-pendente" class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-white" placeholder="0.00">
+            
+            <!-- Payment History -->
+            <div id="pag-history-container" class="hidden">
+              <h4 class="text-[10px] font-bold text-gray-400 uppercase mb-2 px-1">Histórico de Pagamentos</h4>
+              <div id="pag-history-list" class="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                <!-- JS Injects history here -->
+              </div>
             </div>
           </div>
         </div>
         <div class="p-4 border-t border-gray-100 flex justify-end gap-2 bg-gray-50">
           <button type="button" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition" onclick="document.getElementById('modal-pagamento-lote').classList.add('hidden'); document.getElementById('modal-pagamento-lote').classList.remove('flex');">Cancelar</button>
           <button type="button" id="btn-save-pagamento" class="px-6 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition flex items-center gap-2">
-            <i class="fa-solid fa-check"></i> Confirmar
+            <i class="fa-solid fa-check"></i> Confirmar Pagamento
           </button>
         </div>
       </div>
@@ -1873,23 +1889,28 @@ async function confirmarChegada() {
 function togglePagamentoFields() {
   const status = document.getElementById('pag-status').value;
   const partialFields = document.getElementById('pag-parcial-fields');
+  const valorPagoInput = document.getElementById('pag-valor-pago');
 
   if (status === 'parcial') {
     partialFields.classList.remove('hidden');
-    // If empty, suggest full value as a starting point? 
-    // Actually just let user type.
+    valorPagoInput.value = '';
+    handlePagamentoInput();
   } else if (status === 'pago') {
-    partialFields.classList.add('hidden');
-    document.getElementById('pag-valor-pago').value = currentLoteTotalValue.toFixed(2);
-    document.getElementById('pag-valor-pendente').value = '0';
+    partialFields.classList.remove('hidden');
+    // Calculate what's left to pay
+    const totalPagoAteAgora = Number(document.getElementById('modal-pagamento-lote').dataset.totalPago) || 0;
+    const faltaPagar = Math.max(0, currentLoteTotalValue - totalPagoAteAgora);
+    valorPagoInput.value = faltaPagar.toFixed(2);
+    handlePagamentoInput();
   } else {
     partialFields.classList.add('hidden');
   }
 }
 
 function handlePagamentoInput() {
-  const valorPago = Number(document.getElementById('pag-valor-pago').value) || 0;
-  const restante = Math.max(0, currentLoteTotalValue - valorPago);
+  const totalPagoAteAgora = Number(document.getElementById('modal-pagamento-lote').dataset.totalPago) || 0;
+  const valorPagoAgora = Number(document.getElementById('pag-valor-pago').value) || 0;
+  const restante = Math.max(0, currentLoteTotalValue - (totalPagoAteAgora + valorPagoAgora));
   document.getElementById('pag-valor-pendente').value = restante.toFixed(2);
 }
 
@@ -1898,10 +1919,17 @@ window.abrirModalPagamentoLote = function (loteId) {
   const lote = loteItems[0];
   if (!lote) return;
 
+  const modal = document.getElementById('modal-pagamento-lote');
+  if (!modal) return;
+
+  // Clear previous errors
+  const errorMsg = document.getElementById('pag-error-msg');
+  if (errorMsg) errorMsg.classList.add('hidden');
+
   document.getElementById('pag-lote-id').value = loteId;
   document.getElementById('pag-status').value = lote.status_pagamento || 'pendente';
 
-  // Calculate total lot value for autocomplete logic
+  // Calculate total lot value
   currentLoteTotalValue = 0;
   const lGroupForCalc = {
     frete: Number(lote.custo_frete) || 0,
@@ -1913,20 +1941,42 @@ window.abrirModalPagamentoLote = function (loteId) {
     currentLoteTotalValue += getCustoItemReal(i, lGroupForCalc);
   });
 
-  // Format data for input (DD/MM/YYYY)
-  const dateVal = lote.data_pagamento ? formatDateBr(lote.data_pagamento) : formatDateBr(new Date());
-  document.getElementById('pag-data').value = dateVal;
+  const totalPagoAteAgora = Number(lote.valor_pago_lote) || 0;
+  modal.dataset.totalPago = totalPagoAteAgora;
 
-  document.getElementById('pag-valor-pago').value = lote.valor_pago_lote || '';
-  document.getElementById('pag-valor-pendente').value = lote.valor_pendente_lote || '';
+  // History rendering
+  const historyContainer = document.getElementById('pag-history-container');
+  const historyList = document.getElementById('pag-history-list');
+  let history = [];
+  try {
+    history = typeof lote.historico_pagamentos === 'string' ? JSON.parse(lote.historico_pagamentos) : (lote.historico_pagamentos || []);
+  } catch (e) {
+    history = [];
+  }
+
+  if (history.length > 0) {
+    historyList.innerHTML = history.map(p => `
+      <div class="flex items-center justify-between p-2 bg-white border border-gray-100 rounded-lg shadow-sm">
+        <div class="flex flex-col">
+          <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">${formatDateBr(p.data)}</span>
+          <span class="text-xs font-bold text-gray-700">${formatMoney(p.valor)}</span>
+        </div>
+        <div class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black rounded uppercase tracking-tighter border border-emerald-100">Confirmado</div>
+      </div>
+    `).join('');
+    historyContainer.classList.remove('hidden');
+  } else {
+    historyList.innerHTML = '';
+    historyContainer.classList.add('hidden');
+  }
+
+  // Suggest current date
+  document.getElementById('pag-data').value = formatDateBr(new Date());
 
   togglePagamentoFields();
 
-  const modal = document.getElementById('modal-pagamento-lote');
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-  }
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
 };
 
 async function salvarPagamentoLote() {
@@ -1937,16 +1987,39 @@ async function salvarPagamentoLote() {
   const valorPago = Number(document.getElementById('pag-valor-pago').value) || 0;
   const valorPendente = Number(document.getElementById('pag-valor-pendente').value) || 0;
 
+  const totalPagoAteAgora = Number(document.getElementById('modal-pagamento-lote').dataset.totalPago) || 0;
+
   if (!data) {
-    showToast('Informe a data do pagamento', 'red', 'fa-xmark');
+    if (errorMsg && errorText) {
+      errorText.textContent = 'Informe a data do pagamento';
+      errorMsg.classList.remove('hidden');
+    }
     return;
+  }
+
+  // Validação de Valor Extra
+  const errorMsg = document.getElementById('pag-error-msg');
+  const errorText = document.getElementById('pag-error-text');
+
+  if (status !== 'pendente' && (totalPagoAteAgora + valorPago) > (currentLoteTotalValue + 0.01)) {
+    if (errorMsg && errorText) {
+      errorText.textContent = `O valor total ultrapassa o custo do lote (${formatMoney(currentLoteTotalValue)})`;
+      errorMsg.classList.remove('hidden');
+    }
+    return;
+  }
+
+  // Auto-set status to 'pago' if total reached
+  let finalStatus = status;
+  if (status === 'parcial' && (totalPagoAteAgora + valorPago) >= (currentLoteTotalValue - 0.01)) {
+    finalStatus = 'pago';
   }
 
   const payload = {
     lote_id: loteId,
-    status_pagamento: status,
-    data_pagamento: data,
-    valor_pago_lote: valorPago,
+    status_pagamento: finalStatus,
+    data_pagamento_agora: data,
+    valor_pago_agora: valorPago,
     valor_pendente_lote: valorPendente
   };
 
