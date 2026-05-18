@@ -10,6 +10,9 @@ export const cashflowState = {
   // All merged movements (auto + manual)
   allMovements: [],
 
+  // Abertura de Caixa (opening balance movement, or null)
+  aberturaCaixa: null,
+
   // Filters
   periodFilter: 'month',   // today | week | month | custom
   typeFilter: 'all',        // all | entrada | saida
@@ -20,6 +23,7 @@ export const cashflowState = {
 
   // UI state
   isModalOpen: false,
+  isAberturaCaixaModalOpen: false,
   isLoading: false,
   isInitialized: false
 };

@@ -4,6 +4,7 @@
  */
 
 import { formatMoney } from '../ui.js';
+import { ABERTURA_CAIXA_ID } from './calculations.js';
 
 /** Period filter labels */
 const PERIOD_LABELS = {
@@ -32,7 +33,13 @@ export function shellTemplate() {
             </h2>
             <p class="text-sm text-gray-500 mt-1.5 ml-0.5">Controle entradas, saídas e saldo disponível da loja.</p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button id="cf-btn-extrato" class="cf-btn-action cf-btn-extrato" title="Ver extrato do caixa">
+              <i class="fa-solid fa-receipt"></i> Extrato
+            </button>
+            <button id="cf-btn-abertura" class="cf-btn-action cf-btn-abertura" title="Configurar caixa inicial">
+              <i class="fa-solid fa-vault"></i> Caixa Inicial
+            </button>
             <button id="cf-btn-entrada" class="cf-btn-action cf-btn-entrada">
               <i class="fa-solid fa-arrow-up"></i> Entrada
             </button>
@@ -76,6 +83,9 @@ export function shellTemplate() {
           </div>
         </div>
       </div>
+
+      <!-- ABERTURA DE CAIXA BANNER -->
+      <div id="cf-abertura-banner-container" class="mb-4"></div>
 
       <!-- CARDS -->
       <div id="cf-cards" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
@@ -156,7 +166,7 @@ export function cardsTemplate({ saldoPeriodo, entradas, saidas, caixaDisponivel,
         <span class="cf-card-icon cf-icon-balance"><i class="fa-solid fa-scale-balanced"></i></span>
         <span class="cf-card-label flex items-center gap-1">
           Saldo do Período
-          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Diferença entre entradas e saídas no período selecionado."></i>
+          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Diferença entre entradas e saídas confirmadas no período selecionado. Movimentações pendentes não alteram este valor."></i>
         </span>
       </div>
       <span class="cf-card-value ${saldoPeriodo >= 0 ? 'cf-val-positive' : 'cf-val-negative'}">${formatMoney(saldoPeriodo)}</span>
@@ -167,7 +177,7 @@ export function cardsTemplate({ saldoPeriodo, entradas, saidas, caixaDisponivel,
         <span class="cf-card-icon cf-icon-entrada"><i class="fa-solid fa-arrow-trend-up"></i></span>
         <span class="cf-card-label flex items-center gap-1">
           Entradas
-          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Total de entradas confirmadas no período."></i>
+          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Total de entradas com status confirmado ou pago no período. Entradas pendentes não são contabilizadas."></i>
         </span>
       </div>
       <span class="cf-card-value cf-val-positive">${formatMoney(entradas)}</span>
@@ -178,7 +188,7 @@ export function cardsTemplate({ saldoPeriodo, entradas, saidas, caixaDisponivel,
         <span class="cf-card-icon cf-icon-saida"><i class="fa-solid fa-arrow-trend-down"></i></span>
         <span class="cf-card-label flex items-center gap-1">
           Saídas
-          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Total de saídas confirmadas no período."></i>
+          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Total de saídas com status confirmado ou pago no período. Saídas pendentes não são contabilizadas."></i>
         </span>
       </div>
       <span class="cf-card-value cf-val-negative">${formatMoney(saidas)}</span>
@@ -189,7 +199,7 @@ export function cardsTemplate({ saldoPeriodo, entradas, saidas, caixaDisponivel,
         <span class="cf-card-icon cf-icon-wallet"><i class="fa-solid fa-wallet"></i></span>
         <span class="cf-card-label flex items-center gap-1">
           Caixa Disponível
-          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Representa o caixa disponível considerando movimentações confirmadas."></i>
+          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Caixa inicial + entradas confirmadas − saídas confirmadas. Movimentações pendentes não entram neste valor."></i>
         </span>
       </div>
       <span class="cf-card-value ${caixaDisponivel >= 0 ? 'cf-val-positive' : 'cf-val-negative'}">${formatMoney(caixaDisponivel)}</span>
@@ -200,7 +210,7 @@ export function cardsTemplate({ saldoPeriodo, entradas, saidas, caixaDisponivel,
         <span class="cf-card-icon cf-icon-pendente"><i class="fa-solid fa-clock"></i></span>
         <span class="cf-card-label flex items-center gap-1">
           Pendente a Receber
-          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Valores a receber de fiados pendentes."></i>
+          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Valores previstos a receber de fiados pendentes. Projeção — não entra no Caixa Disponível."></i>
         </span>
       </div>
       <span class="cf-card-value cf-val-pendente">${formatMoney(pendenteReceber)}</span>
@@ -211,7 +221,7 @@ export function cardsTemplate({ saldoPeriodo, entradas, saidas, caixaDisponivel,
         <span class="cf-card-icon cf-icon-pendente-pagar"><i class="fa-solid fa-file-invoice-dollar"></i></span>
         <span class="cf-card-label flex items-center gap-1">
           Pendente a Pagar
-          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Compras e parcelas pendentes de pagamento."></i>
+          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Valores previstos a pagar em compras e parcelas pendentes. Projeção — não entra no Caixa Disponível."></i>
         </span>
       </div>
       <span class="cf-card-value cf-val-pendente-pagar">${formatMoney(pendentePagar)}</span>
@@ -308,6 +318,7 @@ export function tableRowsTemplate(movements) {
   }
 
   return movements.map(m => {
+    const isAbertura = m.id === ABERTURA_CAIXA_ID;
     let typeBadge = '';
     let valorClass = '';
     let valorPrefix = '';
@@ -334,7 +345,7 @@ export function tableRowsTemplate(movements) {
     else if (m.status === 'pendente') statusBadge = '<span class="cf-status-badge cf-status-pendente">Pendente</span>';
     else if (m.status === 'cancelado') statusBadge = '<span class="cf-status-badge cf-status-cancelado">Cancelado</span>';
 
-    const isAuto = m.origem === 'auto';
+    const isAuto = m.origem === 'auto' || isAbertura;
 
     return `
       <tr class="cf-table-row hover:bg-gray-50/60 transition-colors group">
@@ -349,7 +360,7 @@ export function tableRowsTemplate(movements) {
         <td class="p-4 block md:table-cell">
           <div class="font-semibold text-gray-800 text-[13px]">${m.descricao || '-'}</div>
           ${m.subDescricao ? `<div class="text-[10px] font-medium text-gray-500 mt-0.5">${m.subDescricao}</div>` : ''}
-          ${isAuto ? '<span class="inline-flex mt-1 text-[8px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">Automático</span>' : ''}
+          ${isAbertura ? '<span class="inline-flex mt-1 text-[8px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 uppercase tracking-wider"><i class="fa-solid fa-vault mr-1"></i>Caixa Inicial</span>' : isAuto ? '<span class="inline-flex mt-1 text-[8px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">Automático</span>' : ''}
         </td>
         <td class="p-4 block md:table-cell">
           <span class="md:hidden text-[9px] font-bold text-gray-400 uppercase mr-1">Categoria:</span>
@@ -361,14 +372,23 @@ export function tableRowsTemplate(movements) {
         </td>
         <td class="p-4 text-right block md:table-cell">
           <span class="md:hidden text-[9px] font-bold text-gray-400 uppercase mr-1">Valor:</span>
-          <span class="font-black text-sm ${valorClass}">${valorPrefix} ${formatMoney(Math.abs(m.valor))}</span>
+          <span class="font-black text-sm whitespace-nowrap ${valorClass}">${valorPrefix}${formatMoney(Math.abs(m.valor))}</span>
         </td>
         <td class="p-4 text-center block md:table-cell">
           <span class="md:hidden text-[9px] font-bold text-gray-400 uppercase mr-1">Status:</span>
           ${statusBadge}
         </td>
         <td class="p-4 text-center block md:table-cell">
-          ${!isAuto ? `
+          ${isAbertura ? `
+            <div class="flex gap-1">
+              <button class="cf-action-btn opacity-0 group-hover:opacity-100 transition-opacity" data-action="edit-abertura" title="Editar caixa inicial">
+                <i class="fa-solid fa-pen text-[10px] text-gray-400"></i>
+              </button>
+              <button class="cf-action-btn opacity-0 group-hover:opacity-100 transition-opacity" data-action="delete" data-id="${m.id}" data-desc="Abertura de Caixa" data-valor="${m.valor}" data-tipo="${m.tipo}" title="Excluir caixa inicial">
+                <i class="fa-solid fa-trash-can text-[10px]"></i>
+              </button>
+            </div>
+          ` : !isAuto ? `
             <button class="cf-action-btn opacity-0 group-hover:opacity-100 transition-opacity" data-action="delete" data-id="${m.id}" data-desc="${m.descricao || 'Sem descrição'}" data-valor="${m.valor}" data-tipo="${m.tipo}" title="Excluir movimentação">
               <i class="fa-solid fa-trash-can text-[10px]"></i>
             </button>
@@ -472,6 +492,106 @@ export function modalTemplate() {
           </button>
           <button id="cf-modal-save" class="flex-1 px-4 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition shadow-sm flex items-center justify-center gap-2">
             <i class="fa-solid fa-check"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Banner CTA when no opening balance is configured
+ */
+export function aberturaBannerTemplate(hasAbertura) {
+  if (hasAbertura) return '';
+  return `
+    <div class="cf-abertura-banner" id="cf-abertura-banner">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-vault text-sm"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold text-gray-800">Defina o caixa inicial</p>
+          <p class="text-xs text-gray-500 mt-0.5">Informe o saldo real da loja para conciliar o Caixa Disponível.</p>
+        </div>
+        <button id="cf-banner-abertura-btn" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg transition shadow-sm flex items-center gap-1.5 flex-shrink-0">
+          <i class="fa-solid fa-plus text-[10px]"></i> Configurar
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Modal template for Abertura de Caixa
+ */
+export function aberturaModalTemplate() {
+  return `
+    <div id="cf-abertura-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[100] p-4" style="display:none;">
+      <div id="cf-abertura-drawer" class="fixed right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-out z-[101]">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-teal-50 to-white shrink-0">
+          <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-vault"></i>
+            </span>
+            Abertura de Caixa
+          </h3>
+          <button id="cf-abertura-close" class="text-gray-400 hover:text-gray-600 transition w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto flex-1 custom-scrollbar space-y-5">
+          <!-- Info box -->
+          <div class="bg-teal-50/50 border border-teal-100 rounded-xl p-4">
+            <p class="text-xs font-semibold text-teal-800 leading-relaxed">
+              <i class="fa-solid fa-circle-info text-teal-500 mr-1"></i>
+              Use este valor como ponto de partida para o Vendly calcular o caixa disponível.
+              Movimentações anteriores a esta data não serão contabilizadas.
+            </p>
+          </div>
+
+          <!-- Edit warning (hidden by default) -->
+          <div id="cf-abertura-edit-warning" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <p class="text-xs font-semibold text-amber-800 leading-relaxed">
+              <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1"></i>
+              Alterar o caixa inicial recalcula todo o saldo disponível a partir da nova data e valor.
+            </p>
+          </div>
+
+          <!-- Data -->
+          <div>
+            <label class="cf-label">Data de Início do Controle *</label>
+            <div class="relative">
+              <input type="text" id="cf-abertura-data" class="cf-input" placeholder="DD/MM/YYYY" maxlength="10">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <input type="date" class="absolute inset-0 opacity-0 cursor-pointer js-date-picker-helper" data-target="cf-abertura-data">
+                <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] pointer-events-none"></i>
+              </div>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-1.5 ml-0.5">A partir desta data o Vendly calculará o caixa.</p>
+          </div>
+
+          <!-- Valor -->
+          <div>
+            <label class="cf-label">Valor Disponível em Caixa/Banco (R$) *</label>
+            <input type="text" id="cf-abertura-valor" class="cf-input" placeholder="0,00">
+            <p class="text-[10px] text-gray-400 mt-1.5 ml-0.5">Quanto a loja tinha disponível nessa data.</p>
+          </div>
+
+          <!-- Observação -->
+          <div>
+            <label class="cf-label">Observação</label>
+            <textarea id="cf-abertura-obs" class="cf-input" rows="2" placeholder="Ex: Saldo em caixa + banco na abertura do controle"></textarea>
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-100 bg-gray-50/50 flex items-center gap-3 shrink-0">
+          <button id="cf-abertura-cancel" class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition">
+            Cancelar
+          </button>
+          <button id="cf-abertura-save" class="flex-1 px-4 py-3 bg-teal-600 text-white rounded-xl text-sm font-bold hover:bg-teal-700 transition shadow-sm flex items-center justify-center gap-2">
+            <i class="fa-solid fa-check"></i> Salvar Abertura
           </button>
         </div>
       </div>

@@ -8,9 +8,10 @@ import { cashflowState } from './state.js';
 import { state, fetchJSON } from '../store.js';
 import { applyDateMask } from '../ui.js';
 import { generateFromOrders, generateFromFiados, generateFromCompras, mergeMovements } from './integrations.js';
-import { shellTemplate, modalTemplate } from './templates.js';
+import { shellTemplate, modalTemplate, aberturaModalTemplate } from './templates.js';
 import { renderAll } from './render.js';
-import { openModal, closeModal, setupModalListeners, deleteMovement, isModalOpen as checkModalOpen } from './modal.js';
+import { openModal, closeModal, setupModalListeners, deleteMovement, isModalOpen as checkModalOpen, openAberturaCaixaModal, setupAberturaCaixaListeners } from './modal.js';
+import { extratoModalTemplate, openExtratoModal, setupExtratoListeners } from './extrato.js';
 
 let isShellRendered = false;
 
@@ -24,7 +25,7 @@ export async function initAndRender() {
   // Render shell only once
   if (!isShellRendered) {
     container.innerHTML = shellTemplate();
-    renderModalToBody();
+    renderModalsToBody();
     setupListeners();
     isShellRendered = true;
   }
@@ -81,16 +82,16 @@ async function refreshData() {
 }
 
 /**
- * Render modal HTML to body (once)
+ * Render modal HTML to body (once) — standard + abertura
  */
-function renderModalToBody() {
+function renderModalsToBody() {
   let modalContainer = document.getElementById('cf-modal-container');
   if (!modalContainer) {
     modalContainer = document.createElement('div');
     modalContainer.id = 'cf-modal-container';
     document.body.appendChild(modalContainer);
   }
-  modalContainer.innerHTML = modalTemplate();
+  modalContainer.innerHTML = modalTemplate() + aberturaModalTemplate() + extratoModalTemplate();
 }
 
 /**
@@ -100,6 +101,8 @@ function setupListeners() {
   // Action buttons
   document.getElementById('cf-btn-entrada')?.addEventListener('click', () => openModal('entrada'));
   document.getElementById('cf-btn-saida')?.addEventListener('click', () => openModal('saida'));
+  document.getElementById('cf-btn-abertura')?.addEventListener('click', () => openAberturaCaixaModal());
+  document.getElementById('cf-btn-extrato')?.addEventListener('click', () => openExtratoModal());
 
   // Period chips
   document.getElementById('cf-period-chips')?.addEventListener('click', (e) => {
@@ -167,11 +170,18 @@ function setupListeners() {
 
   // Modal listeners
   setupModalListeners(() => refreshData());
+  setupAberturaCaixaListeners(() => refreshData());
+  setupExtratoListeners();
 
   // Delete event (custom event from render.js)
   window.addEventListener('cf:delete-movement', async (e) => {
     const { id } = e.detail;
     await deleteMovement(id, () => refreshData());
+  });
+
+  // Open abertura event (from banner CTA or edit button)
+  window.addEventListener('cf:open-abertura', () => {
+    openAberturaCaixaModal();
   });
 }
 

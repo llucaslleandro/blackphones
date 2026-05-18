@@ -314,6 +314,17 @@ function doPost(e) {
     }
   }
 
+  if (action === 'salvar_abertura_caixa') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      var res = salvarAberturaCaixa_(payload);
+      return buildResponse({ ok: true, id: res.id });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
   if (action === 'marcar_pagamento_lote') {
     try {
       var payload = {};
@@ -1972,4 +1983,64 @@ function removerMovimentoCaixa_(id) {
       return;
     }
   }
+}
+
+// =============================================
+// ABERTURA DE CAIXA — Caixa Inicial
+// =============================================
+
+function salvarAberturaCaixa_(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Fluxo_Caixa');
+  if (!sheet) {
+    sheet = ss.insertSheet('Fluxo_Caixa');
+    sheet.appendRow([
+      'id', 'tipo', 'data', 'valor', 'categoria', 'descricao',
+      'forma_pagamento', 'status', 'observacao', 'created_at'
+    ]);
+  }
+
+  var ABERTURA_ID = 'ABERTURA-CAIXA';
+  var dataHora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+  var idColIdx = headers.indexOf('id');
+  var dataColIdx = headers.indexOf('data');
+  var valorColIdx = headers.indexOf('valor');
+  var obsColIdx = headers.indexOf('observacao');
+
+  // Upsert: buscar linha existente
+  var existingRow = -1;
+  if (idColIdx !== -1) {
+    for (var i = 1; i < rows.length; i++) {
+      if (String(rows[i][idColIdx]) === ABERTURA_ID) {
+        existingRow = i + 1;
+        break;
+      }
+    }
+  }
+
+  if (existingRow > 0) {
+    // Update in-place
+    if (dataColIdx !== -1) sheet.getRange(existingRow, dataColIdx + 1).setValue(payload.data || '');
+    if (valorColIdx !== -1) sheet.getRange(existingRow, valorColIdx + 1).setValue(Number(payload.valor) || 0);
+    if (obsColIdx !== -1) sheet.getRange(existingRow, obsColIdx + 1).setValue(payload.observacao || '');
+  } else {
+    // Insert new
+    sheet.appendRow([
+      ABERTURA_ID,
+      'entrada',
+      payload.data || dataHora.split(' ')[0],
+      Number(payload.valor) || 0,
+      'Abertura de Caixa',
+      'Abertura de caixa',
+      '-',
+      'confirmado',
+      payload.observacao || 'Saldo inicial informado pelo lojista',
+      dataHora
+    ]);
+  }
+
+  return { id: ABERTURA_ID };
 }

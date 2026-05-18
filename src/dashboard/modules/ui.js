@@ -166,6 +166,23 @@ export function applyDateMask(e) {
   e.target.value = v;
 }
 
+/**
+ * Event handler to apply money/currency mask on input (e.g. 1.250,00).
+ */
+export function applyMoneyMask(e) {
+  let value = e.target.value;
+  value = value.replace(/\D/g, "");
+  if (value === "") {
+    e.target.value = "";
+    return;
+  }
+  const floatValue = parseFloat(value) / 100;
+  e.target.value = floatValue.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
 export async function compressImage(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

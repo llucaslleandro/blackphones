@@ -4,22 +4,41 @@
  */
 
 import { cashflowState } from './state.js';
-import { calcEntradas, calcSaidas, calcSaldoPeriodo, calcSaldoAtual, calcPendenteReceber, calcPendentePagar, calcEntradasPorOrigem, calcSaidasPorCategoria } from './calculations.js';
+import { calcEntradas, calcSaidas, calcSaldoPeriodo, calcSaldoAtual, calcPendenteReceber, calcPendentePagar, calcEntradasPorOrigem, calcSaidasPorCategoria, findAberturaCaixa } from './calculations.js';
 import { getFilteredMovements, getAllTimeMovements } from './filters.js';
-import { cardsTemplate, resumoTemplate, tableRowsTemplate, insightsTemplate } from './templates.js';
+import { cardsTemplate, resumoTemplate, tableRowsTemplate, insightsTemplate, aberturaBannerTemplate } from './templates.js';
 import { formatMoney } from '../ui.js';
 import { state } from '../store.js';
 
 /**
- * Render all visuals (cards, resumo, table)
+ * Render all visuals (cards, resumo, table, banner)
  */
 export function renderAll() {
   const filtered = getFilteredMovements(cashflowState.allMovements);
   const allTime = getAllTimeMovements(cashflowState.allMovements);
 
+  // Detect opening balance
+  cashflowState.aberturaCaixa = findAberturaCaixa(cashflowState.allMovements);
+
+  renderAberturaBanner();
   renderCards(filtered, allTime);
   renderResumo(filtered);
   renderTable(filtered);
+}
+
+/**
+ * Render the abertura de caixa banner (only if no opening balance exists)
+ */
+function renderAberturaBanner() {
+  const container = document.getElementById('cf-abertura-banner-container');
+  if (!container) return;
+
+  container.innerHTML = aberturaBannerTemplate(!!cashflowState.aberturaCaixa);
+
+  // Bind the banner CTA button
+  document.getElementById('cf-banner-abertura-btn')?.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('cf:open-abertura'));
+  });
 }
 
 /**
@@ -120,6 +139,14 @@ function renderTable(filtered) {
           window.dispatchEvent(new CustomEvent('cf:delete-movement', { detail: { id } }));
         }
       }
+    });
+  });
+
+  // Bind edit-abertura buttons
+  tbody.querySelectorAll('[data-action="edit-abertura"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.dispatchEvent(new CustomEvent('cf:open-abertura'));
     });
   });
 }

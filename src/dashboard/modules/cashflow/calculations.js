@@ -4,41 +4,99 @@
  */
 
 /**
- * Sum all entradas in a set of movements
+ * Well-known ID for the opening balance movement
+ */
+export const ABERTURA_CAIXA_ID = 'ABERTURA-CAIXA';
+export const ABERTURA_CAIXA_CATEGORIA = 'Abertura de Caixa';
+
+/**
+ * Statuses that represent confirmed/real money movement.
+ * Only these impact Caixa Disponível and confirmed totals.
+ */
+const CONFIRMED_STATUSES = ['confirmado', 'pago'];
+
+/**
+ * Check if a movement represents confirmed (real) money.
+ * Pending, projected, awaiting, or cancelled movements return false.
+ */
+export function isConfirmedMovement(movement) {
+  return CONFIRMED_STATUSES.includes(String(movement.status || '').toLowerCase());
+}
+
+/**
+ * Check if a movement is the opening balance entry
+ */
+export function isAberturaCaixa(movement) {
+  return movement.id === ABERTURA_CAIXA_ID ||
+    String(movement.categoria || '').toLowerCase() === ABERTURA_CAIXA_CATEGORIA.toLowerCase();
+}
+
+/**
+ * Find the opening balance movement from a list, if it exists
+ */
+export function findAberturaCaixa(allMovements) {
+  return allMovements.find(m => isAberturaCaixa(m)) || null;
+}
+
+/**
+ * Sum all entradas confirmadas in a set of movements
  */
 export function calcEntradas(movements) {
   return movements
-    .filter(m => m.tipo === 'entrada' && m.status !== 'cancelado')
+    .filter(m => m.tipo === 'entrada' && isConfirmedMovement(m) && !isAberturaCaixa(m))
     .reduce((sum, m) => sum + (Number(m.valor) || 0), 0);
 }
 
 /**
- * Sum all saídas in a set of movements
+ * Sum all saídas confirmadas in a set of movements
  */
 export function calcSaidas(movements) {
   return movements
-    .filter(m => m.tipo === 'saida' && m.status !== 'cancelado')
+    .filter(m => m.tipo === 'saida' && isConfirmedMovement(m))
     .reduce((sum, m) => sum + (Number(m.valor) || 0), 0);
 }
 
 /**
- * Saldo do período = entradas - saídas (filtered)
+ * Saldo do período = entradas confirmadas - saídas confirmadas (filtered)
+ * Excludes opening balance from the period calculation.
  */
 export function calcSaldoPeriodo(movements) {
   return calcEntradas(movements) - calcSaidas(movements);
 }
 
 /**
- * Saldo atual = all-time entradas - saídas (no period filter)
+ * Caixa Disponível = abertura + entradas confirmadas (após cutoff) - saídas confirmadas (após cutoff)
+ *
+ * If an opening balance exists, only movements on or after its date are counted.
+ * The opening balance value itself is added as the starting point.
+ * If no opening balance, behaves as before (all-time sum from zero).
  */
 export function calcSaldoAtual(allMovements) {
-  const entradas = allMovements
-    .filter(m => m.tipo === 'entrada' && m.status !== 'cancelado')
+  const abertura = findAberturaCaixa(allMovements);
+
+  let movimentsToSum = allMovements;
+  let aberturaValor = 0;
+
+  if (abertura) {
+    aberturaValor = Number(abertura.valor) || 0;
+    const cutoffDate = abertura.parsedDate instanceof Date ? abertura.parsedDate : new Date(abertura.data || 0);
+
+    // Only count movements on or after the cutoff date, excluding the opening itself
+    movimentsToSum = allMovements.filter(m => {
+      if (isAberturaCaixa(m)) return false;
+      const d = m.parsedDate instanceof Date ? m.parsedDate : new Date(m.data || 0);
+      return d >= cutoffDate;
+    });
+  }
+
+  const entradas = movimentsToSum
+    .filter(m => m.tipo === 'entrada' && isConfirmedMovement(m))
     .reduce((sum, m) => sum + (Number(m.valor) || 0), 0);
-  const saidas = allMovements
-    .filter(m => m.tipo === 'saida' && m.status !== 'cancelado')
+  const saidas = movimentsToSum
+    .filter(m => m.tipo === 'saida' && isConfirmedMovement(m))
     .reduce((sum, m) => sum + (Number(m.valor) || 0), 0);
-  return entradas - saidas;
+
+  return aberturaValor + entradas - saidas;
 }
 
 /**
@@ -99,12 +157,12 @@ export function calcPendentePagar(encomendas) {
 }
 
 /**
- * Group entradas by origem (categoria)
+ * Group entradas by origem (categoria) — excludes opening balance
  */
 export function calcEntradasPorOrigem(movements) {
   const map = {};
   movements
-    .filter(m => m.tipo === 'entrada' && m.status !== 'cancelado')
+    .filter(m => m.tipo === 'entrada' && isConfirmedMovement(m) && !isAberturaCaixa(m))
     .forEach(m => {
       const cat = m.categoria || 'Outros';
       map[cat] = (map[cat] || 0) + (Number(m.valor) || 0);
@@ -120,7 +178,7 @@ export function calcEntradasPorOrigem(movements) {
 export function calcSaidasPorCategoria(movements) {
   const map = {};
   movements
-    .filter(m => m.tipo === 'saida' && m.status !== 'cancelado')
+    .filter(m => m.tipo === 'saida' && isConfirmedMovement(m))
     .forEach(m => {
       const cat = m.categoria || 'Outros';
       map[cat] = (map[cat] || 0) + (Number(m.valor) || 0);

@@ -36,6 +36,30 @@
   box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
 }
 
+.cf-btn-abertura {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  color: white;
+}
+
+.cf-btn-abertura:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.3);
+}
+
+/* ---- Abertura Banner ---- */
+.cf-abertura-banner {
+  background: linear-gradient(135deg, #f0fdfa 0%, #f5f3ff 100%);
+  border: 1px solid #99f6e4;
+  border-radius: 16px;
+  padding: 16px 20px;
+  transition: all 0.25s ease;
+}
+
+.cf-abertura-banner:hover {
+  border-color: #5eead4;
+  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.08);
+}
+
 /* ---- Period Chips ---- */
 .cf-chip {
   display: inline-flex;
@@ -450,4 +474,253 @@ textarea.cf-input {
   background-size: 200% 100%;
   animation: cf-shimmer 1.5s infinite linear;
   border-radius: 6px;
+}
+
+/* ===== Extrato do Caixa ===== */
+
+/* Button */
+.cf-btn-extrato {
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.cf-btn-extrato:hover {
+  transform: translateY(-1px);
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Panel */
+.ext-panel {
+  position: fixed;
+  inset: 16px;
+  max-width: 1100px;
+  margin: auto;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 101;
+}
+
+@media (max-width: 639px) {
+  .ext-panel {
+    inset: 0;
+    border-radius: 0;
+  }
+}
+
+/* Header */
+.ext-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f3f5;
+  flex-shrink: 0;
+}
+
+/* Filters */
+.ext-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border-bottom: 1px solid #f1f3f5;
+  background: #fafbfc;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.ext-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Inter', system-ui, sans-serif;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ext-filter-chip:hover {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+}
+
+.ext-filter-chip.active {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+  box-shadow: 0 2px 6px rgba(17, 24, 39, 0.12);
+}
+
+.ext-search-input {
+  width: 100%;
+  padding: 7px 10px 7px 28px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #374151;
+  background: #ffffff;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.ext-search-input:focus {
+  border-color: #a5b4fc;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+}
+
+/* Content */
+.ext-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* Day Group */
+.ext-day-group {
+  border: 1px solid #f1f3f5;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ext-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #f1f3f5;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ext-day-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ext-day-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+@media (max-width: 639px) {
+  .ext-day-summary {
+    gap: 10px;
+  }
+  .ext-day-stat {
+    align-items: center;
+  }
+}
+
+/* Table */
+.ext-table th {
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.ext-row {
+  border-bottom: 1px solid #f8fafc;
+  transition: background 0.15s ease;
+}
+
+.ext-row:last-child {
+  border-bottom: none;
+}
+
+.ext-row:hover {
+  background: #f8fafc;
+}
+
+.ext-row-abertura {
+  background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 60%);
+}
+
+.ext-row-abertura:hover {
+  background: linear-gradient(90deg, #ccfbf1 0%, #f8fafc 60%);
+}
+
+/* Mobile Cards */
+.ext-mobile-card {
+  background: #ffffff;
+  border: 1px solid #f1f3f5;
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: all 0.15s ease;
+}
+
+.ext-mobile-card:hover {
+  border-color: #e5e7eb;
+}
+
+.ext-mobile-card-abertura {
+  background: linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%);
+  border-color: #99f6e4;
+}
+
+/* Badges */
+.ext-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ext-badge-abertura {
+  background: #f0fdfa;
+  color: #0d9488;
+  border: 1px solid #99f6e4;
+}
+
+.ext-badge-auto {
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #c7d2fe;
+}
+
+.ext-badge-manual {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* Export button placeholder */
+.ext-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Inter', system-ui, sans-serif;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.5;
+  transition: all 0.15s;
 }

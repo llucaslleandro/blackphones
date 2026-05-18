@@ -4,6 +4,7 @@
  */
 
 import { cashflowState } from './state.js';
+import { isConfirmedMovement, isAberturaCaixa } from './calculations.js';
 
 /**
  * Get start/end Date for a named period filter
@@ -84,8 +85,10 @@ export function getFilteredMovements(allMovements) {
 }
 
 /**
- * Filter ALL movements (ignoring period) — for saldo atual calculation
+ * Filter ALL movements (ignoring period) — for Caixa Disponível calculation.
+ * Only confirmed/paid movements count as real money.
+ * The opening balance is always included so calcSaldoAtual can detect and use it.
  */
 export function getAllTimeMovements(allMovements) {
-  return allMovements.filter(m => m.status !== 'cancelado');
+  return allMovements.filter(m => isConfirmedMovement(m) || isAberturaCaixa(m));
 }
