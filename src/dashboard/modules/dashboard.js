@@ -1082,6 +1082,15 @@ async function salvarEdicaoPedidoAPI() {
     }).join(' + ');
   }
 
+  let rawDate = document.getElementById('edit-data-venda').value.trim();
+  let isoDate = rawDate;
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(rawDate)) {
+    const [datePart, timePart] = rawDate.split(' ');
+    const [d, m, y] = datePart.split('/');
+    const timeStr = timePart && timePart.length >= 5 ? timePart + ':00' : '00:00:00';
+    isoDate = `${y}-${m}-${d} ${timeStr}`;
+  }
+
   const data = {
     cliente: document.getElementById('edit-cliente-nome').value,
     telefone: document.getElementById('edit-cliente-fone').value,
@@ -1090,7 +1099,7 @@ async function salvarEdicaoPedidoAPI() {
     total: parseFloat(document.getElementById('edit-total-venda').value),
     final_price: parseFloat(document.getElementById('edit-final-price-venda').value),
     observacoes: document.getElementById('edit-obs-venda').value,
-    data: document.getElementById('edit-data-venda').value
+    data: isoDate
   };
 
   try {
