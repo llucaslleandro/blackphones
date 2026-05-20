@@ -6,11 +6,12 @@
 import { CONFIG } from '../../../shared/config.js';
 import { cashflowState } from './state.js';
 import { state, fetchJSON } from '../store.js';
-import { applyDateMask } from '../ui.js';
+import { applyDateMask, formatMoney } from '../ui.js';
 import { generateFromOrders, generateFromFiados, generateFromCompras, mergeMovements } from './integrations.js';
-import { shellTemplate, modalTemplate, aberturaModalTemplate } from './templates.js';
+import { shellTemplate, modalTemplate, aberturaModalTemplate, confirmModalTemplate } from './templates.js';
 import { renderAll } from './render.js';
-import { openModal, closeModal, setupModalListeners, deleteMovement, isModalOpen as checkModalOpen, openAberturaCaixaModal, setupAberturaCaixaListeners } from './modal.js';
+import { openModal, closeModal, setupModalListeners, deleteMovement, isModalOpen as checkModalOpen, openAberturaCaixaModal, setupAberturaCaixaListeners, openEditModal, setupConfirmModalListeners, openConfirmModal } from './modal.js';
+import { ABERTURA_CAIXA_ID } from './calculations.js';
 import { extratoModalTemplate, openExtratoModal, setupExtratoListeners } from './extrato.js';
 
 let isShellRendered = false;
@@ -91,7 +92,7 @@ function renderModalsToBody() {
     modalContainer.id = 'cf-modal-container';
     document.body.appendChild(modalContainer);
   }
-  modalContainer.innerHTML = modalTemplate() + aberturaModalTemplate() + extratoModalTemplate();
+  modalContainer.innerHTML = modalTemplate() + aberturaModalTemplate() + extratoModalTemplate() + confirmModalTemplate();
 }
 
 /**
@@ -172,11 +173,33 @@ function setupListeners() {
   setupModalListeners(() => refreshData());
   setupAberturaCaixaListeners(() => refreshData());
   setupExtratoListeners();
+  setupConfirmModalListeners();
 
-  // Delete event (custom event from render.js)
-  window.addEventListener('cf:delete-movement', async (e) => {
+  // Delete event (custom event from render.js) — uses UI confirm modal
+  window.addEventListener('cf:delete-movement', (e) => {
+    const { id, desc, valor, tipo } = e.detail;
+    const tipoLabel = tipo === 'entrada' ? 'Entrada' : 'Saída';
+    const isAbertura = id === ABERTURA_CAIXA_ID;
+
+    const msg = isAbertura
+      ? '⚠️ Excluir a Abertura de Caixa fará o sistema voltar a calcular o caixa a partir de zero.\n\nTem certeza que deseja remover o caixa inicial?'
+      : `Tem certeza que deseja excluir esta movimentação?\n\nTipo: ${tipoLabel}\nValor: ${formatMoney(valor)}\nDescrição: ${desc || 'Sem descrição'}`;
+
+    openConfirmModal(msg, async () => {
+      await deleteMovement(id, () => refreshData());
+    }, {
+      variant: 'delete',
+      title: isAbertura ? 'Excluir Caixa Inicial?' : 'Excluir Movimentação?'
+    });
+  });
+
+  // Edit event (custom event from render.js)
+  window.addEventListener('cf:edit-movement', (e) => {
     const { id } = e.detail;
-    await deleteMovement(id, () => refreshData());
+    const movement = cashflowState.allMovements.find(m => m.id === id);
+    if (movement) {
+      openEditModal(movement);
+    }
   });
 
   // Open abertura event (from banner CTA or edit button)

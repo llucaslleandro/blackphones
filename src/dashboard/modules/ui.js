@@ -226,6 +226,12 @@ export function updateStoreNames() {
 
   const storeNameEl = document.getElementById('store-name');
   if (storeNameEl) storeNameEl.textContent = CONFIG.storeName;
+
+  // Sidebar brand logo from config (prepended with '../../' since dashboard is in src/dashboard/)
+  const brandLogo = document.getElementById('sidebar-brand-logo');
+  if (brandLogo && CONFIG.storeLogo) {
+    brandLogo.src = '../../' + CONFIG.storeLogo;
+  }
 }
 
 /**

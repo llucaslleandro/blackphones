@@ -129,15 +129,25 @@ function renderTable(filtered) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = btn.dataset.id;
-      const desc = btn.dataset.desc;
-      const valor = btn.dataset.valor;
-      const tipo = btn.dataset.tipo === 'entrada' ? 'Entrada' : 'Saída';
+      const desc = btn.dataset.desc || 'Sem descrição';
+      const valor = btn.dataset.valor || '0';
+      const tipo = btn.dataset.tipo || '';
 
       if (id) {
-        const msg = `Tem certeza que deseja excluir esta movimentação?\n\nTipo: ${tipo}\nValor: ${formatMoney(valor)}\nDescrição: ${desc}`;
-        if (confirm(msg)) {
-          window.dispatchEvent(new CustomEvent('cf:delete-movement', { detail: { id } }));
-        }
+        window.dispatchEvent(new CustomEvent('cf:delete-movement', {
+          detail: { id, desc, valor, tipo }
+        }));
+      }
+    });
+  });
+
+  // Bind edit buttons (manual movements only)
+  tbody.querySelectorAll('[data-action="edit"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      if (id) {
+        window.dispatchEvent(new CustomEvent('cf:edit-movement', { detail: { id } }));
       }
     });
   });

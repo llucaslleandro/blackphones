@@ -302,6 +302,18 @@ function doPost(e) {
     }
   }
 
+  if (action === 'editar_movimento_caixa') {
+    try {
+      var payload = {};
+      if (e.postData && e.postData.contents) payload = JSON.parse(e.postData.contents);
+      if (!payload.id) throw new Error('ID não fornecido.');
+      editarMovimentoCaixa_(payload);
+      return buildResponse({ ok: true, id: payload.id });
+    } catch (err) {
+      return buildResponse({ ok: false, error: err.toString() });
+    }
+  }
+
   if (action === 'remover_movimento_caixa') {
     try {
       var payload = {};
@@ -2043,4 +2055,63 @@ function salvarAberturaCaixa_(payload) {
   }
 
   return { id: ABERTURA_ID };
+}
+
+function editarMovimentoCaixa_(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Fluxo_Caixa');
+  if (!sheet) throw new Error('Aba Fluxo_Caixa não encontrada.');
+
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase().replace(/ /g, '_'); });
+
+  var idCol = headers.indexOf('id');
+  if (idCol === -1) throw new Error('Coluna ID não encontrada.');
+
+  var targetRow = -1;
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][idCol]) === String(payload.id)) {
+      targetRow = i + 1; // 1-indexed for sheet
+      break;
+    }
+  }
+  if (targetRow === -1) throw new Error('Movimentação não encontrada: ' + payload.id);
+
+  // Map of editable fields -> column indices
+  var editableFields = {
+    tipo: headers.indexOf('tipo'),
+    data: headers.indexOf('data'),
+    valor: headers.indexOf('valor'),
+    categoria: headers.indexOf('categoria'),
+    descricao: headers.indexOf('descricao'),
+    forma_pagamento: headers.indexOf('forma_pagamento'),
+    status: headers.indexOf('status'),
+    observacao: headers.indexOf('observacao')
+  };
+
+  // Update each field if present in payload and column exists
+  if (editableFields.tipo !== -1 && payload.tipo !== undefined) {
+    sheet.getRange(targetRow, editableFields.tipo + 1).setValue(payload.tipo);
+  }
+  if (editableFields.data !== -1 && payload.data !== undefined) {
+    sheet.getRange(targetRow, editableFields.data + 1).setValue(payload.data);
+  }
+  if (editableFields.valor !== -1 && payload.valor !== undefined) {
+    sheet.getRange(targetRow, editableFields.valor + 1).setValue(Number(payload.valor) || 0);
+  }
+  if (editableFields.categoria !== -1 && payload.categoria !== undefined) {
+    sheet.getRange(targetRow, editableFields.categoria + 1).setValue(payload.categoria);
+  }
+  if (editableFields.descricao !== -1 && payload.descricao !== undefined) {
+    sheet.getRange(targetRow, editableFields.descricao + 1).setValue(payload.descricao);
+  }
+  if (editableFields.forma_pagamento !== -1 && payload.forma_pagamento !== undefined) {
+    sheet.getRange(targetRow, editableFields.forma_pagamento + 1).setValue(payload.forma_pagamento);
+  }
+  if (editableFields.status !== -1 && payload.status !== undefined) {
+    sheet.getRange(targetRow, editableFields.status + 1).setValue(payload.status);
+  }
+  if (editableFields.observacao !== -1 && payload.observacao !== undefined) {
+    sheet.getRange(targetRow, editableFields.observacao + 1).setValue(payload.observacao);
+  }
 }

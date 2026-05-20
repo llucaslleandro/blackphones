@@ -24,6 +24,7 @@ export const cashflowState = {
   // UI state
   isModalOpen: false,
   isAberturaCaixaModalOpen: false,
+  isConfirmModalOpen: false,
   isLoading: false,
   isInitialized: false
 };

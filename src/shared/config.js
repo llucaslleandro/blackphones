@@ -7,7 +7,8 @@ export const CONFIG = {
   // Identidade da Loja
   storeName: 'Black Phones',
   nome_lojista: 'Júlio', // Nome para saudação personalizada no dashboard
-  storeLogo: 'assets/images/black-logo2.png', // Logo da loja (usada no onboarding)
+  storeLogo: 'assets/images/logo-1080X1080.png', // Logo da loja (usada no onboarding)
+  favicon: 'assets/images/favicon-48X48.png',    // Favicon da aba do navegador (aceita .png, .ico, .svg)
   storeTagline: 'Encontre o celular ideal para você',
 
   // Cores da Marca
@@ -74,7 +75,7 @@ export const CONFIG = {
   },
 
   // Google Apps Script API
-  apiBaseUrl: 'https://script.google.com/macros/s/AKfycbw7digZx38Cjpz_VFmEMvHfoaXMXnmkk0eEOCV9yINGvs8duTpDQ1shgOqE5tQ8DiMk/exec',
+  apiBaseUrl: 'https://script.google.com/macros/s/AKfycbwyOpjmtMMndSNMKee0ekW4Fdsk2Q6G9J7FmEUesaJwc0_ClUZ0evQsyrd67jLxNCHy/exec',
 
   // Banners do Carrossel
   // Para Desktop: tamanho recomendado 1200x400px (proporção 3:1)
@@ -102,4 +103,17 @@ export function applyTheme() {
   root.style.setProperty('--color-success', CONFIG.colors.success);
   root.style.setProperty('--color-error', CONFIG.colors.error);
   root.style.setProperty('--color-warning', CONFIG.colors.warning);
+
+  // Dynamic favicon from config
+  if (CONFIG.favicon) {
+    let link = document.querySelector('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    const isDashboard = window.location.pathname.includes('/src/dashboard/');
+    const prefix = isDashboard ? '../../' : '';
+    link.href = prefix + CONFIG.favicon;
+  }
 }

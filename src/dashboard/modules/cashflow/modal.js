@@ -1,6 +1,7 @@
 /**
  * Cashflow Module — Modal Logic
  * Open/close/save for manual movement entries + abertura de caixa.
+ * Supports both CREATE and EDIT modes for manual movements.
  */
 
 import { CONFIG } from '../../../shared/config.js';
@@ -16,6 +17,12 @@ const CATEGORIAS_SAIDA = [
   'Compra', 'Frete', 'Taxa', 'Despesa Fixa', 'Despesa Variável', 'Retirada', 'Ajuste Negativo', 'Outros'
 ];
 
+// Edit mode state
+let editingMovementId = null;
+
+// Confirm modal callback
+let confirmCallback = null;
+
 // =============================================
 // Standard Movement Modal
 // =============================================
@@ -24,6 +31,69 @@ const CATEGORIAS_SAIDA = [
  * Open the modal drawer for a new entry
  */
 export function openModal(tipo) {
+  editingMovementId = null;
+  _openModalInternal(tipo);
+}
+
+/**
+ * Open the modal drawer for editing an existing manual movement
+ */
+export function openEditModal(movement) {
+  if (!movement || !movement.id) return;
+
+  editingMovementId = movement.id;
+  const tipo = movement.tipo || 'entrada';
+
+  _openModalInternal(tipo);
+
+  // Pre-fill fields with existing data
+  const d = movement.parsedDate instanceof Date && !isNaN(movement.parsedDate.getTime())
+    ? movement.parsedDate.toLocaleDateString('pt-BR')
+    : (movement.data || '');
+  document.getElementById('cf-mov-data').value = d;
+  document.getElementById('cf-mov-valor').value = Number(movement.valor) || '';
+  document.getElementById('cf-mov-descricao').value = movement.descricao || '';
+  document.getElementById('cf-mov-pagamento').value = movement.formaPagamento || movement.forma_pagamento || '';
+  document.getElementById('cf-mov-status').value = movement.status || 'confirmado';
+  document.getElementById('cf-mov-obs').value = movement.observacao || '';
+
+  // Set category (after options are populated)
+  const catSelect = document.getElementById('cf-mov-categoria');
+  if (catSelect) {
+    const cat = movement.categoria || '';
+    // If category doesn't exist in options, add it
+    let found = false;
+    for (const opt of catSelect.options) {
+      if (opt.value === cat) { found = true; break; }
+    }
+    if (!found && cat) {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      catSelect.appendChild(opt);
+    }
+    catSelect.value = cat;
+  }
+
+  // Update title for edit mode
+  const title = document.getElementById('cf-modal-title');
+  if (tipo === 'entrada') {
+    title.innerHTML = '<i class="fa-solid fa-pen text-emerald-500"></i> Editar Entrada';
+  } else {
+    title.innerHTML = '<i class="fa-solid fa-pen text-red-500"></i> Editar Saída';
+  }
+
+  // Update save button text
+  const saveBtn = document.getElementById('cf-modal-save');
+  if (saveBtn) {
+    saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar Alterações';
+  }
+}
+
+/**
+ * Internal: shared open logic for create/edit modes
+ */
+function _openModalInternal(tipo) {
   const modal = document.getElementById('cf-modal');
   const drawer = document.getElementById('cf-modal-drawer');
   const title = document.getElementById('cf-modal-title');
@@ -35,7 +105,7 @@ export function openModal(tipo) {
   // Set tipo
   tipoInput.value = tipo;
 
-  // Update title
+  // Update title (default for create mode)
   if (tipo === 'entrada') {
     title.innerHTML = '<i class="fa-solid fa-arrow-up text-emerald-500"></i> Nova Entrada';
   } else {
@@ -61,6 +131,12 @@ export function openModal(tipo) {
   document.getElementById('cf-mov-status').value = 'confirmado';
   document.getElementById('cf-mov-obs').value = '';
 
+  // Reset save button text
+  const saveBtn = document.getElementById('cf-modal-save');
+  if (saveBtn) {
+    saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar';
+  }
+
   // Show
   modal.style.display = 'flex';
   modal.classList.remove('hidden');
@@ -81,6 +157,7 @@ export function closeModal() {
 
   drawer.classList.add('translate-x-full');
   cashflowState.isModalOpen = false;
+  editingMovementId = null;
 
   setTimeout(() => {
     modal.style.display = 'none';
@@ -89,7 +166,8 @@ export function closeModal() {
 }
 
 /**
- * Save a manual movement (via API)
+ * Save a manual movement (via API) — handles both create and edit.
+ * In edit mode, opens a custom UI confirmation modal before saving.
  */
 export async function saveMovement(onSaved) {
   const tipo = document.getElementById('cf-mov-tipo').value;
@@ -129,6 +207,26 @@ export async function saveMovement(onSaved) {
     observacao
   };
 
+  // EDIT MODE: Show custom confirmation modal
+  if (editingMovementId) {
+    payload.id = editingMovementId;
+    const tipoLabel = tipo === 'entrada' ? 'Entrada' : 'Saída';
+    const msg = `Tem certeza que deseja alterar esta movimentação?\n\nTipo: ${tipoLabel}\nValor: ${formatMoney(valor)}\nCategoria: ${categoria}`;
+
+    openConfirmModal(msg, async () => {
+      await _doSaveEdit(payload, onSaved);
+    });
+    return;
+  }
+
+  // CREATE MODE: Save directly
+  await _doSaveCreate(payload, onSaved);
+}
+
+/**
+ * Internal: Execute create save
+ */
+async function _doSaveCreate(payload, onSaved) {
   const btn = document.getElementById('cf-modal-save');
   const originalText = btn.innerHTML;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
@@ -158,15 +256,41 @@ export async function saveMovement(onSaved) {
 }
 
 /**
+ * Internal: Execute edit save
+ */
+async function _doSaveEdit(payload, onSaved) {
+  const btn = document.getElementById('cf-modal-save');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${CONFIG.apiBaseUrl}?action=editar_movimento_caixa`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (json.ok) {
+      showToast('Movimentação atualizada com sucesso!', 'green', 'fa-check');
+      closeModal();
+      if (onSaved) onSaved();
+    } else {
+      throw new Error(json.error || 'Erro ao atualizar');
+    }
+  } catch (err) {
+    console.error('Erro ao atualizar movimentação:', err);
+    showToast('Erro ao atualizar: ' + err.message, 'red', 'fa-xmark');
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+/**
  * Delete a manual movement (via API)
  */
 export async function deleteMovement(id, onDeleted) {
-  // Block deletion of opening balance with weak confirm
-  if (id === ABERTURA_CAIXA_ID) {
-    const msg = '⚠️ ATENÇÃO: Excluir a Abertura de Caixa fará o sistema voltar a calcular o caixa a partir de zero.\n\nTem certeza que deseja remover o caixa inicial?';
-    if (!confirm(msg)) return;
-  }
-
   try {
     const res = await fetch(`${CONFIG.apiBaseUrl}?action=remover_movimento_caixa`, {
       method: 'POST',
@@ -186,6 +310,107 @@ export async function deleteMovement(id, onDeleted) {
   }
 }
 
+// =============================================
+// Custom Confirmation Modal (UI, not native)
+// =============================================
+
+/**
+ * Open the custom UI confirmation modal.
+ * @param {string} message - Message to display (supports \n for line breaks)
+ * @param {Function} onConfirm - Callback when user confirms
+ * @param {Object} [options] - Styling options
+ * @param {string} [options.variant='edit'] - 'edit' (amber) or 'delete' (red)
+ * @param {string} [options.title] - Custom title
+ * @param {string} [options.confirmText] - Custom confirm button text
+ * @param {string} [options.icon] - Custom FontAwesome icon class
+ */
+export function openConfirmModal(message, onConfirm, options = {}) {
+  const modal = document.getElementById('cf-confirm-modal');
+  const box = document.getElementById('cf-confirm-box');
+  const msgEl = document.getElementById('cf-confirm-msg');
+  const titleEl = document.getElementById('cf-confirm-title');
+  const iconEl = document.getElementById('cf-confirm-icon');
+  const btnYes = document.getElementById('cf-confirm-yes');
+  if (!modal || !box) return;
+
+  const variant = options.variant || 'edit';
+  const isDelete = variant === 'delete';
+
+  // Set message (convert newlines to <br>)
+  if (msgEl) {
+    msgEl.innerHTML = message.replace(/\n/g, '<br>');
+  }
+
+  // Set title
+  if (titleEl) {
+    titleEl.textContent = options.title || (isDelete ? 'Confirmar Exclusão' : 'Confirmar Alteração');
+  }
+
+  // Set icon styling
+  if (iconEl) {
+    const iconClass = options.icon || (isDelete ? 'fa-solid fa-trash-can' : 'fa-solid fa-pen-to-square');
+    iconEl.className = `w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-sm ${isDelete ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`;
+    iconEl.innerHTML = `<i class="${iconClass} text-2xl"></i>`;
+  }
+
+  // Set confirm button styling
+  if (btnYes) {
+    const btnText = options.confirmText || (isDelete ? 'Sim, Excluir' : 'Confirmar Alteração');
+    const btnIcon = isDelete ? 'fa-solid fa-trash-can' : 'fa-solid fa-check';
+    btnYes.className = `flex-1 px-5 py-3 rounded-xl text-sm font-bold text-white transition shadow-sm flex items-center justify-center gap-2 ${isDelete ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-900 hover:bg-gray-800'}`;
+    btnYes.innerHTML = `<i class="${btnIcon} text-xs"></i> ${btnText}`;
+  }
+
+  // Store callback
+  confirmCallback = onConfirm;
+
+  // Show
+  modal.style.display = 'flex';
+  modal.classList.remove('hidden');
+  cashflowState.isConfirmModalOpen = true;
+
+  // Animate in
+  requestAnimationFrame(() => {
+    box.classList.remove('scale-95', 'opacity-0');
+    box.classList.add('scale-100', 'opacity-100');
+  });
+}
+
+/**
+ * Close the custom UI confirmation modal
+ */
+export function closeConfirmModal() {
+  const modal = document.getElementById('cf-confirm-modal');
+  const box = document.getElementById('cf-confirm-box');
+  if (!modal || !box) return;
+
+  box.classList.remove('scale-100', 'opacity-100');
+  box.classList.add('scale-95', 'opacity-0');
+  cashflowState.isConfirmModalOpen = false;
+  confirmCallback = null;
+
+  setTimeout(() => {
+    modal.style.display = 'none';
+    modal.classList.add('hidden');
+  }, 300);
+}
+
+/**
+ * Setup confirm modal event listeners
+ */
+export function setupConfirmModalListeners() {
+  document.getElementById('cf-confirm-no')?.addEventListener('click', closeConfirmModal);
+  document.getElementById('cf-confirm-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'cf-confirm-modal') closeConfirmModal();
+  });
+
+  document.getElementById('cf-confirm-yes')?.addEventListener('click', () => {
+    const cb = confirmCallback;
+    closeConfirmModal();
+    if (cb) cb();
+  });
+}
+
 /**
  * Setup all modal event listeners
  */
@@ -200,7 +425,7 @@ export function setupModalListeners(onSaved) {
 }
 
 export function isModalOpen() {
-  return cashflowState.isModalOpen || cashflowState.isAberturaCaixaModalOpen;
+  return cashflowState.isModalOpen || cashflowState.isAberturaCaixaModalOpen || cashflowState.isConfirmModalOpen;
 }
 
 // =============================================

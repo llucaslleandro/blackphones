@@ -360,7 +360,7 @@ export function tableRowsTemplate(movements) {
         <td class="p-4 block md:table-cell">
           <div class="font-semibold text-gray-800 text-[13px]">${m.descricao || '-'}</div>
           ${m.subDescricao ? `<div class="text-[10px] font-medium text-gray-500 mt-0.5">${m.subDescricao}</div>` : ''}
-          ${isAbertura ? '<span class="inline-flex mt-1 text-[8px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 uppercase tracking-wider"><i class="fa-solid fa-vault mr-1"></i>Caixa Inicial</span>' : isAuto ? '<span class="inline-flex mt-1 text-[8px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">Automático</span>' : ''}
+          ${isAbertura ? '<span class="inline-flex items-center mt-1 text-[8px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 uppercase tracking-wider"><i class="fa-solid fa-vault mr-1"></i>Caixa Inicial</span>' : isAuto ? '<span class="inline-flex items-center mt-1 text-[8px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">Automático</span>' : ''}
         </td>
         <td class="p-4 block md:table-cell">
           <span class="md:hidden text-[9px] font-bold text-gray-400 uppercase mr-1">Categoria:</span>
@@ -389,9 +389,14 @@ export function tableRowsTemplate(movements) {
               </button>
             </div>
           ` : !isAuto ? `
-            <button class="cf-action-btn opacity-0 group-hover:opacity-100 transition-opacity" data-action="delete" data-id="${m.id}" data-desc="${m.descricao || 'Sem descrição'}" data-valor="${m.valor}" data-tipo="${m.tipo}" title="Excluir movimentação">
-              <i class="fa-solid fa-trash-can text-[10px]"></i>
-            </button>
+            <div class="flex gap-1">
+              <button class="cf-action-btn opacity-0 group-hover:opacity-100 transition-opacity" data-action="edit" data-id="${m.id}" title="Editar movimentação">
+                <i class="fa-solid fa-pen text-[10px] text-gray-400"></i>
+              </button>
+              <button class="cf-action-btn opacity-0 group-hover:opacity-100 transition-opacity" data-action="delete" data-id="${m.id}" data-desc="${m.descricao || 'Sem descrição'}" data-valor="${m.valor}" data-tipo="${m.tipo}" title="Excluir movimentação">
+                <i class="fa-solid fa-trash-can text-[10px]"></i>
+              </button>
+            </div>
           ` : `
             <button class="cf-action-btn cf-action-btn-disabled opacity-0 group-hover:opacity-100 transition-opacity" title="Esta movimentação é vinculada a uma operação e não pode ser excluída diretamente.">
               <i class="fa-solid fa-lock text-[10px] text-gray-300"></i>
@@ -592,6 +597,36 @@ export function aberturaModalTemplate() {
           </button>
           <button id="cf-abertura-save" class="flex-1 px-4 py-3 bg-teal-600 text-white rounded-xl text-sm font-bold hover:bg-teal-700 transition shadow-sm flex items-center justify-center gap-2">
             <i class="fa-solid fa-check"></i> Salvar Abertura
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Confirmation modal template (custom UI, not native browser).
+ * Icon, title, message, and button text are set dynamically via JS.
+ */
+export function confirmModalTemplate() {
+  return `
+    <div id="cf-confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[120] p-4" style="display:none;">
+      <div id="cf-confirm-box" class="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-10 transform transition-all duration-300 scale-95 opacity-0">
+        <div class="p-6 text-center space-y-4">
+          <div id="cf-confirm-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-sm bg-amber-100 text-amber-600">
+            <i class="fa-solid fa-pen-to-square text-2xl"></i>
+          </div>
+          <div>
+            <h3 id="cf-confirm-title" class="text-lg font-bold text-gray-900">Confirmar</h3>
+            <p id="cf-confirm-msg" class="text-sm text-gray-500 mt-2 leading-relaxed"></p>
+          </div>
+        </div>
+        <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center gap-3 rounded-b-2xl">
+          <button id="cf-confirm-no" class="flex-1 px-5 py-3 rounded-xl text-sm font-bold text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition text-center">
+            Cancelar
+          </button>
+          <button id="cf-confirm-yes" class="flex-1 px-5 py-3 rounded-xl text-sm font-bold text-white transition shadow-sm flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800">
+            Confirmar
           </button>
         </div>
       </div>
