@@ -88,7 +88,7 @@ export function shellTemplate() {
       <div id="cf-abertura-banner-container" class="mb-4"></div>
 
       <!-- CARDS -->
-      <div id="cf-cards" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+      <div id="cf-cards" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
         ${skeletonCards()}
       </div>
 
@@ -153,13 +153,13 @@ export function skeletonCards() {
     <div class="skeleton h-3 w-20 rounded mb-3"></div>
     <div class="skeleton h-7 w-28 rounded"></div>
   </div>`;
-  return sk.repeat(5);
+  return sk.repeat(7);
 }
 
 /**
  * Render the 5 financial metric cards
  */
-export function cardsTemplate({ saldoPeriodo, entradas, saidas, caixaDisponivel, pendenteReceber, pendentePagar }) {
+export function cardsTemplate({ saldoPeriodo, entradas, saidas, caixaDisponivel, pendenteReceber, pendentePagar, patrimonioOperacional }) {
   return `
     <div class="cf-card cf-card-saldo-periodo">
       <div class="cf-card-header">
@@ -203,6 +203,17 @@ export function cardsTemplate({ saldoPeriodo, entradas, saidas, caixaDisponivel,
         </span>
       </div>
       <span class="cf-card-value ${caixaDisponivel >= 0 ? 'cf-val-positive' : 'cf-val-negative'}">${formatMoney(caixaDisponivel)}</span>
+    </div>
+
+    <div class="cf-card cf-card-patrimonio">
+      <div class="cf-card-header">
+        <span class="cf-card-icon cf-icon-patrimonio"><i class="fa-solid fa-building-columns"></i></span>
+        <span class="cf-card-label flex items-center gap-1">
+          Patrimônio Operacional
+          <i class="fa-solid fa-circle-question text-gray-300 hover:text-gray-500 cursor-pointer js-tooltip-trigger" data-tooltip-content="Soma do Caixa Disponível atual com todo o Capital Imobilizado (Estoque + Lotes Pendentes)."></i>
+        </span>
+      </div>
+      <span class="cf-card-value ${patrimonioOperacional >= 0 ? 'cf-val-positive' : 'cf-val-negative'}">${formatMoney(patrimonioOperacional)}</span>
     </div>
 
     <div class="cf-card cf-card-pendente">

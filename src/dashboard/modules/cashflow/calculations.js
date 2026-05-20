@@ -3,6 +3,8 @@
  * No DOM access, no side effects — just math.
  */
 
+import { parseNumber } from '../ui.js';
+
 /**
  * Well-known ID for the opening balance movement
  */
@@ -187,3 +189,50 @@ export function calcSaidasPorCategoria(movements) {
     .map(([label, valor]) => ({ label, valor }))
     .sort((a, b) => b.valor - a.valor);
 }
+
+/**
+ * Capital Imobilizado = Capital em Estoque + Capital em Trânsito (Encomendas Pendentes)
+ */
+export function calcCapitalImobilizado(allProducts, allEncomendas) {
+  let capitalEstoque = 0;
+  (allProducts || []).forEach(p => {
+    if (String(p.ativo) === 'true' && parseNumber(p.estoque) > 0) {
+      capitalEstoque += ((parseNumber(p.custo) || parseNumber(p.preco_custo) || 0) * parseNumber(p.estoque));
+    }
+  });
+
+  let capitalTransito = 0;
+  const lotesMap = {};
+  (allEncomendas || []).forEach(e => {
+    const lid = e.lote_id || e.id;
+    if (!lotesMap[lid]) {
+      lotesMap[lid] = {
+        frete: parseNumber(e.custo_frete) || 0,
+        taxas: parseNumber(e.custo_taxas) || 0,
+        adicLote: parseNumber(e.custo_adicional_lote) || 0,
+        items: []
+      };
+    }
+    lotesMap[lid].items.push(e);
+  });
+  
+  Object.values(lotesMap).forEach(lote => {
+    const loteTotalCustosExtra = lote.frete + lote.taxas + lote.adicLote;
+    const rateio = lote.items.length > 0 ? loteTotalCustosExtra / lote.items.length : 0;
+
+    lote.items.forEach(i => {
+      if (i.status === 'encomendado' || i.status === 'pendente') {
+        let custoItemReal = 0;
+        if (i.custo_total !== undefined && i.custo_total !== null && String(i.custo_total) !== '') {
+          custoItemReal = parseNumber(i.custo_total) || 0;
+        } else {
+          custoItemReal = (parseNumber(i.custo_compra) || 0) + rateio;
+        }
+        capitalTransito += custoItemReal;
+      }
+    });
+  });
+
+  return capitalEstoque + capitalTransito;
+}
+

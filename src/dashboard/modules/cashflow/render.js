@@ -4,7 +4,7 @@
  */
 
 import { cashflowState } from './state.js';
-import { calcEntradas, calcSaidas, calcSaldoPeriodo, calcSaldoAtual, calcPendenteReceber, calcPendentePagar, calcEntradasPorOrigem, calcSaidasPorCategoria, findAberturaCaixa } from './calculations.js';
+import { calcEntradas, calcSaidas, calcSaldoPeriodo, calcSaldoAtual, calcPendenteReceber, calcPendentePagar, calcEntradasPorOrigem, calcSaidasPorCategoria, findAberturaCaixa, calcCapitalImobilizado } from './calculations.js';
 import { getFilteredMovements, getAllTimeMovements } from './filters.js';
 import { cardsTemplate, resumoTemplate, tableRowsTemplate, insightsTemplate, aberturaBannerTemplate } from './templates.js';
 import { formatMoney } from '../ui.js';
@@ -54,7 +54,8 @@ function renderCards(filtered, allTime) {
     saidas: calcSaidas(filtered),
     caixaDisponivel: calcSaldoAtual(allTime),
     pendenteReceber: calcPendenteReceber(state.allFiados),
-    pendentePagar: calcPendentePagar(state.allEncomendas)
+    pendentePagar: calcPendentePagar(state.allEncomendas),
+    patrimonioOperacional: calcSaldoAtual(allTime) + calcCapitalImobilizado(state.allProducts, state.allEncomendas)
   });
 
   // Animate cards in only if NOT a silent refresh

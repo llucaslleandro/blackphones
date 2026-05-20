@@ -159,6 +159,7 @@
 .cf-card-saldo-atual::before { background: linear-gradient(90deg, #1f2937, #374151); }
 .cf-card-pendente::before { background: linear-gradient(90deg, #d97706, #f59e0b); }
 .cf-card-pendente-pagar::before { background: linear-gradient(90deg, #b45309, #d97706); }
+.cf-card-patrimonio::before { background: linear-gradient(90deg, #2563eb, #3b82f6); }
 
 .cf-card-header {
   display: flex;
@@ -183,6 +184,7 @@
 .cf-icon-wallet { background: #f3f4f6; color: #374151; }
 .cf-icon-pendente { background: #fffbeb; color: #d97706; }
 .cf-icon-pendente-pagar { background: #fef3c7; color: #b45309; }
+.cf-icon-patrimonio { background: #eff6ff; color: #3b82f6; }
 
 .cf-card-label {
   font-size: 10px;
