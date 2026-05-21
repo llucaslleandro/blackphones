@@ -496,7 +496,7 @@ export async function salvarEstoqueManualmente(callbacks = {}) {
   }
 }
 
-async function toggleAtivoProduto(sku, callbacks = {}) {
+async function toggleAtivoProduto(id, callbacks = {}) {
   try {
     showToast('Atualizando status...', 'blue', 'fa-spinner', true);
     const resp = await fetch(`${CONFIG.apiBaseUrl}?action=toggle_ativo`, {
