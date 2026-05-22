@@ -196,7 +196,7 @@ export function calcSaidasPorCategoria(movements) {
 export function calcCapitalImobilizado(allProducts, allEncomendas) {
   let capitalEstoque = 0;
   (allProducts || []).forEach(p => {
-    if (String(p.ativo) === 'true' && parseNumber(p.estoque) > 0) {
+    if (parseNumber(p.estoque) > 0) {
       capitalEstoque += ((parseNumber(p.custo) || parseNumber(p.preco_custo) || 0) * parseNumber(p.estoque));
     }
   });
@@ -235,4 +235,3 @@ export function calcCapitalImobilizado(allProducts, allEncomendas) {
 
   return capitalEstoque + capitalTransito;
 }
-
