@@ -1424,6 +1424,32 @@ function salvarLoteEncomendado(payload) {
   
   var idColIdx = headers.indexOf('id');
   var loteIdColIdx = headers.indexOf('lote_id');
+  var histColIdx = headers.indexOf('historico_pagamentos');
+  var spColIdx = headers.indexOf('status_pagamento');
+  var dpColIdx = headers.indexOf('data_pagamento');
+  var vpColIdx = headers.indexOf('valor_pago_lote');
+  var pendColIdx = headers.indexOf('valor_pendente_lote');
+
+  if (
+    (!loteData.status_pagamento && spColIdx !== -1) ||
+    (!loteData.data_pagamento && dpColIdx !== -1) ||
+    (!loteData.valor_pago_lote && vpColIdx !== -1) ||
+    (!loteData.valor_pendente_lote && pendColIdx !== -1) ||
+    (!loteData.historico_pagamentos && histColIdx !== -1)
+  ) {
+    for (var h = 1; h < rows.length; h++) {
+      var hId = idColIdx !== -1 ? rows[h][idColIdx] : '';
+      var hLoteId = loteIdColIdx !== -1 ? (rows[h][loteIdColIdx] || hId) : hId;
+      if (String(hLoteId) === String(loteId)) {
+        if (!loteData.status_pagamento && spColIdx !== -1) loteData.status_pagamento = rows[h][spColIdx];
+        if (!loteData.data_pagamento && dpColIdx !== -1) loteData.data_pagamento = rows[h][dpColIdx];
+        if (!loteData.valor_pago_lote && vpColIdx !== -1) loteData.valor_pago_lote = rows[h][vpColIdx];
+        if (!loteData.valor_pendente_lote && pendColIdx !== -1) loteData.valor_pendente_lote = rows[h][pendColIdx];
+        if (!loteData.historico_pagamentos && histColIdx !== -1) loteData.historico_pagamentos = rows[h][histColIdx];
+        break;
+      }
+    }
+  }
 
   // Deletar linhas antigas do lote
   if (loteIdColIdx !== -1) {
@@ -1454,6 +1480,7 @@ function salvarLoteEncomendado(payload) {
       data_pagamento: loteData.data_pagamento || '',
       valor_pago_lote: loteData.valor_pago_lote || '',
       valor_pendente_lote: loteData.valor_pendente_lote || '',
+      historico_pagamentos: loteData.historico_pagamentos || '',
       
       categoria: item.categoria,
       modelo: item.modelo,

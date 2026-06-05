@@ -1436,6 +1436,7 @@ async function salvarLoteEncomenda() {
       loteData.data_pagamento = loteGroup.data_pagamento || '';
       loteData.valor_pago_lote = loteGroup.valor_pago_lote || '';
       loteData.valor_pendente_lote = loteGroup.valor_pendente_lote || '';
+      loteData.historico_pagamentos = loteGroup.historico_pagamentos || loteGroup.historico_pagamentos_lote || '';
     }
   }
 
@@ -2100,4 +2101,3 @@ window.excluirEncomendado = function (id, isLote) {
     }
   };
 }
-

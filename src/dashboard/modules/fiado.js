@@ -149,7 +149,7 @@ function renderList() {
       <tbody class="divide-y divide-gray-100">`;
 
     sortedFiados.forEach(f => {
-      const produtoStr = f.produtoVendidoSnapshot ? `${f.produtoVendidoSnapshot.nome || 'Produto'} - ${f.produtoVendidoSnapshot.armazenamento || ''}` : 'Produto Desconhecido';
+      const produtoStr = f.produtoVendidoSnapshot ? `${f.produtoVendidoSnapshot.nome || 'Produto'} - ${f.produtoVendidoSnapshot.cor || ''} | ${f.produtoVendidoSnapshot.armazenamento || ''}` : 'Produto Desconhecido';
       
       const parcelas = f.parcelas || [];
       const totalParcelas = parcelas.length;
@@ -195,7 +195,7 @@ function renderList() {
     // Grid View
     let html = `<div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
     sortedFiados.forEach(f => {
-      const produtoStr = f.produtoVendidoSnapshot ? `${f.produtoVendidoSnapshot.nome || 'Produto'} - ${f.produtoVendidoSnapshot.armazenamento || ''}` : 'Produto Desconhecido';
+      const produtoStr = f.produtoVendidoSnapshot ? `${f.produtoVendidoSnapshot.nome || 'Produto'} - ${f.produtoVendidoSnapshot.cor || ''} | ${f.produtoVendidoSnapshot.armazenamento || ''}` : 'Produto Desconhecido';
       
       const parcelas = f.parcelas || [];
       const totalParcelas = parcelas.length;

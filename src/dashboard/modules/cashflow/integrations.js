@@ -31,6 +31,56 @@ function safeParseDate(dateStr) {
   return isNaN(d.getTime()) ? new Date(0) : d;
 }
 
+function parsePaymentHistory(rawHist) {
+  if (!rawHist) return [];
+  try {
+    return typeof rawHist === 'string' ? JSON.parse(rawHist) : (Array.isArray(rawHist) ? rawHist : []);
+  } catch (e) {
+    return [];
+  }
+}
+
+function getLotPaymentHistory(items) {
+  const payments = new Map();
+
+  (items || []).forEach(item => {
+    const history = [
+      ...parsePaymentHistory(item.historico_pagamentos),
+      ...parsePaymentHistory(item.historico_pagamentos_lote)
+    ];
+
+    history.forEach((payment, idx) => {
+      const signature = [
+        payment.data || '',
+        parseNumber(payment.valor) || 0,
+        payment.forma_pagamento || payment.formaPagamento || '',
+        payment.observacao || payment.obs || ''
+      ].join('|');
+      const id = signature || payment.id || `EMPTY-${idx}`;
+      if (!payments.has(id)) payments.set(id, payment);
+    });
+  });
+
+  return [...payments.values()];
+}
+
+function calcLotTotalCost(lote) {
+  const items = lote.items || [];
+  const allHaveRealItemCost = items.length > 0 && items.every(i =>
+    i.custo_total !== undefined &&
+    i.custo_total !== null &&
+    String(i.custo_total) !== ''
+  );
+
+  if (allHaveRealItemCost) {
+    return items.reduce((sum, i) => sum + (parseNumber(i.custo_total) || 0), 0);
+  }
+
+  return items.reduce((sum, i) => {
+    return sum + (parseNumber(i.custo_compra || i.custo) || 0);
+  }, 0) + lote.frete + lote.taxas + lote.adicLote;
+}
+
 /**
  * Generate entrada movements from closed orders (Vendas)
  */
@@ -171,7 +221,7 @@ export function generateFromFiados(fiados) {
           tipo: 'entrada',
           data: p.dataPagamento || '',
           parsedDate: p.dataPagamento ? new Date(p.dataPagamento) : new Date(0),
-          valor: Number(p.valor || 0),
+          valor: parseNumber(p.valor) || 0,
           categoria: 'Fiado Recebido',
           descricao: 'Recebimento Fiado',
           subDescricao: `${f.cliente || 'Cliente'} • Parcela ${p.numero}`,
@@ -240,14 +290,7 @@ export function generateFromCompras(encomendas) {
     if (paymentStatus === 'pendente' || !paymentStatus) return;
 
     // Check for payment history (new format)
-    let history = [];
-    try {
-      const firstItem = lote.items[0];
-      const rawHist = firstItem.historico_pagamentos || firstItem.historico_pagamentos_lote;
-      history = typeof rawHist === 'string' ? JSON.parse(rawHist) : (rawHist || []);
-    } catch (e) {
-      history = [];
-    }
+    const history = getLotPaymentHistory(lote.items);
 
     if (history && Array.isArray(history) && history.length > 0) {
       // Generate one movement per history entry
@@ -260,7 +303,7 @@ export function generateFromCompras(encomendas) {
           tipo: 'saida',
           data: p.data || '',
           parsedDate: parsedDate,
-          valor: Number(p.valor || 0),
+          valor: parseNumber(p.valor) || 0,
           categoria: 'Compra',
           descricao: `Pgto Lote • ${lote.fornecedor}`,
           subDescricao: `Lote ${String(lote.id)} • Parcela ${idx + 1}`,
@@ -273,11 +316,7 @@ export function generateFromCompras(encomendas) {
     } else {
       // Legacy Fallback (Single movement)
       if (paymentStatus === 'pago') {
-        let totalCost = lote.frete + lote.taxas + lote.adicLote;
-        lote.items.forEach(i => {
-          const cBase = parseNumber(i.custo_compra || i.custo || i.custo_total);
-          totalCost += cBase;
-        });
+        let totalCost = calcLotTotalCost(lote);
 
         if (totalCost === 0 && lote.valor_pago_lote > 0) {
           totalCost = lote.valor_pago_lote;
