@@ -168,8 +168,12 @@ export function abrirModalRecibo(order) {
 
   // Buscar detalhes adicionais no estoque se existirem
   let p = {};
-  if (order.item_id || order.id_do_pedido) {
-    p = state.allProducts.find(prod => String(prod.sku || prod.id) === String(order.item_id || order.id_do_pedido)) || {};
+  if (order.produto_id || order.id_do_produto || order.sku) {
+    p = state.allProducts.find(prod =>
+      (order.produto_id && String(prod.id) === String(order.produto_id)) ||
+      (order.id_do_produto && String(prod.id) === String(order.id_do_produto)) ||
+      (order.sku && String(prod.sku || '') === String(order.sku))
+    ) || {};
   }
   if (!p.id) {
     p = state.allProducts.find(prod => prod.nome === order.produto) || {};

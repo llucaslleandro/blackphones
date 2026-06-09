@@ -4,6 +4,43 @@ import { elements, showElement, hideElement, openCart, closeCart, setError, setM
 import { adicionarAoCarrinho, renderCarrinho } from '../../shared/modules/cart.js';
 import { trackProductView } from './tracker.js';
 
+const FALLBACK_PRODUCT_IMAGE = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250">
+  <rect width="400" height="250" fill="#f8fafc"/>
+  <rect x="140" y="42" width="120" height="150" rx="20" fill="#e5e7eb"/>
+  <rect x="157" y="63" width="86" height="106" rx="10" fill="#f9fafb"/>
+  <circle cx="200" cy="179" r="4" fill="#cbd5e1"/>
+  <text x="200" y="226" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#94a3b8">Imagem</text>
+</svg>
+`);
+
+function getProductImageUrl(item) {
+  const candidates = [
+    ...(Array.isArray(item.images) ? item.images : []),
+    item.imagem,
+    item.imagem_1,
+    item.imagem1,
+    item.imagem_2,
+    item.imagem2
+  ];
+
+  const validUrl = candidates
+    .map(value => String(value || '').trim())
+    .find(value => value && !value.includes('via.placeholder.com'));
+
+  return normalizeDriveImageUrl(validUrl) || FALLBACK_PRODUCT_IMAGE;
+}
+
+function normalizeDriveImageUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+
+  const idMatch = raw.match(/\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (!idMatch?.[1]) return raw;
+
+  return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+}
+
 function renderCategorias() {
   const categorias = ['all', ...new Set(store.produtos.map(p => p.categoria).filter(Boolean))];
   elements.categorySelect.innerHTML = categorias
@@ -23,8 +60,15 @@ function mapearProduto(item) {
     descricao: String(item.descricao || '').trim(),
     categoria: String(item.categoria || 'Sem categoria').trim(),
     preco: Number(item.preco || 0),
-    imagem: String(item.imagem || item.imagem_1 || 'https://via.placeholder.com/400x250?text=Imagem'),
-    images: Array.isArray(item.images) ? item.images : [String(item.imagem || item.imagem_1 || '')].filter(Boolean),
+    imagem: getProductImageUrl(item),
+    images: [
+      ...(Array.isArray(item.images) ? item.images : []),
+      item.imagem,
+      item.imagem_1,
+      item.imagem1,
+      item.imagem_2,
+      item.imagem2
+    ].map(value => normalizeDriveImageUrl(value)).filter(value => value && !value.includes('via.placeholder.com')),
     armazenamento: String(item.armazenamento || '').trim(),
     ram: String(item.ram || '').trim(),
     camera_frontal: String(item.camera_frontal || '').trim(),
@@ -144,7 +188,7 @@ function renderProdutos(lista, useAnimation = false) {
     card.innerHTML = `
       <div class="relative">
         <div class="aspect-square overflow-hidden bg-gray-50 flex items-center justify-center">
-          <img src="${produto.imagem}" alt="${fullName}" class="w-4/5 h-4/5 object-contain" loading="lazy" decoding="async">
+          <img src="${produto.imagem}" alt="${fullName}" class="w-4/5 h-4/5 object-contain" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK_PRODUCT_IMAGE}';">
         </div>
         ${badge}
         ${conditionBadge}
@@ -313,7 +357,7 @@ function showCompareToast(produto) {
 
   const thumbs = store.comparacao.map(p => `
     <div style="width:36px;height:36px;border-radius:8px;background:#f3f4f6;border:1px solid #e5e7eb;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-      <img src="${p.imagem}" style="width:100%;height:100%;object-fit:contain;" alt="${p.nome}">
+      <img src="${p.imagem}" style="width:100%;height:100%;object-fit:contain;" alt="${p.nome}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK_PRODUCT_IMAGE}';">
     </div>
   `).join('');
 
@@ -570,7 +614,7 @@ export function renderComparacao() {
   store.comparacao.forEach(p => {
     html += `<th style="padding:12px 16px; text-align:center; border-bottom:1px solid #e5e7eb; position:relative;">
       <button onclick="removerDaComparacao('${p.id}')" style="position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#9ca3af'" title="Remover produto">✕</button>
-      <img src="${p.imagem}" style="width:56px; height:56px; object-fit:contain; margin:0 auto 6px;" alt="${p.nome}">
+      <img src="${p.imagem}" style="width:56px; height:56px; object-fit:contain; margin:0 auto 6px;" alt="${p.nome}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK_PRODUCT_IMAGE}';">
       <div style="font-size:13px; font-weight:600; color:#111827;">${p.nome}</div>
     </th>`;
   });
@@ -833,10 +877,10 @@ function updateModalSelection() {
     const minMatch = Number(match.estoque_minimo) || 2;
     const isPoucas = emEstoque && Number(match.estoque) > 1 && Number(match.estoque) <= minMatch;
 
-    store.currentTargetId = match.sku || match.id;
+    store.currentTargetId = match.id;
 
     // Gallery Rendering
-    const allImages = match.images && match.images.length > 0 ? match.images : [match.imagem];
+    const allImages = match.images && match.images.length > 0 ? match.images : [match.imagem || FALLBACK_PRODUCT_IMAGE];
     if (allImages.length > 1) {
       imgContainer.innerHTML = `
         <div class="flex flex-col md:flex-row gap-4 w-full h-full">
@@ -844,14 +888,14 @@ function updateModalSelection() {
           <div class="flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto md:overflow-y-auto no-scrollbar py-1 md:w-20 shrink-0" id="pm-thumbnails">
             ${allImages.map((img, idx) => `
               <button class="pm-thumb w-14 h-14 md:w-16 md:h-16 rounded-xl border-2 ${idx === 0 ? 'border-gray-900 bg-gray-50' : 'border-transparent bg-white'} overflow-hidden flex-shrink-0 transition-all hover:border-gray-300 shadow-sm" data-idx="${idx}">
-                <img src="${img}" class="w-full h-full object-contain p-1" loading="lazy">
+                <img src="${img}" class="w-full h-full object-contain p-1" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK_PRODUCT_IMAGE}';">
               </button>
             `).join('')}
           </div>
           
           <!-- Imagem Principal -->
           <div class="relative group flex-1 order-1 md:order-2 bg-white rounded-2xl overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-0">
-            <img src="${allImages[0]}" id="pm-main-img" class="max-w-[90%] max-h-[90%] object-contain transition-opacity duration-300" alt="${match.nome}">
+            <img src="${allImages[0]}" id="pm-main-img" class="max-w-[90%] max-h-[90%] object-contain transition-opacity duration-300" alt="${match.nome}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK_PRODUCT_IMAGE}';">
             
             <button id="pm-prev" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 transition-all hover:bg-white active:scale-95">
               <i class="fa-solid fa-chevron-left text-sm"></i>
@@ -887,7 +931,7 @@ function updateModalSelection() {
     } else {
       imgContainer.innerHTML = `
         <div class="w-full h-full bg-white rounded-2xl overflow-hidden flex items-center justify-center p-4">
-          <img src="${allImages[0]}" class="max-w-[95%] max-h-[95%] object-contain drop-shadow-xl" alt="${match.nome}">
+          <img src="${allImages[0]}" class="max-w-[95%] max-h-[95%] object-contain drop-shadow-xl" alt="${match.nome}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK_PRODUCT_IMAGE}';">
         </div>
       `;
     }
@@ -941,7 +985,7 @@ function updateModalSelection() {
     if (store.modalVariacoes[0]) {
       imgContainer.innerHTML = `
         <div class="w-full aspect-square bg-white rounded-xl overflow-hidden flex items-center justify-center">
-          <img src="${store.modalVariacoes[0].imagem}" class="max-w-[85%] max-h-[85%] object-contain opacity-50" alt="Indisponível">
+          <img src="${store.modalVariacoes[0].imagem || FALLBACK_PRODUCT_IMAGE}" class="max-w-[85%] max-h-[85%] object-contain opacity-50" alt="Indisponível" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK_PRODUCT_IMAGE}';">
         </div>
       `;
       document.getElementById('pm-name').textContent = store.modalVariacoes[0].nome;

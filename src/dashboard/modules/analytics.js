@@ -18,6 +18,7 @@ export function calcularKPIsEInsights(callbacks = {}) {
         fatBase += (o.final_price || o.total);
 
         const produtoRef = state.allProducts.find(p =>
+          (o.produto_id && p.id && String(p.id) === String(o.produto_id)) ||
           (p.sku && String(p.sku) === String(o.sku)) ||
           (p.id && String(p.id) === String(o.sku)) ||
           (p.id && String(p.id) === String(o.id))
@@ -151,6 +152,7 @@ export function calcularKPIsEInsights(callbacks = {}) {
       
       if (o.status === 'Fechado' && isBeforePeriodEnd) {
         const produtoRef = state.allProducts.find(p =>
+          (o.produto_id && p.id && String(p.id) === String(o.produto_id)) ||
           (p.sku && String(p.sku) === String(o.sku)) ||
           (p.id && String(p.id) === String(o.sku)) ||
           (p.id && String(p.id) === String(o.id))

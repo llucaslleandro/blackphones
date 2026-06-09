@@ -21,8 +21,29 @@ function gerarSlug_(text) {
     .replace(/^-|-$/g, '');
 }
 
+function normalizeImageUrl_(url) {
+  var raw = String(url || '').trim();
+  if (!raw) return '';
+
+  var id = '';
+  var match;
+
+  match = raw.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) id = match[1];
+
+  if (!id) {
+    match = raw.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) id = match[1];
+  }
+
+  if (!id) return raw;
+
+  return 'https://lh3.googleusercontent.com/d/' + id;
+}
+
 function doGet(e) {
-  var action = (e.parameter.action || '').toLowerCase();
+  var params = (e && e.parameter) ? e.parameter : {};
+  var action = String(params.action || '').toLowerCase();
   var result = {
     ok: false,
     data: null,
@@ -30,7 +51,17 @@ function doGet(e) {
   };
 
   try {
-    if (action === 'produtos') {
+    if (action === 'health' || action === 'debug_vendly') {
+      result.data = {
+        app: 'Vendly',
+        api: 'Code.gs',
+        contract: '{ ok, data, error }',
+        version: 'produto-id-stock-fix',
+        timestamp: new Date().toISOString()
+      };
+      result.ok = true;
+      return buildResponse(result);
+    } else if (action === 'produtos') {
       result.data = getProdutos();
       result.ok = true;
       return buildResponse(result);
@@ -43,7 +74,7 @@ function doGet(e) {
       result.ok = true;
       return buildResponse(result);
     } else if (action === 'click') {
-      var produtoId = e.parameter.produtoId || '';
+      var produtoId = params.produtoId || '';
       var clickResult = registrarClick(produtoId);
       return buildResponse({ ok: true, clicks: clickResult.clicks });
     } else if (action === 'fiados') {
@@ -51,7 +82,7 @@ function doGet(e) {
       result.ok = true;
       return buildResponse(result);
     } else if (action === 'metricas') {
-      var periodo = e.parameter.periodo || 'hoje';
+      var periodo = params.periodo || 'hoje';
       result.data = getMetricas_(periodo);
       result.ok = true;
       return buildResponse(result);
@@ -75,7 +106,8 @@ function autorizarDrive() {
 }
 
 function doPost(e) {
-  var action = (e.parameter.action || '').toLowerCase();
+  var params = (e && e.parameter) ? e.parameter : {};
+  var action = String(params.action || '').toLowerCase();
   
   if (action === 'atualizarstatus') {
     try {
@@ -375,11 +407,6 @@ function getProdutos() {
   var rows = sheet.getDataRange().getValues();
   if (rows.length < 2) return [];
 
-  // Ensure expected columns exist (adds headers if missing)
-  ensureProdutosColumns_(sheet, rows[0]);
-
-  // Reload after potential header changes
-  rows = sheet.getDataRange().getValues();
   var headers = rows[0].map(String);
   var dataRows = rows.slice(1);
   var normalizedHeaders = headers.map(function(h) {
@@ -394,6 +421,18 @@ function getProdutos() {
 
     var cameraFrontal = String(obj['camera_frontal'] || obj['câmera_frontal'] || obj['camera frontal'] || obj['câmera frontal'] || '');
     var cameraTraseira = String(obj['camera_traseira'] || obj['câmera_traseira'] || obj['camera traseira'] || obj['câmera traseira'] || '');
+    var imageUrls = [
+      obj['imagem_1'] || obj['imagem1'] || obj['imagem'] || '',
+      obj['imagem_2'] || obj['imagem2'] || '',
+      obj['imagem_3'] || obj['imagem3'] || '',
+      obj['imagem_4'] || obj['imagem4'] || '',
+      obj['imagem_5'] || obj['imagem5'] || ''
+    ].map(function(img) {
+      return normalizeImageUrl_(img);
+    }).filter(function(img) {
+      return img && img.trim() !== '';
+    });
+
     return {
       id: String(obj['id'] || '').trim(),
       sku: String(obj['sku'] || obj['id'] || '').trim(),
@@ -405,14 +444,8 @@ function getProdutos() {
       descricao: String(obj['descrição'] || obj['descricao'] || ''),
       categoria: String(obj['categoria'] || ''),
       preco: Number(obj['preço'] || obj['preco'] || 0),
-      imagem: String(obj['imagem_1'] || obj['imagem'] || ''),
-      images: [
-        String(obj['imagem_1'] || obj['imagem'] || ''),
-        String(obj['imagem_2'] || ''),
-        String(obj['imagem_3'] || ''),
-        String(obj['imagem_4'] || ''),
-        String(obj['imagem_5'] || '')
-      ].filter(img => img && img.trim() !== ''),
+      imagem: imageUrls[0] || '',
+      images: imageUrls,
       armazenamento: String(obj['armazenamento'] || ''),
       ram: String(obj['ram'] || ''),
       // Cameras (new split fields + legacy compatibility)
@@ -536,7 +569,7 @@ function salvarPedido(pedido) {
   var sheet = ss.getSheetByName('Pedidos');
   if (!sheet) {
     sheet = ss.insertSheet('Pedidos');
-    sheet.appendRow(['Data', 'ID do Pedido', 'Group ID', 'Marca', 'Produto', 'Armazenamento', 'Cor', 'Condição', 'IMEI 1', 'Saude Bateria', 'Quantidade', 'Total', 'Status', 'SKU', 'Estoque Processado']);
+    sheet.appendRow(['Data', 'ID do Pedido', 'ID do Produto', 'Group ID', 'Marca', 'Produto', 'Armazenamento', 'Cor', 'Condição', 'IMEI 1', 'Saude Bateria', 'Quantidade', 'Total', 'Status', 'SKU', 'Estoque Processado']);
   }
 
   var rows = sheet.getDataRange().getValues();
@@ -560,6 +593,12 @@ function salvarPedido(pedido) {
     itemIdCol = headers.length;
     sheet.getRange(1, itemIdCol + 1).setValue('ID do Item');
     headers.push('id do item');
+  }
+  var produtoIdCol = headers.indexOf('id do produto');
+  if (produtoIdCol === -1) {
+    produtoIdCol = headers.length;
+    sheet.getRange(1, produtoIdCol + 1).setValue('ID do Produto');
+    headers.push('id do produto');
   }
   var imeiCol = headers.indexOf('imei 1');
   if (imeiCol === -1) {
@@ -594,6 +633,7 @@ function salvarPedido(pedido) {
       // UNIQUE ITEM ID
       var itemId = 'ITM-' + new Date().getTime() + '-' + Math.floor(Math.random() * 1000);
       mapHeader('id do item', itemId);
+      mapHeader('id do produto', item.id || item.produto_id || '');
 
       mapHeader('group id', item.group_id || '');
       mapHeader('marca', item.marca || '');
@@ -642,6 +682,7 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone
   var idColIdx = headers.indexOf('id do pedido');
   var statusColIdx = headers.indexOf('status');
   var skuColIdx = headers.indexOf('sku');
+  var produtoIdColIdx = headers.indexOf('id do produto');
   var estProcColIdx = headers.indexOf('estoque processado');
   var qtdColIdx = headers.indexOf('quantidade');
   
@@ -653,6 +694,11 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone
     itemIdColIdx = headers.length;
     sheet.getRange(1, itemIdColIdx + 1).setValue('ID do Item');
     headers.push('id do item');
+  }
+  if (produtoIdColIdx === -1) {
+    produtoIdColIdx = headers.length;
+    sheet.getRange(1, produtoIdColIdx + 1).setValue('ID do Produto');
+    headers.push('id do produto');
   }
   
   // Se coluna status não existir, crie
@@ -711,7 +757,7 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone
   var updatedCount = 0;
   
   // Lógica de Estoque: Precisamos pegar ranges e values de Produtos
-  var prodRows = [], prodHeaders = [], pSkuColIdx = -1, pEstoqueColIdx = -1, pIdColIdx = -1;
+  var prodRows = [], prodHeaders = [], pSkuColIdx = -1, pEstoqueColIdx = -1, pIdColIdx = -1, pAtivoColIdx = -1;
   if (prodSheet) {
     prodRows = prodSheet.getDataRange().getValues();
     if (prodRows.length > 0) {
@@ -719,21 +765,48 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone
       pSkuColIdx = prodHeaders.indexOf('sku');
       pEstoqueColIdx = prodHeaders.indexOf('estoque');
       pIdColIdx = prodHeaders.indexOf('id');
+      pAtivoColIdx = prodHeaders.indexOf('ativo');
     }
   }
 
-  var safeUpdateEstoque = function(sku, deltaQtd) {
+  var safeUpdateEstoque = function(produtoId, sku, deltaQtd) {
     if (!prodSheet || pEstoqueColIdx === -1) return;
-    for (var j = 1; j < prodRows.length; j++) {
-      var rowSku = pSkuColIdx !== -1 ? String(prodRows[j][pSkuColIdx]) : '';
-      var rowId = pIdColIdx !== -1 ? String(prodRows[j][pIdColIdx]) : '';
-      if ((rowSku !== '' && rowSku === String(sku)) || (rowSku === '' && rowId === String(sku)) || (rowId === String(sku))) {
-        var currentStock = Number(prodRows[j][pEstoqueColIdx]) || 0;
-        var newStock = currentStock + deltaQtd;
-        prodSheet.getRange(j + 1, pEstoqueColIdx + 1).setValue(newStock);
-        prodRows[j][pEstoqueColIdx] = newStock; // update local cache
-        break;
+    var targetId = produtoId ? String(produtoId).trim() : '';
+    var targetSku = sku ? String(sku).trim() : '';
+
+    if (targetId && pIdColIdx !== -1) {
+      for (var jId = 1; jId < prodRows.length; jId++) {
+        var rowIdExact = String(prodRows[jId][pIdColIdx]).trim();
+        if (rowIdExact === targetId) {
+          var currentStockId = Number(prodRows[jId][pEstoqueColIdx]) || 0;
+          var newStockId = currentStockId + deltaQtd;
+          prodSheet.getRange(jId + 1, pEstoqueColIdx + 1).setValue(newStockId);
+          prodRows[jId][pEstoqueColIdx] = newStockId;
+          return;
+        }
       }
+    }
+
+    if (!targetSku) return;
+    var fallbackRow = -1;
+    for (var j = 1; j < prodRows.length; j++) {
+      var rowSku = pSkuColIdx !== -1 ? String(prodRows[j][pSkuColIdx]).trim() : '';
+      var rowId = pIdColIdx !== -1 ? String(prodRows[j][pIdColIdx]).trim() : '';
+      if ((rowSku !== '' && rowSku === targetSku) || (rowSku === '' && rowId === targetSku) || (rowId === targetSku)) {
+        if (fallbackRow === -1) fallbackRow = j;
+        var rowStock = Number(prodRows[j][pEstoqueColIdx]) || 0;
+        var rowAtivo = pAtivoColIdx === -1 || String(prodRows[j][pAtivoColIdx]).toLowerCase() === 'true';
+        if (deltaQtd < 0 && rowAtivo && rowStock >= Math.abs(deltaQtd)) {
+          fallbackRow = j;
+          break;
+        }
+      }
+    }
+    if (fallbackRow !== -1) {
+      var currentStock = Number(prodRows[fallbackRow][pEstoqueColIdx]) || 0;
+      var newStock = currentStock + deltaQtd;
+      prodSheet.getRange(fallbackRow + 1, pEstoqueColIdx + 1).setValue(newStock);
+      prodRows[fallbackRow][pEstoqueColIdx] = newStock; // update local cache
     }
   };
 
@@ -742,6 +815,7 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone
     if (String(rows[i][itemIdColIdx]) === String(itemId)) {
       var estProc = estProcColIdx !== -1 ? rows[i][estProcColIdx] : '';
       var sku = skuColIdx !== -1 ? rows[i][skuColIdx] : '';
+      var produtoId = produtoIdColIdx !== -1 ? rows[i][produtoIdColIdx] : '';
       var qtd = qtdColIdx !== -1 ? Number(rows[i][qtdColIdx] || 1) : 1;
       
       sheet.getRange(i + 1, statusColIdx + 1).setValue(novoStatus);
@@ -776,14 +850,14 @@ function atualizarStatusPedido(itemId, novoStatus, precoFinal, cliente, telefone
       }
       
       // Regra de Estoque (Sempre por item)
-      if (novoStatus === 'Fechado' && estProc !== 'SIM' && sku) {
-        safeUpdateEstoque(sku, -qtd);
+      if (novoStatus === 'Fechado' && estProc !== 'SIM' && (produtoId || sku)) {
+        safeUpdateEstoque(produtoId, sku, -qtd);
         if (estProcColIdx !== -1) {
           sheet.getRange(i + 1, estProcColIdx + 1).setValue('SIM');
           rows[i][estProcColIdx] = 'SIM';
         }
-      } else if (novoStatus === 'Cancelado' && estProc === 'SIM' && sku) {
-        safeUpdateEstoque(sku, qtd);
+      } else if (novoStatus === 'Cancelado' && estProc === 'SIM' && (produtoId || sku)) {
+        safeUpdateEstoque(produtoId, sku, qtd);
         if (estProcColIdx !== -1) {
           sheet.getRange(i + 1, estProcColIdx + 1).setValue('NÃO');
           rows[i][estProcColIdx] = 'NÃO';
@@ -863,6 +937,7 @@ function excluirPedido(itemId) {
   var statusCol = headers.indexOf('status');
   var estProcCol = headers.indexOf('estoque processado');
   var skuCol = headers.indexOf('sku');
+  var produtoIdCol = headers.indexOf('id do produto');
   var qtdCol = headers.indexOf('quantidade');
 
   if (itemIdCol === -1) throw new Error('Coluna "ID do Item" não encontrada.');
@@ -872,10 +947,11 @@ function excluirPedido(itemId) {
       var status = statusCol !== -1 ? rows[i][statusCol] : '';
       var estProc = estProcCol !== -1 ? rows[i][estProcCol] : '';
       var sku = skuCol !== -1 ? rows[i][skuCol] : '';
+      var produtoId = produtoIdCol !== -1 ? rows[i][produtoIdCol] : '';
       var qtd = qtdCol !== -1 ? Number(rows[i][qtdCol] || 1) : 1;
 
       // Se o estoque foi processado, devolve ao estoque
-      if (estProc === 'SIM' && sku && prodSheet) {
+      if (estProc === 'SIM' && (produtoId || sku) && prodSheet) {
         var prodRows = prodSheet.getDataRange().getValues();
         var prodHeaders = prodRows[0].map(function(h) { return String(h).trim().toLowerCase(); });
         var pSkuCol = prodHeaders.indexOf('sku');
@@ -883,13 +959,31 @@ function excluirPedido(itemId) {
         var pEstoqueCol = prodHeaders.indexOf('estoque');
 
         if (pEstoqueCol !== -1) {
-          for (var j = 1; j < prodRows.length; j++) {
-            var rowSku = pSkuCol !== -1 ? String(prodRows[j][pSkuCol]) : '';
-            var rowId = pIdCol !== -1 ? String(prodRows[j][pIdCol]) : '';
-            if ((rowSku !== '' && rowSku === String(sku)) || (rowSku === '' && rowId === String(sku)) || (rowId === String(sku))) {
-              var currentStock = Number(prodRows[j][pEstoqueCol]) || 0;
-              prodSheet.getRange(j + 1, pEstoqueCol + 1).setValue(currentStock + qtd);
-              break;
+          var targetProdutoId = produtoId ? String(produtoId).trim() : '';
+          var targetSku = sku ? String(sku).trim() : '';
+          var restored = false;
+
+          if (targetProdutoId && pIdCol !== -1) {
+            for (var jId = 1; jId < prodRows.length; jId++) {
+              var rowIdExact = String(prodRows[jId][pIdCol]).trim();
+              if (rowIdExact === targetProdutoId) {
+                var currentStockId = Number(prodRows[jId][pEstoqueCol]) || 0;
+                prodSheet.getRange(jId + 1, pEstoqueCol + 1).setValue(currentStockId + qtd);
+                restored = true;
+                break;
+              }
+            }
+          }
+
+          if (!restored && targetSku) {
+            for (var j = 1; j < prodRows.length; j++) {
+              var rowSku = pSkuCol !== -1 ? String(prodRows[j][pSkuCol]).trim() : '';
+              var rowId = pIdCol !== -1 ? String(prodRows[j][pIdCol]).trim() : '';
+              if ((rowSku !== '' && rowSku === targetSku) || (rowSku === '' && rowId === targetSku) || (rowId === targetSku)) {
+                var currentStock = Number(prodRows[j][pEstoqueCol]) || 0;
+                prodSheet.getRange(j + 1, pEstoqueCol + 1).setValue(currentStock + qtd);
+                break;
+              }
             }
           }
         }
@@ -934,6 +1028,7 @@ function salvarEstoqueManualmente(updates) {
   var updatedCount = 0;
   var updateMap = {};
   updates.forEach(function(u) {
+    if (u.id) updateMap[String(u.id)] = u;
     if (u.sku) updateMap[String(u.sku)] = u;
   });
 
@@ -942,8 +1037,8 @@ function salvarEstoqueManualmente(updates) {
     var rowId = idCol !== -1 ? String(rows[i][idCol]) : '';
     var searchKey = rowSku !== '' ? rowSku : rowId;
     
-    if (updateMap[searchKey] || updateMap[rowId]) {
-      var u = updateMap[searchKey] || updateMap[rowId];
+    if (updateMap[rowId] || updateMap[searchKey]) {
+      var u = updateMap[rowId] || updateMap[searchKey];
       if (u.estoque !== undefined) sheet.getRange(i + 1, estoqueCol + 1).setValue(u.estoque);
       if (u.estoque_minimo !== undefined) sheet.getRange(i + 1, minCol + 1).setValue(u.estoque_minimo);
       updatedCount++;

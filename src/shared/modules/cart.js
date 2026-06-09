@@ -5,6 +5,44 @@ import { elements, hideElement, showElement, openCart, setMessage } from '../../
 import { registrarClickApi, enviarPedidoApi } from './api.js';
 import { trackProductClick, trackWhatsAppClick, trackMessageSent } from '../../vitrine/modules/tracker.js';
 
+const FALLBACK_CART_IMAGE = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+  <rect width="150" height="150" fill="#f8fafc"/>
+  <rect x="48" y="25" width="54" height="78" rx="10" fill="#e5e7eb"/>
+  <rect x="56" y="36" width="38" height="54" rx="5" fill="#f9fafb"/>
+  <circle cx="75" cy="96" r="2" fill="#cbd5e1"/>
+  <text x="75" y="128" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#94a3b8">Sem Imagem</text>
+</svg>
+`);
+
+function getCartImageUrl(item) {
+  const product = store.produtos.find(p => String(p.id) === String(item.id)) || {};
+  const candidates = [
+    item.imagem,
+    ...(Array.isArray(item.images) ? item.images : []),
+    product.imagem,
+    product.imagem_1,
+    product.imagem1,
+    ...(Array.isArray(product.images) ? product.images : [])
+  ];
+
+  const validUrl = candidates
+    .map(value => String(value || '').trim())
+    .find(value => value && !value.includes('via.placeholder.com'));
+
+  return normalizeDriveImageUrl(validUrl) || FALLBACK_CART_IMAGE;
+}
+
+function normalizeDriveImageUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+
+  const idMatch = raw.match(/\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (!idMatch?.[1]) return raw;
+
+  return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+}
+
 export function atualizarBadge() {
   const quantidadeTotal = store.carrinho.reduce((acc, item) => acc + item.quantidade, 0);
   elements.cartBadge.textContent = quantidadeTotal;
@@ -261,13 +299,13 @@ export function renderCarrinho() {
 
   store.carrinho.forEach(item => {
     const subtotal = item.preco * item.quantidade;
-    const imageSrc = item.imagem || (store.produtos.find(p => String(p.id) === String(item.id))?.imagem) || 'https://via.placeholder.com/150';
+    const imageSrc = getCartImageUrl(item);
     const li = document.createElement('li');
     li.className = 'bg-gray-50 border border-gray-100 rounded-lg p-3 space-y-3';
     li.innerHTML = `
       <div class="flex gap-3">
         <div class="w-16 h-16 bg-white border border-gray-100 rounded-md flex items-center justify-center shrink-0 overflow-hidden">
-          <img src="${imageSrc}" alt="${item.nome}" class="w-full h-full object-contain">
+          <img src="${imageSrc}" alt="${item.nome}" class="w-full h-full object-contain" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK_CART_IMAGE}';">
         </div>
         <div class="flex flex-col flex-1 min-w-0">
           <div class="flex justify-between items-start gap-2">
@@ -358,9 +396,15 @@ export function renderCarrinho() {
 
 export function adicionarAoCarrinho(produtoId) {
   const cleanId = String(produtoId).trim();
-  // Busca preferencialmente por SKU, depois por ID, e sempre prioriza o ATIVO
-  const produto = store.produtos.find(p => (String(p.sku).trim() === cleanId || String(p.id).trim() === cleanId) && p.ativo);
+  const produto = store.produtos.find(p => String(p.id).trim() === cleanId && p.ativo)
+    || store.produtos.find(p => String(p.sku || '').trim() === cleanId && p.ativo);
   if (!produto) return;
+  if ((Number(produto.estoque) || 0) <= 0) {
+    if (typeof setMessage === 'function') {
+      setMessage('error', 'Produto sem estoque disponível.');
+    }
+    return;
+  }
 
   // Contar cliques e persistir
   store.produtoClicks[produtoId] = (store.produtoClicks[produtoId] || 0) + 1;
@@ -370,9 +414,11 @@ export function adicionarAoCarrinho(produtoId) {
   // Track product click for metrics
   trackProductClick(produto);
 
-  // No carrinho, a unicidade deve ser pelo SKU se disponível, senão pelo ID
-  const searchKey = produto.sku || produto.id;
-  const itemEmCarrinho = store.carrinho.find(i => (i.sku || i.id) === searchKey);
+  // No carrinho, a unicidade deve ser pelo ID do produto.
+  const searchKey = produto.id || produto.sku;
+  const itemEmCarrinho = store.carrinho.find(i =>
+    produto.id ? String(i.id) === String(searchKey) : String(i.sku || '') === String(searchKey)
+  );
 
   // Se já está no carrinho, apenas abrimos o modal sem adicionar mais (conforme pedido do usuário)
   if (itemEmCarrinho) {
@@ -400,7 +446,7 @@ export function adicionarAoCarrinho(produtoId) {
 
 export function removerDoCarrinho(produtoId) {
   const cleanId = String(produtoId).trim();
-  store.carrinho = store.carrinho.filter(i => (i.sku || i.id) !== cleanId && i.id !== cleanId);
+  store.carrinho = store.carrinho.filter(i => String(i.id) !== cleanId && String(i.sku || '') !== cleanId);
   salvarCarrinhoLocalStorage();
   renderCarrinho();
   atualizarBadge();
@@ -409,16 +455,17 @@ export function removerDoCarrinho(produtoId) {
 export function ajustarQuantidade(produtoId, delta) {
   const cleanId = String(produtoId).trim();
   // No carrinho, buscamos por SKU ou ID
-  const item = store.carrinho.find(i => (i.sku || i.id) === cleanId || String(i.id).trim() === cleanId);
+  const item = store.carrinho.find(i => String(i.id).trim() === cleanId || String(i.sku || '').trim() === cleanId);
   if (!item) return;
 
   if (delta > 0) {
     // No catálogo, buscamos o produto ativo correspondente
-    const produto = store.produtos.find(p => (String(p.sku).trim() === cleanId || String(p.id).trim() === cleanId) && p.ativo);
-    // Regra de privacidade: só restringir se o estoque for EXATAMENTE 1
-    if (produto && produto.estoque === 1 && item.quantidade >= 1) {
+    const produto = store.produtos.find(p => String(p.id).trim() === String(item.id).trim() && p.ativo)
+      || store.produtos.find(p => (String(p.id).trim() === cleanId || String(p.sku || '').trim() === cleanId) && p.ativo);
+    const estoqueDisponivel = Number(produto?.estoque) || 0;
+    if (produto && item.quantidade >= estoqueDisponivel) {
       if (typeof setMessage === 'function') {
-        setMessage('error', 'Apenas 1 unidade disponível deste produto.');
+        setMessage('error', estoqueDisponivel === 1 ? 'Apenas 1 unidade disponível deste produto.' : `Apenas ${estoqueDisponivel} unidades disponíveis deste produto.`);
       }
       return;
     }

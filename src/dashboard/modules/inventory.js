@@ -2,8 +2,45 @@ import { CONFIG } from '../../shared/config.js';
 import { state, loadDashboardData, uploadImageToDrive } from './store.js';
 import { formatMoney, formatText, showToast, compressImage, parseNumber, getViewPreference, applyDateMask, parseDateBr, formatDateBr } from './ui.js';
 
+const FALLBACK_PRODUCT_IMAGE = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f8fafc"/>
+  <rect x="115" y="55" width="170" height="190" rx="22" fill="#e5e7eb"/>
+  <rect x="135" y="78" width="130" height="144" rx="12" fill="#f9fafb"/>
+  <circle cx="200" cy="233" r="5" fill="#cbd5e1"/>
+  <text x="200" y="276" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#94a3b8">Sem Imagem</text>
+</svg>
+`);
+
 let pendingEstoqueUpdates = {};
 let pendingDeleteId = null;
+
+function getProductImageUrl(product) {
+  const candidates = [
+    ...(Array.isArray(product.images) ? product.images : []),
+    product.imagem,
+    product.imagem_1,
+    product.imagem1,
+    product.imagem_2,
+    product.imagem2
+  ];
+
+  const validUrl = candidates
+    .map(value => String(value || '').trim())
+    .find(value => value && !value.includes('via.placeholder.com'));
+
+  return normalizeDriveImageUrl(validUrl) || FALLBACK_PRODUCT_IMAGE;
+}
+
+function normalizeDriveImageUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+
+  const idMatch = raw.match(/\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (!idMatch?.[1]) return raw;
+
+  return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+}
 
 export function renderEstoque(callbacks = {}) {
   const container = document.getElementById('estoque-list-container');
@@ -17,7 +54,7 @@ export function renderEstoque(callbacks = {}) {
   const produtosTotais = produtosValidos.length;
 
   produtosValidos.forEach(p => {
-    const pending = pendingEstoqueUpdates[p.sku] || {};
+    const pending = pendingEstoqueUpdates[p.id] || {};
     const est = pending.estoque !== undefined ? pending.estoque : (Number(p.estoque) || 0);
     // Usando a mesma lógica da tabela para consistência (padrão 2 se não definido)
     const min = pending.estoque_minimo !== undefined ? pending.estoque_minimo : (Number(p.estoque_minimo) || 2);
@@ -160,7 +197,7 @@ export function renderEstoque(callbacks = {}) {
 
 
   produtosValidos.forEach(p => {
-    const pending = pendingEstoqueUpdates[p.sku] || {};
+    const pending = pendingEstoqueUpdates[p.id] || {};
     const estVal = pending.estoque !== undefined ? pending.estoque : (Number(p.estoque) || 0);
     const minVal = pending.estoque_minimo !== undefined ? pending.estoque_minimo : (Number(p.estoque_minimo) || 2);
 
@@ -307,7 +344,7 @@ export function renderEstoque(callbacks = {}) {
         </tr>
       `;
     } else {
-      const imageUrl = (p.images && p.images[0]) || p.imagem1 || p.imagem || 'https://via.placeholder.com/400x300?text=Sem+Imagem';
+      const imageUrl = getProductImageUrl(p);
       const margin = precoVenda > 0 ? Math.round((lucro / precoVenda) * 100) : 0;
       let badgeCondicao = p.condicao ? p.condicao.toUpperCase() : 'NOVO';
 
@@ -341,7 +378,7 @@ export function renderEstoque(callbacks = {}) {
           
           <!-- Product Image -->
           <div class="w-full aspect-[4/3] rounded-lg overflow-hidden mb-3 bg-gray-50 border border-gray-100">
-             <img src="${imageUrl}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Sem+Imagem';">
+             <img src="${imageUrl}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK_PRODUCT_IMAGE}';">
           </div>
           
           <!-- Detalhes / Observações -->
@@ -471,7 +508,7 @@ export async function salvarEstoqueManualmente(callbacks = {}) {
     const resp = await fetch(`${CONFIG.apiBaseUrl}?action=salvar_estoque`, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ estoque_updates: keys.map(k => ({ sku: k, ...pendingEstoqueUpdates[k] })) })
+      body: JSON.stringify({ estoque_updates: keys.map(k => ({ id: k, ...pendingEstoqueUpdates[k] })) })
     });
 
     if (!(await resp.json()).ok) throw new Error('Erro na API');

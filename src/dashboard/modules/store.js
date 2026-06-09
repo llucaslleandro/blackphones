@@ -30,6 +30,10 @@ export async function fetchJSON(url) {
   const res = await fetch(urlComCacheBuster, { cache: 'no-store' });
   if (!res.ok) throw new Error('Erro na rede.');
   const json = await res.json();
+  if (typeof json.ok === 'undefined') {
+    console.error('Resposta inesperada da API Vendly:', { url, json });
+    throw new Error('Resposta inválida da API. Verifique se a URL publicada é do Code.gs do Vendly.');
+  }
   if (!json.ok) throw new Error(json.error || 'Erro da API.');
   return json.data || [];
 }
@@ -81,6 +85,7 @@ export async function loadDashboardData(callbacks, silent = false) {
     state.allOrders = rawPedidos.map(order => ({
       ...order,
       item_id: order.id_do_item || null,
+      produto_id: order.id_do_produto || order.produto_id || null,
       parsedDate: (() => {
         if (!order.data) return new Date(0);
         

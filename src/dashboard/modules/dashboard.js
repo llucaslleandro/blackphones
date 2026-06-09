@@ -2,6 +2,51 @@ import { CONFIG } from '../../shared/config.js';
 import { state, loadDashboardData } from './store.js';
 import { formatMoney, formatText, showToast, parseDateBr, formatDateBr, formatDateForInput, getViewPreference, formatPhone } from './ui.js';
 
+function normalizeLookupValue(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function matchesOrderVariation(product, order) {
+  const productStorage = normalizeLookupValue(product.armazenamento);
+  const productColor = normalizeLookupValue(product.cor);
+  const productCondition = normalizeLookupValue(product.condicao || product['condição']);
+  const orderStorage = normalizeLookupValue(order.armazenamento);
+  const orderColor = normalizeLookupValue(order.cor);
+  const orderCondition = normalizeLookupValue(order.condicao || order['condição']);
+
+  return (!orderStorage || productStorage === orderStorage)
+    && (!orderColor || productColor === orderColor)
+    && (!orderCondition || productCondition === orderCondition);
+}
+
+function findProductForOrder(order) {
+  const productId = String(order.produto_id || order.id_do_produto || '').trim();
+  if (productId) {
+    const byId = state.allProducts.find(p => p.id && String(p.id).trim() === productId);
+    if (byId) return byId;
+  }
+
+  const sku = String(order.sku || '').trim();
+  if (sku) {
+    const skuMatches = state.allProducts.filter(p =>
+      (p.sku && String(p.sku).trim() === sku) ||
+      (p.id && String(p.id).trim() === sku)
+    );
+    if (skuMatches.length) {
+      return skuMatches.find(p => matchesOrderVariation(p, order) && Number(p.estoque || 0) > 0)
+        || skuMatches.find(p => matchesOrderVariation(p, order))
+        || skuMatches.find(p => Number(p.estoque || 0) > 0)
+        || skuMatches[0];
+    }
+  }
+
+  const productName = normalizeLookupValue(order.produto);
+  if (!productName) return null;
+  return state.allProducts.find(p => normalizeLookupValue(p.nome) === productName && matchesOrderVariation(p, order))
+    || state.allProducts.find(p => normalizeLookupValue(p.nome) === productName)
+    || null;
+}
+
 export function aplicarFiltroPeriodo(callbacks = {}) {
   const periodFilter = document.getElementById('period-filter');
   const dateStart = document.getElementById('date-start');
@@ -145,14 +190,7 @@ export function renderTable(callbacks = {}) {
       : formatDateBr(o.data);
 
     // Financial logic
-    let prodRef = state.allProducts.find(p =>
-      (p.sku && String(p.sku) === String(o.sku)) ||
-      (p.id && String(p.id) === String(o.sku)) ||
-      (p.id && String(p.id) === String(o.id))
-    );
-    if (!prodRef) {
-      prodRef = state.allProducts.find(p => p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase());
-    }
+    const prodRef = findProductForOrder(o);
     const custoUnit = prodRef ? parseFloat(prodRef.custo || prodRef.preco_custo) || 0 : 0;
     const rev = parseFloat(o.final_price || o.total) || 0;
     const lucro = rev - (custoUnit * (o.quantidade || 1));
@@ -424,14 +462,7 @@ function renderOperationalKPIs(orders) {
     totalRevenue += rev;
 
     // Lookup product for cost (same logic as analytics.js)
-    let prodRef = state.allProducts.find(p =>
-      (p.sku && String(p.sku) === String(o.sku)) ||
-      (p.id && String(p.id) === String(o.sku)) ||
-      (p.id && String(p.id) === String(o.id))
-    );
-    if (!prodRef) {
-      prodRef = state.allProducts.find(p => p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase());
-    }
+    const prodRef = findProductForOrder(o);
 
     if (prodRef) {
       const custoUnit = parseFloat(prodRef.custo || prodRef.preco_custo) || 0;
@@ -1247,9 +1278,10 @@ export function abrirModalNovoPedido() {
       }
 
       const opt = document.createElement('option');
-      opt.value = p.sku || p.id;
+      opt.value = p.id || p.sku;
       opt.textContent = desc;
       opt.dataset.preco = p.preco;
+      opt.dataset.sku = p.sku || '';
 
       if (estoque <= 0) {
         opt.disabled = true;
@@ -1270,12 +1302,12 @@ export function fecharModalNovoPedido() {
 }
 
 export async function salvarPedidoManual(callbacks = {}) {
-  const sku = document.getElementById('man-produto').value;
+  const produtoId = document.getElementById('man-produto').value;
   const qtd = parseInt(document.getElementById('man-qtd').value) || 1;
   const precoCustom = parseFloat(document.getElementById('man-preco').value);
 
   const erros = [];
-  if (!sku) erros.push('Selecione um produto');
+  if (!produtoId) erros.push('Selecione um produto');
   if (qtd <= 0) erros.push('Quantidade deve ser maior que zero');
 
   if (erros.length > 0) {
@@ -1286,9 +1318,28 @@ export async function salvarPedidoManual(callbacks = {}) {
     return;
   }
 
-  const prod = state.allProducts.find(p => (p.sku === sku || p.id === sku));
+  const prod = state.allProducts.find(p => String(p.id || '') === String(produtoId))
+    || state.allProducts.find(p => !p.id && String(p.sku || '') === String(produtoId));
+  if (!prod) {
+    const errContainer = document.getElementById('pedido-manual-errors');
+    const errList = document.getElementById('pedido-manual-errors-list');
+    errList.innerHTML = '<li>Produto selecionado não encontrado. Atualize os dados e tente novamente.</li>';
+    errContainer.classList.remove('hidden');
+    return;
+  }
+  const estoqueDisponivel = Number(prod.estoque) || 0;
+  if (qtd > estoqueDisponivel) {
+    const errContainer = document.getElementById('pedido-manual-errors');
+    const errList = document.getElementById('pedido-manual-errors-list');
+    errList.innerHTML = `<li>Quantidade maior que o estoque disponível (${estoqueDisponivel}).</li>`;
+    errContainer.classList.remove('hidden');
+    return;
+  }
+
   const item = {
-    sku: sku,
+    id: prod.id,
+    produto_id: prod.id,
+    sku: prod.sku || '',
     group_id: prod.grupo_id || prod.id,
     marca: prod.categoria,
     nome: prod.nome,
@@ -1532,14 +1583,7 @@ export function filterOrders() {
   }
   if (state.tableLossOnly) {
     displayOrders = displayOrders.filter(o => {
-      let prodRef = state.allProducts.find(p =>
-        (p.sku && String(p.sku) === String(o.sku)) ||
-        (p.id && String(p.id) === String(o.sku)) ||
-        (p.id && String(p.id) === String(o.id))
-      );
-      if (!prodRef) {
-        prodRef = state.allProducts.find(p => p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase());
-      }
+      const prodRef = findProductForOrder(o);
       if (!prodRef) return false;
       const rev = parseFloat(o.final_price || o.total) || 0;
       const custoTotal = (parseFloat(prodRef.custo || prodRef.preco_custo) || 0) * (o.quantidade || 1);
@@ -1548,14 +1592,7 @@ export function filterOrders() {
   }
   if (state.tableMarginFilter !== 'all') {
     displayOrders = displayOrders.filter(o => {
-      let prodRef = state.allProducts.find(p =>
-        (p.sku && String(p.sku) === String(o.sku)) ||
-        (p.id && String(p.id) === String(o.sku)) ||
-        (p.id && String(p.id) === String(o.id))
-      );
-      if (!prodRef) {
-        prodRef = state.allProducts.find(p => p.nome && String(p.nome).trim().toLowerCase() === String(o.produto).trim().toLowerCase());
-      }
+      const prodRef = findProductForOrder(o);
       if (!prodRef) return false;
       const rev = parseFloat(o.final_price || o.total) || 0;
       const custoTotal = (parseFloat(prodRef.custo || prodRef.preco_custo) || 0) * (o.quantidade || 1);
